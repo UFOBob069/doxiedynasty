@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { auth } from '../../firebase';
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
 export default function SignInPage() {
@@ -18,8 +18,9 @@ export default function SignInPage() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       router.replace("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Google sign in failed");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Google sign in failed";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

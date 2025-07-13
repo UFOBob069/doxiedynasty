@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const testimonials = [
   {
@@ -30,10 +31,10 @@ export default function Home() {
       </p>
       {/* Trust signals */}
       <div className="flex flex-wrap justify-center gap-6 mb-8 opacity-80">
-        <img src="/trusted1.png" alt="Trusted Brokerage 1" className="h-8" />
-        <img src="/trusted2.png" alt="Trusted Brokerage 2" className="h-8" />
-        <img src="/trusted3.png" alt="Trusted Brokerage 3" className="h-8" />
-        <img src="/trusted4.png" alt="Trusted Brokerage 4" className="h-8" />
+        <Image src="/trusted1.png" alt="Trusted Brokerage 1" width={32} height={32} className="h-8" />
+        <Image src="/trusted2.png" alt="Trusted Brokerage 2" width={32} height={32} className="h-8" />
+        <Image src="/trusted3.png" alt="Trusted Brokerage 3" width={32} height={32} className="h-8" />
+        <Image src="/trusted4.png" alt="Trusted Brokerage 4" width={32} height={32} className="h-8" />
       </div>
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <Link href="/dashboard" className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold shadow hover:bg-blue-700 transition text-center">
@@ -56,8 +57,8 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {testimonials.map((t, i) => (
             <div key={i} className="bg-white rounded-xl shadow p-6 flex flex-col items-center text-center">
-              <img src={t.avatar} alt={t.name} className="w-16 h-16 rounded-full mb-3 object-cover" />
-              <p className="text-gray-700 italic mb-2">“{t.quote}”</p>
+              <Image src={t.avatar} alt={t.name} width={64} height={64} className="w-16 h-16 rounded-full mb-3 object-cover" />
+              <p className="text-gray-700 italic mb-2">"{t.quote}"</p>
               <span className="font-semibold text-gray-900">{t.name}</span>
               <span className="text-xs text-gray-500">{t.role}</span>
             </div>
