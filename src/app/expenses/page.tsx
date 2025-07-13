@@ -12,6 +12,9 @@ import {
   orderBy,
   deleteDoc,
   doc,
+  QuerySnapshot,
+  DocumentData,
+  QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { onAuthStateChanged } from "firebase/auth";
@@ -27,7 +30,7 @@ const categories = [
 ];
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     date: "",
@@ -40,17 +43,8 @@ export default function ExpensesPage() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
   const router = useRouter();
-  const [mileageForm, setMileageForm] = useState({
-    begin: "",
-    end: "",
-    roundTrip: false,
-    miles: "",
-    deal: "",
-  });
-  const [mileageLoading, setMileageLoading] = useState(false);
-  const [mileageError, setMileageError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Auth guard
@@ -68,39 +62,23 @@ export default function ExpensesPage() {
     if (!user) return;
     const q = query(
       collection(db, "expenses"),
-      where("userId", "==", user.uid),
+      where("userId", "==", (user as { uid: string }).uid),
       orderBy("date", "desc")
     );
-    const unsub = onSnapshot(q, (snapshot) => {
-      setExpenses(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      );
+    const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setExpenses(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() })));
     });
     return () => unsub();
   }, [user]);
 
-  // Placeholder: Replace with real Google Maps API call
-  const calculateMiles = async (begin: string, end: string, roundTrip: boolean) => {
-    // Simulate API call
-    if (!begin || !end) return 0;
-    // Fake: 10 miles one way
-    let miles = 10;
-    if (roundTrip) miles *= 2;
-    return miles;
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, files } = e.target as any;
+    const { name, value, files } = e.target as unknown as { name: string; value: string; files: FileList };
     if (name === "receipt") {
       setForm((f) => ({ ...f, receipt: files[0] }));
     } else {
       setForm((f) => ({ ...f, [name]: value }));
     }
-  };
-
-  const handleMileageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setMileageForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,7 +91,7 @@ export default function ExpensesPage() {
       if (form.receipt) {
         const storageRef = ref(
           storage,
-          `receipts/${user.uid}/${Date.now()}_${form.receipt.name}`
+          `receipts/${(user as { uid: string }).uid}/${Date.now()}_${form.receipt.name}`
         );
         const uploadTask = uploadBytesResumable(storageRef, form.receipt);
         uploadTask.on("state_changed", (snap) => {
@@ -123,7 +101,7 @@ export default function ExpensesPage() {
         receiptUrl = await getDownloadURL(storageRef);
       }
       await addDoc(collection(db, "expenses"), {
-        userId: user.uid,
+        userId: (user as { uid: string }).uid,
         date: form.date,
         category: form.category,
         amount: parseFloat(form.amount),
@@ -134,36 +112,11 @@ export default function ExpensesPage() {
       });
       setForm({ date: "", category: "", amount: "", notes: "", deal: "", receipt: null });
       setUploadProgress(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to add expense");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to add expense";
+      setError(errorMessage);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleMileageSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMileageError("");
-    setMileageLoading(true);
-    try {
-      if (!user) throw new Error("You must be signed in.");
-      const miles = await calculateMiles(mileageForm.begin, mileageForm.end, mileageForm.roundTrip);
-      const amount = miles * 0.67; // 2024 IRS rate per mile
-      await addDoc(collection(db, "expenses"), {
-        userId: user.uid,
-        date: new Date().toISOString().slice(0, 10),
-        category: "Mileage",
-        amount,
-        notes: `${miles} miles from ${mileageForm.begin} to ${mileageForm.end}${mileageForm.roundTrip ? " (round trip)" : ""}`,
-        deal: mileageForm.deal,
-        receiptUrl: "",
-        createdAt: Timestamp.now(),
-      });
-      setMileageForm({ begin: "", end: "", roundTrip: false, miles: "", deal: "" });
-    } catch (err: any) {
-      setMileageError(err.message || "Failed to add mileage expense");
-    } finally {
-      setMileageLoading(false);
     }
   };
 
@@ -176,6 +129,12 @@ export default function ExpensesPage() {
       setDeletingId(null);
     }
   };
+
+  function safeDisplay(val: unknown): string {
+    if (typeof val === 'number') return val.toLocaleString();
+    if (typeof val === 'string') return val;
+    return '';
+  }
 
   if (authLoading) {
     return (
@@ -249,12 +208,12 @@ export default function ExpensesPage() {
             <tbody>
               {expenses.map((exp) => (
                 <tr key={exp.id}>
-                  <td className="px-3 py-2">{exp.date}</td>
-                  <td className="px-3 py-2">{exp.category}</td>
-                  <td className="px-3 py-2">${exp.amount.toFixed(2)}</td>
-                  <td className="px-3 py-2">{exp.notes}</td>
-                  <td className="px-3 py-2">{exp.receiptUrl ? <a href={exp.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a> : "-"}</td>
-                  <td className="px-3 py-2">{exp.deal || "-"}</td>
+                  <td className="px-3 py-2">{safeDisplay(exp.date)}</td>
+                  <td className="px-3 py-2">{safeDisplay(exp.category)}</td>
+                  <td className="px-3 py-2">${typeof exp.amount === 'number' ? exp.amount.toFixed(2) : safeDisplay(exp.amount)}</td>
+                  <td className="px-3 py-2">{safeDisplay(exp.notes)}</td>
+                  <td className="px-3 py-2">{exp.receiptUrl ? <a href={exp.receiptUrl as string} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a> : "-"}</td>
+                  <td className="px-3 py-2">{safeDisplay(exp.deal) || "-"}</td>
                   <td className="px-3 py-2">
                     <button
                       onClick={() => handleDelete(exp.id)}

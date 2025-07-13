@@ -5,9 +5,15 @@ import { auth } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 export default function Header() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
   useEffect(() => {
-    return onAuthStateChanged(auth, setUser);
+    return onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    });
   }, []);
 
   return (
@@ -18,7 +24,9 @@ export default function Header() {
           {user ? (
             <div className="flex items-center gap-3">
               <Link href="/dashboard" className="text-blue-700 font-semibold hover:underline">Dashboard</Link>
-              <span className="text-gray-700 text-sm font-medium">{user.displayName || user.email}</span>
+              {user && typeof user === 'object' && ('displayName' in user || 'email' in user) ? (
+                <span className="text-gray-700 text-sm font-medium">{(user as { displayName?: string; email?: string }).displayName || (user as { email?: string }).email}</span>
+              ) : null}
               <button
                 onClick={async () => { await signOut(auth); }}
                 className="text-blue-700 font-semibold hover:underline bg-transparent border-none cursor-pointer"

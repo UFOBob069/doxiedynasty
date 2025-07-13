@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRef } from "react";
 
@@ -14,13 +14,19 @@ async function fetchAddressSuggestions(query: string) {
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();
-  return data.features?.map((f: any) => f.place_name) || [];
+  return data.features?.map((f: { place_name: string }) => f.place_name) || [];
+}
+
+function safeDisplay(val: unknown): string {
+  if (typeof val === 'number') return val.toLocaleString();
+  if (typeof val === 'string') return val;
+  return '';
 }
 
 export default function DealsPage() {
-  const [deals, setDeals] = useState<any[]>([]);
+  const [deals, setDeals] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [form, setForm] = useState({
     address: "",
@@ -34,11 +40,11 @@ export default function DealsPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
-  const addressTimeout = useRef<any>();
+  const addressTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Auth guard
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, (user: unknown) => {
       setUser(user);
       setAuthLoading(false);
       if (!user) router.replace("/signin");
@@ -50,9 +56,10 @@ export default function DealsPage() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    const q = query(collection(db, "deals"), where("userId", "==", user.uid), orderBy("closeDate", "desc"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      setDeals(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    const q = query(collection(db, "deals"), where("userId", "==", (user as { uid: string }).uid), orderBy("closeDate", "desc"));
+    const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setDeals(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
     return () => unsub();
@@ -91,7 +98,7 @@ export default function DealsPage() {
       const transactionFee = parseFloat(form.transactionFee) || 0;
       const netCommission = calcNetCommission(gci, brokerageSplit, referralFee, transactionFee);
       await addDoc(collection(db, "deals"), {
-        userId: user.uid,
+        userId: (user as { uid: string }).uid,
         address: form.address,
         client: form.client,
         closeDate: form.closeDate,
@@ -103,8 +110,9 @@ export default function DealsPage() {
         createdAt: Timestamp.now(),
       });
       setForm({ address: "", client: "", closeDate: "", gci: "", brokerageSplit: "", referralFee: "", transactionFee: "" });
-    } catch (err: any) {
-      setError(err.message || "Failed to add deal");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to add deal";
+      setError(errorMessage);
     }
   };
 
@@ -179,11 +187,11 @@ export default function DealsPage() {
             <tbody>
               {deals.map((deal) => (
                 <tr key={deal.id}>
-                  <td className="px-3 py-2">{deal.address}</td>
-                  <td className="px-3 py-2">{deal.client}</td>
-                  <td className="px-3 py-2">{deal.closeDate}</td>
-                  <td className="px-3 py-2">${deal.gci?.toLocaleString()}</td>
-                  <td className="px-3 py-2">${deal.netCommission?.toLocaleString()}</td>
+                  <td className="px-3 py-2">{String(deal.address ?? "")}</td>
+                  <td className="px-3 py-2">{String(deal.client ?? "")}</td>
+                  <td className="px-3 py-2">{String(deal.closeDate ?? "")}</td>
+                  <td className="px-3 py-2">${safeDisplay(deal.gci)}</td>
+                  <td className="px-3 py-2">${safeDisplay(deal.netCommission)}</td>
                 </tr>
               ))}
               {deals.length === 0 && (

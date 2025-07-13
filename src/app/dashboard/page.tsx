@@ -3,18 +3,33 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
 import { collection, query, where, onSnapshot, addDoc } from "firebase/firestore";
-import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { Timestamp } from "firebase/firestore";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+interface MapboxFeature {
+  place_name: string;
+  center: [number, number];
+}
+
+interface MapboxResponse {
+  features?: MapboxFeature[];
+}
+
+interface MapboxDirectionsResponse {
+  routes?: Array<{
+    distance: number;
+  }>;
+}
 
 async function fetchAddressSuggestions(query: string) {
   if (!query || !MAPBOX_TOKEN) return [];
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5`;
   const res = await fetch(url);
   if (!res.ok) return [];
-  const data = await res.json();
-  return data.features?.map((f: any) => f.place_name) || [];
+  const data: MapboxResponse = await res.json();
+  return data.features?.map((f: MapboxFeature) => f.place_name) || [];
 }
 
 async function getMiles(begin: string, end: string) {
@@ -24,7 +39,7 @@ async function getMiles(begin: string, end: string) {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&limit=1`;
     const res = await fetch(url);
     if (!res.ok) return null;
-    const data = await res.json();
+    const data: MapboxResponse = await res.json();
     return data.features?.[0]?.center;
   };
   const beginCoord = await geocode(begin);
@@ -34,16 +49,27 @@ async function getMiles(begin: string, end: string) {
   const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${beginCoord[0]},${beginCoord[1]};${endCoord[0]},${endCoord[1]}?access_token=${MAPBOX_TOKEN}&overview=false`;
   const res = await fetch(url);
   if (!res.ok) return null;
-  const data = await res.json();
+  const data: MapboxDirectionsResponse = await res.json();
   const meters = data.routes?.[0]?.distance;
   if (!meters) return null;
   return meters / 1609.34; // meters to miles
 }
 
+interface Expense {
+  id: string;
+  amount?: number;
+  [key: string]: unknown;
+}
+
+interface User {
+  uid: string;
+  [key: string]: unknown;
+}
+
 export default function DashboardPage() {
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
   const [mileageModalOpen, setMileageModalOpen] = useState(false);
@@ -60,13 +86,13 @@ export default function DashboardPage() {
   const [beginSuggestions, setBeginSuggestions] = useState<string[]>([]);
   const [endSuggestions, setEndSuggestions] = useState<string[]>([]);
   const [calculatedMiles, setCalculatedMiles] = useState<number|null>(null);
-  const beginTimeout = useRef<any>();
-  const endTimeout = useRef<any>();
+  const beginTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  const endTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Auth guard
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsub = onAuthStateChanged(auth, (user: unknown) => {
+      setUser(user as User | null);
       setAuthLoading(false);
       if (!user) router.replace("/signin");
     });
@@ -79,7 +105,7 @@ export default function DashboardPage() {
     setLoading(true);
     const q = query(collection(db, "expenses"), where("userId", "==", user.uid));
     const unsub = onSnapshot(q, (snapshot) => {
-      setExpenses(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setExpenses(snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) })));
       setLoading(false);
     });
     return () => unsub();
@@ -135,8 +161,9 @@ export default function DashboardPage() {
       const miles = await getMiles(mileageForm.begin, mileageForm.end);
       if (miles == null) throw new Error("Could not calculate distance between addresses.");
       setCalculatedMiles(mileageForm.roundTrip ? miles * 2 : miles);
-    } catch (err: any) {
-      setMileageError(err.message || "Failed to calculate miles");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to calculate miles";
+      setMileageError(errorMessage);
     } finally {
       setMileageLoading(false);
     }
@@ -171,8 +198,9 @@ export default function DashboardPage() {
       setMileageForm({ begin: "", end: "", roundTrip: false, miles: "", deal: "", costPerMile: "0.67" });
       setCalculatedMiles(null);
       setMileageModalOpen(false);
-    } catch (err: any) {
-      setMileageError(err.message || "Failed to add mileage expense");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to add mileage expense";
+      setMileageError(errorMessage);
     } finally {
       setMileageLoading(false);
     }

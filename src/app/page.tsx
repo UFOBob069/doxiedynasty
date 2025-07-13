@@ -58,7 +58,7 @@ export default function Home() {
           {testimonials.map((t, i) => (
             <div key={i} className="bg-white rounded-xl shadow p-6 flex flex-col items-center text-center">
               <Image src={t.avatar} alt={t.name} width={64} height={64} className="w-16 h-16 rounded-full mb-3 object-cover" />
-              <p className="text-gray-700 italic mb-2">"{t.quote}"</p>
+              <p className="text-gray-700 italic mb-2">&ldquo;{t.quote}&rdquo;</p>
               <span className="font-semibold text-gray-900">{t.name}</span>
               <span className="text-xs text-gray-500">{t.role}</span>
             </div>
