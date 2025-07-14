@@ -7,69 +7,260 @@ const testimonials = [
     role: "Top Producer, Keller Williams",
     quote: "AgentMoneyTracker makes tracking my deals and expenses effortless. I love how fast and simple it is!",
     avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    rating: 5,
   },
   {
     name: "James T.",
     role: "Realtor, Compass",
     quote: "The mileage tracker and receipt uploads save me hours every month. Highly recommend!",
     avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    rating: 5,
   },
   {
     name: "Linda C.",
     role: "Broker Associate, eXp Realty",
     quote: "Finally, a tool built for agents that just works. My accountant loves the reports!",
     avatar: "https://randomuser.me/api/portraits/women/65.jpg",
+    rating: 5,
   },
+];
+
+const features = [
+  {
+    icon: "💰",
+    title: "Smart Commission Tracking",
+    description: "Auto-calculate net commissions with royalty caps, splits, and tax estimates"
+  },
+  {
+    icon: "📱",
+    title: "30-Second Entry",
+    description: "Mobile-first forms designed for speed. Log deals and expenses in seconds"
+  },
+  {
+    icon: "📊",
+    title: "Real-Time Insights",
+    description: "Instant profit & loss reports with visual charts and tax projections"
+  },
+  {
+    icon: "🔒",
+    title: "Bank-Level Security",
+    description: "SOC 2 compliant with end-to-end encryption. Your data is always safe"
+  },
+  {
+    icon: "☁️",
+    title: "Always Accessible",
+    description: "Cloud-based platform works on any device, anywhere, anytime"
+  },
+  {
+    icon: "📈",
+    title: "Income Optimization",
+    description: "Track expenses, maximize deductions, and boost your bottom line"
+  }
+];
+
+const stats = [
+  { number: "1,000+", label: "Active Agents" },
+  { number: "50,000+", label: "Deals Tracked" },
+  { number: "99.9%", label: "Uptime" },
+  { number: "4.9/5", label: "Agent Rating" }
+];
+
+const howItWorks = [
+  {
+    step: "1",
+    title: "Sign Up",
+    description: "Create your account in 30 seconds. No credit card required."
+  },
+  {
+    step: "2", 
+    title: "Configure Settings",
+    description: "Set your commission splits, royalty caps, and tax rates."
+  },
+  {
+    step: "3",
+    title: "Start Tracking",
+    description: "Log deals and expenses. Get instant financial insights."
+  }
 ];
 
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-      <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-700 mb-4 text-center">AgentMoneyTracker</h1>
-      <p className="text-lg sm:text-xl text-gray-700 mb-8 max-w-xl text-center">
-        The fastest, simplest way for real estate agents to track deals, commissions, and expenses. Stay organized, maximize your income, and get instant financial insights—anywhere, anytime.
-      </p>
-      {/* Trust signals */}
-      <div className="flex flex-wrap justify-center gap-6 mb-8 opacity-80">
-        <Image src="/trusted1.png" alt="Trusted Brokerage 1" width={32} height={32} className="h-8" />
-        <Image src="/trusted2.png" alt="Trusted Brokerage 2" width={32} height={32} className="h-8" />
-        <Image src="/trusted3.png" alt="Trusted Brokerage 3" width={32} height={32} className="h-8" />
-        <Image src="/trusted4.png" alt="Trusted Brokerage 4" width={32} height={32} className="h-8" />
-      </div>
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <Link href="/dashboard" className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold shadow hover:bg-blue-700 transition text-center">
-          Try the Demo
-        </Link>
-        <Link href="/signup" className="bg-white border border-blue-600 text-blue-700 px-8 py-3 rounded-xl font-semibold shadow hover:bg-blue-50 transition text-center">
-          Sign Up Free
-        </Link>
-      </div>
-      <ul className="text-gray-600 text-base max-w-md mx-auto space-y-2 mb-10">
-        <li>✔️ Log deals and auto-calculate net commissions</li>
-        <li>✔️ Track expenses and upload receipts</li>
-        <li>✔️ Generate instant profit & loss reports</li>
-        <li>✔️ Mobile-first, 30-second entry forms</li>
-        <li>✔️ Secure, cloud-based, and always accessible</li>
-      </ul>
-      {/* Testimonials */}
-      <div className="w-full max-w-3xl mx-auto mb-12">
-        <h3 className="text-xl font-bold text-center mb-6 text-blue-700">What Agents Are Saying</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <div key={i} className="bg-white rounded-xl shadow p-6 flex flex-col items-center text-center">
-              <Image src={t.avatar} alt={t.name} width={64} height={64} className="w-16 h-16 rounded-full mb-3 object-cover" />
-              <p className="text-gray-700 italic mb-2">&ldquo;{t.quote}&rdquo;</p>
-              <span className="font-semibold text-gray-900">{t.name}</span>
-              <span className="text-xs text-gray-500">{t.role}</span>
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+            Trusted by 1,000+ real estate agents
+          </div>
+          
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+            Track Your
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600"> Money</span>
+            <br />
+            Like a Pro
+          </h1>
+          
+          <p className="text-xl sm:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            The fastest, simplest way for real estate agents to track deals, commissions, and expenses. 
+            Stay organized, maximize your income, and get instant financial insights.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Link href="/dashboard" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
+              Try the Demo
+            </Link>
+            <Link href="/signup" className="bg-white border-2 border-blue-600 text-blue-700 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
+              Sign Up Free
+            </Link>
+          </div>
+          
+          <div className="flex justify-center items-center gap-8 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <span className="text-green-500">✓</span>
+              No credit card required
             </div>
-          ))}
+            <div className="flex items-center gap-2">
+              <span className="text-green-500">✓</span>
+              Setup in 2 minutes
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-green-500">✓</span>
+              Cancel anytime
+            </div>
+          </div>
         </div>
-      </div>
-      {/* Trust badge */}
-      <div className="flex flex-col items-center gap-2 mb-8">
-        <span className="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full font-semibold text-sm shadow">Trusted by 1,000+ real estate agents</span>
-        <span className="text-xs text-gray-400">SOC 2 & GDPR Compliant</span>
-      </div>
+      </section>
+
+      {/* Statistics Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{stat.number}</div>
+                <div className="text-gray-600 font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything You Need to Succeed</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Built specifically for real estate agents, with features that actually matter to your business.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Get Started in Minutes</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Simple setup process that gets you tracking your money immediately.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {howItWorks.map((step, index) => (
+              <div key={index} className="text-center relative">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-6">
+                  {step.step}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-600">{step.description}</p>
+                
+                {index < howItWorks.length - 1 && (
+                  <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 transform translate-x-4"></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">What Agents Are Saying</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Join thousands of agents who&apos;ve transformed their financial tracking.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <span key={i} className="text-yellow-400 text-xl">★</span>
+                  ))}
+                </div>
+                
+                <p className="text-gray-700 italic mb-6 leading-relaxed">
+                  &ldquo;{testimonial.quote.replace(/'/g, '&apos;')}&rdquo;
+                </p>
+                
+                <div className="flex items-center">
+                  <Image 
+                    src={testimonial.avatar} 
+                    alt={testimonial.name} 
+                    width={48} 
+                    height={48} 
+                    className="w-12 h-12 rounded-full mr-4 object-cover" 
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                    <div className="text-sm text-gray-500">{testimonial.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <h2 className="text-4xl font-bold text-white mb-4">Ready to Take Control of Your Money?</h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Start tracking your deals and expenses today. Join thousands of agents who&apos;ve already transformed their financial management.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
+              Start Free Trial
+            </Link>
+            <Link href="/dashboard" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 text-lg">
+              View Demo
+            </Link>
+          </div>
+          
+          <div className="mt-8 text-blue-100 text-sm">
+            <p>✓ No credit card required • ✓ Setup in 2 minutes • ✓ Cancel anytime</p>
+            <p className="mt-2">SOC 2 & GDPR Compliant • Bank-level security</p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

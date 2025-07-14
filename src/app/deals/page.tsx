@@ -1,12 +1,36 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { useRef } from "react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+interface UserProfile {
+  userId: string;
+  startOfCommissionYear: Timestamp;
+  companySplitPercent: number;
+  royaltyPercent: number;
+  royaltyCap: number;
+  estimatedTaxPercent: number;
+}
+
+interface Deal {
+  id: string;
+  userId?: string;
+  address?: string;
+  client?: string;
+  closeDate?: string;
+  gci?: number;
+  brokerageSplit?: number;
+  referralFee?: number;
+  transactionFee?: number;
+  netCommission?: number;
+  royaltyUsed?: number;
+  createdAt?: Timestamp;
+  [key: string]: unknown;
+}
 
 async function fetchAddressSuggestions(query: string) {
   if (!query || !MAPBOX_TOKEN) return [];
@@ -23,11 +47,47 @@ function safeDisplay(val: unknown): string {
   return '';
 }
 
+// Helper function to calculate YTD royalty usage
+function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
+  const startDate = startOfCommissionYear.toDate();
+  const endDate = new Date();
+  
+  return deals
+    .filter(deal => {
+      const dealDate = new Date(deal.closeDate || "");
+      return dealDate >= startDate && dealDate <= endDate;
+    })
+    .reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
+}
+
+// Updated commission calculation with royalty cap
+function calculateNetCommission(
+  gci: number, 
+  brokerageSplit: number, 
+  referralFee: number, 
+  transactionFee: number,
+  royaltyPercent: number,
+  royaltyCap: number,
+  ytdRoyaltyUsage: number
+): { netCommission: number; royaltyUsed: number } {
+  const companySplit = gci * (brokerageSplit / 100);
+  const royalty = gci * (royaltyPercent / 100);
+  
+  // Calculate remaining royalty cap
+  const remainingCap = royaltyCap - ytdRoyaltyUsage;
+  const royaltyUsed = Math.max(0, Math.min(royalty, remainingCap));
+  
+  const netCommission = gci - companySplit - royaltyUsed - referralFee - transactionFee;
+  
+  return { netCommission, royaltyUsed };
+}
+
 export default function DealsPage() {
-  const [deals, setDeals] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<unknown>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [form, setForm] = useState({
     address: "",
     client: "",
@@ -52,6 +112,23 @@ export default function DealsPage() {
     return () => unsub();
   }, [router]);
 
+  // Load user profile
+  useEffect(() => {
+    if (!user) return;
+    
+    const userId = (user as { uid: string }).uid;
+    const profileRef = doc(db, "userProfiles", userId);
+    
+    const unsub = onSnapshot(profileRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data() as UserProfile;
+        setUserProfile(data);
+      }
+    });
+
+    return () => unsub();
+  }, [user]);
+
   // Fetch deals for current user
   useEffect(() => {
     if (!user) return;
@@ -59,17 +136,14 @@ export default function DealsPage() {
     const q = query(collection(db, "deals"), where("userId", "==", (user as { uid: string }).uid), orderBy("closeDate", "desc"));
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setDeals(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() })));
+      setDeals(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
+        id: doc.id, 
+        ...(doc.data() as Record<string, unknown>) 
+      })));
       setLoading(false);
     });
     return () => unsub();
   }, [user]);
-
-  // Calculate net commission
-  function calcNetCommission(gci: number, brokerageSplit: number, referralFee: number, transactionFee: number) {
-    const split = gci * (brokerageSplit / 100);
-    return gci - split - referralFee - transactionFee;
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -91,12 +165,27 @@ export default function DealsPage() {
     e.preventDefault();
     setError("");
     try {
-      if (!user) throw new Error("You must be signed in.");
+      if (!user || !userProfile) throw new Error("You must be signed in and have profile settings configured.");
+      
       const gci = parseFloat(form.gci) || 0;
-      const brokerageSplit = parseFloat(form.brokerageSplit) || 0;
+      const brokerageSplit = parseFloat(form.brokerageSplit) || userProfile.companySplitPercent;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
-      const netCommission = calcNetCommission(gci, brokerageSplit, referralFee, transactionFee);
+      
+      // Calculate YTD royalty usage
+      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
+      
+      // Calculate net commission with royalty cap
+      const { netCommission, royaltyUsed } = calculateNetCommission(
+        gci,
+        brokerageSplit,
+        referralFee,
+        transactionFee,
+        userProfile.royaltyPercent,
+        userProfile.royaltyCap,
+        ytdRoyaltyUsage
+      );
+
       await addDoc(collection(db, "deals"), {
         userId: (user as { uid: string }).uid,
         address: form.address,
@@ -107,6 +196,7 @@ export default function DealsPage() {
         referralFee,
         transactionFee,
         netCommission,
+        royaltyUsed,
         createdAt: Timestamp.now(),
       });
       setForm({ address: "", client: "", closeDate: "", gci: "", brokerageSplit: "", referralFee: "", transactionFee: "" });
@@ -116,91 +206,275 @@ export default function DealsPage() {
     }
   };
 
+  // Calculate totals
+  const totalGCI = deals.reduce((sum, deal) => sum + (deal.gci || 0), 0);
+  const totalNetCommission = deals.reduce((sum, deal) => sum + (deal.netCommission || 0), 0);
+  const totalRoyaltyUsed = deals.reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
+  const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
+  const remainingRoyaltyCap = userProfile ? userProfile.royaltyCap - ytdRoyaltyUsage : 0;
+
   if (authLoading || loading) {
     return (
-      <main className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-500 text-lg">Loading deals...</div>
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-gray-600 text-lg font-medium">Loading your deals...</div>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Deals</h1>
-      <div className="bg-white rounded-xl shadow p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-2">Add Deal</h2>
-        <form className="grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={handleSubmit} autoComplete="off">
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            <input type="text" name="address" value={form.address} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg" required autoComplete="off" />
-            {addressSuggestions.length > 0 && (
-              <ul className="absolute z-10 bg-white border border-gray-200 rounded w-full mt-1 shadow-lg max-h-40 overflow-y-auto">
-                {addressSuggestions.map((s, i) => (
-                  <li key={i} className="px-3 py-2 hover:bg-blue-50 cursor-pointer" onClick={() => selectAddress(s)}>{s}</li>
-                ))}
-              </ul>
-            )}
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Deals Management</h1>
+              <p className="text-gray-600 text-lg">Track your real estate transactions and commissions</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
+              >
+                📊 Dashboard
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-            <input type="text" name="client" value={form.client} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">💰</span>
+              </div>
+              <span className="text-green-600 text-sm font-medium">Total GCI</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${totalGCI.toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">Gross Commission Income</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Close Date</label>
-            <input type="date" name="closeDate" value={form.closeDate} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">📈</span>
+              </div>
+              <span className="text-blue-600 text-sm font-medium">Net Commission</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${totalNetCommission.toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">After splits & fees</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">GCI</label>
-            <input type="number" name="gci" value={form.gci} onChange={handleChange} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">👑</span>
+              </div>
+              <span className="text-orange-600 text-sm font-medium">Royalty Used</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${totalRoyaltyUsed.toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">This year</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Brokerage Split %</label>
-            <input type="number" name="brokerageSplit" value={form.brokerageSplit} onChange={handleChange} step="0.01" min="0" max="100" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <span className="text-purple-600 text-sm font-medium">Cap Remaining</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${Math.max(0, remainingRoyaltyCap).toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">Royalty cap left</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Referral Fee</label>
-            <input type="number" name="referralFee" value={form.referralFee} onChange={handleChange} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+        </div>
+
+        {/* Add Deal Form */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <span className="text-xl">➕</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Add New Deal</h2>
+              <p className="text-gray-500 text-sm">Enter deal details to calculate commissions</p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Fee</label>
-            <input type="number" name="transactionFee" value={form.transactionFee} onChange={handleChange} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-          </div>
-          <div className="sm:col-span-2 flex flex-col items-end gap-2">
-            {error && <div className="text-red-600 text-sm">{error}</div>}
-            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition">Add Deal</button>
-          </div>
-        </form>
-      </div>
-      <div className="bg-white rounded-xl shadow p-4">
-        <h2 className="text-lg font-semibold mb-2">Your Deals</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-3 py-2 text-left">Address</th>
-                <th className="px-3 py-2 text-left">Client</th>
-                <th className="px-3 py-2 text-left">Date</th>
-                <th className="px-3 py-2 text-left">GCI</th>
-                <th className="px-3 py-2 text-left">Net Commission</th>
-              </tr>
-            </thead>
-            <tbody>
-              {deals.map((deal) => (
-                <tr key={deal.id}>
-                  <td className="px-3 py-2">{String(deal.address ?? "")}</td>
-                  <td className="px-3 py-2">{String(deal.client ?? "")}</td>
-                  <td className="px-3 py-2">{String(deal.closeDate ?? "")}</td>
-                  <td className="px-3 py-2">${safeDisplay(deal.gci)}</td>
-                  <td className="px-3 py-2">${safeDisplay(deal.netCommission)}</td>
-                </tr>
-              ))}
-              {deals.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center text-gray-400 py-4">No deals yet.</td>
-                </tr>
+          
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit} autoComplete="off">
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Property Address</label>
+              <input 
+                type="text" 
+                name="address" 
+                value={form.address} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                required 
+                autoComplete="off" 
+                placeholder="Enter property address"
+              />
+              {addressSuggestions.length > 0 && (
+                <ul className="absolute z-10 bg-white border border-gray-200 rounded-xl w-full mt-1 shadow-lg max-h-40 overflow-y-auto">
+                  {addressSuggestions.map((s, i) => (
+                    <li key={i} className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors" onClick={() => selectAddress(s)}>{s}</li>
+                  ))}
+                </ul>
               )}
-            </tbody>
-          </table>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Client Name</label>
+              <input 
+                type="text" 
+                name="client" 
+                value={form.client} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                required 
+                placeholder="Enter client name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Close Date</label>
+              <input 
+                type="date" 
+                name="closeDate" 
+                value={form.closeDate} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                required 
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">GCI (Gross Commission Income)</label>
+              <input 
+                type="number" 
+                name="gci" 
+                value={form.gci} 
+                onChange={handleChange} 
+                step="0.01" 
+                min="0" 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                required 
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Brokerage Split %</label>
+              <input 
+                type="number" 
+                name="brokerageSplit" 
+                value={form.brokerageSplit || userProfile?.companySplitPercent || ""} 
+                onChange={handleChange} 
+                step="0.01" 
+                min="0" 
+                max="100" 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                placeholder={userProfile?.companySplitPercent?.toString()}
+              />
+              <p className="text-xs text-gray-500 mt-1">Default: {userProfile?.companySplitPercent}%</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Referral Fee</label>
+              <input 
+                type="number" 
+                name="referralFee" 
+                value={form.referralFee} 
+                onChange={handleChange} 
+                step="0.01" 
+                min="0" 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Transaction Fee</label>
+              <input 
+                type="number" 
+                name="transactionFee" 
+                value={form.transactionFee} 
+                onChange={handleChange} 
+                step="0.01" 
+                min="0" 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div className="md:col-span-2 flex flex-col items-end gap-3">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm w-full">
+                  {error}
+                </div>
+              )}
+              <button 
+                type="submit" 
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                Add Deal
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Deals Table */}
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+              <span className="text-xl">📋</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Your Deals</h2>
+              <p className="text-gray-500 text-sm">{deals.length} deal{deals.length !== 1 ? 's' : ''} tracked</p>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Address</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Client</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">GCI</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Commission</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Royalty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deals.map((deal) => (
+                  <tr key={deal.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium">{String(deal.address ?? "")}</td>
+                    <td className="px-4 py-3">{String(deal.client ?? "")}</td>
+                    <td className="px-4 py-3 text-gray-600">{String(deal.closeDate ?? "")}</td>
+                    <td className="px-4 py-3 font-semibold text-green-600">${safeDisplay(deal.gci)}</td>
+                    <td className="px-4 py-3 font-semibold text-blue-600">${safeDisplay(deal.netCommission)}</td>
+                    <td className="px-4 py-3 font-semibold text-orange-600">${safeDisplay(deal.royaltyUsed)}</td>
+                  </tr>
+                ))}
+                {deals.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="text-center text-gray-400 py-8">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-4xl">📋</span>
+                        <p className="text-lg font-medium">No deals yet</p>
+                        <p className="text-sm">Add your first deal to get started!</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
