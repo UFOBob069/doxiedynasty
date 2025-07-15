@@ -6,6 +6,8 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 export default function Header() {
   const [user, setUser] = useState<unknown>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -16,23 +18,40 @@ export default function Header() {
     });
   }, []);
 
+  const handleSignOut = async () => {
+    await signOut(auth);
+    setMobileMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="text-xl font-bold text-blue-700">
+          {/* Logo */}
+          <Link href="/" className="text-xl font-bold text-blue-700" onClick={closeMobileMenu}>
             AgentMoneyTracker
           </Link>
-          <nav className="flex items-center space-x-4">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-4">
             {user && typeof user === 'object' && ('displayName' in user || 'email' in user) ? (
               <>
                 <Link href="/dashboard" className="text-blue-700 font-semibold hover:underline">Dashboard</Link>
                 <Link href="/deals" className="text-gray-700 hover:text-blue-700">Deals</Link>
                 <Link href="/expenses" className="text-gray-700 hover:text-blue-700">Expenses</Link>
+                <Link href="/mileage" className="text-gray-700 hover:text-blue-700">Log Mileage</Link>
                 <Link href="/settings" className="text-gray-700 hover:text-blue-700">Settings</Link>
                 <span className="text-gray-700 text-sm font-medium">{(user as { displayName?: string; email?: string }).displayName || (user as { email?: string }).email}</span>
                 <button
-                  onClick={async () => { await signOut(auth); }}
+                  onClick={handleSignOut}
                   className="text-blue-700 font-semibold hover:underline bg-transparent border-none cursor-pointer"
                 >
                   Sign Out
@@ -47,7 +66,97 @@ export default function Header() {
               </>
             )}
           </nav>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={toggleMobileMenu}
+              className="text-gray-700 hover:text-blue-700 focus:outline-none focus:text-blue-700"
+              aria-label="Toggle mobile menu"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
+              {user && typeof user === 'object' && ('displayName' in user || 'email' in user) ? (
+                <>
+                  <Link 
+                    href="/dashboard" 
+                    className="block px-3 py-2 text-blue-700 font-semibold hover:bg-blue-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    href="/deals" 
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Deals
+                  </Link>
+                  <Link 
+                    href="/expenses" 
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Expenses
+                  </Link>
+                  <Link 
+                    href="/mileage" 
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Log Mileage
+                  </Link>
+                  <Link 
+                    href="/settings" 
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Settings
+                  </Link>
+                  <div className="px-3 py-2 text-gray-700 text-sm font-medium border-t border-gray-200 mt-2 pt-2">
+                    {(user as { displayName?: string; email?: string }).displayName || (user as { email?: string }).email}
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-3 py-2 text-blue-700 font-semibold hover:bg-blue-50 rounded-md bg-transparent border-none cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    href="/signin" 
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    href="/signup" 
+                    className="block px-3 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition"
+                    onClick={closeMobileMenu}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

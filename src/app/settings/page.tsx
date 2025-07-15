@@ -9,10 +9,34 @@ import { Timestamp } from "firebase/firestore";
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
-  companySplitPercent: number;
-  royaltyPercent: number;
-  royaltyCap: number;
+  commissionPercent: number; // Agent's commission percentage on total deal
+  companySplitPercent: number; // Company's percentage
+  companySplitCap: number; // Company split cap
+  royaltyPercent: number; // Royalty percentage
+  royaltyCap: number; // Royalty cap
   estimatedTaxPercent: number;
+  // Personal/Business Information
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  licenseNumber?: string;
+  zipCode?: string;
+  state?: string;
+  // Financial Tracking
+  monthlyGoal?: number;
+  annualGoal?: number;
+  emergencyFund?: number;
+  retirementContribution?: number;
+  // Additional Settings
+  currency?: string;
+  timezone?: string;
+  notifications?: {
+    email?: boolean;
+    push?: boolean;
+    capAlerts?: boolean;
+  };
 }
 
 export default function SettingsPage() {
@@ -26,10 +50,34 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile>({
     userId: "",
     startOfCommissionYear: Timestamp.fromDate(new Date(new Date().getFullYear(), 0, 1)), // January 1st of current year
-    companySplitPercent: 30,
-    royaltyPercent: 6,
-    royaltyCap: 3000,
+    commissionPercent: 70, // Agent gets 70% of total deal
+    companySplitPercent: 30, // Company gets 30% of total deal
+    companySplitCap: 5000, // Company cap at $5,000
+    royaltyPercent: 6, // 6% royalty
+    royaltyCap: 3000, // $3,000 royalty cap
     estimatedTaxPercent: 25,
+    // Personal/Business Information
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    licenseNumber: "",
+    zipCode: "",
+    state: "",
+    // Financial Tracking
+    monthlyGoal: 0,
+    annualGoal: 0,
+    emergencyFund: 0,
+    retirementContribution: 0,
+    // Additional Settings
+    currency: "USD",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    notifications: {
+      email: false,
+      push: false,
+      capAlerts: true,
+    },
   });
 
   // Auth guard
@@ -58,10 +106,34 @@ export default function SettingsPage() {
         const defaultProfile: UserProfile = {
           userId,
           startOfCommissionYear: Timestamp.fromDate(new Date(new Date().getFullYear(), 0, 1)),
+          commissionPercent: 70,
           companySplitPercent: 30,
+          companySplitCap: 5000,
           royaltyPercent: 6,
           royaltyCap: 3000,
           estimatedTaxPercent: 25,
+          // Personal/Business Information
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          company: "",
+          licenseNumber: "",
+          zipCode: "",
+          state: "",
+          // Financial Tracking
+          monthlyGoal: 0,
+          annualGoal: 0,
+          emergencyFund: 0,
+          retirementContribution: 0,
+          // Additional Settings
+          currency: "USD",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          notifications: {
+            email: false,
+            push: false,
+            capAlerts: true,
+          },
         };
         setProfile(defaultProfile);
       }
@@ -70,15 +142,29 @@ export default function SettingsPage() {
     return () => unsub();
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
     setProfile(prev => ({
       ...prev,
       [name]: type === 'date' 
         ? Timestamp.fromDate(new Date(value))
         : type === 'number' 
           ? parseFloat(value) || 0 
-          : value
+          : type === 'checkbox'
+            ? checked
+            : value
+    }));
+  };
+
+  const handleNotificationChange = (key: keyof UserProfile['notifications']) => {
+    setProfile(prev => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [key]: !prev.notifications?.[key]
+      }
     }));
   };
 
@@ -150,8 +236,8 @@ export default function SettingsPage() {
                 <span className="text-2xl">🛠️</span>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Commission Settings</h2>
-                <p className="text-gray-500 text-sm">Configure your commission structure and royalty tracking</p>
+                <h2 className="text-2xl font-bold text-gray-900">Commission Structure</h2>
+                <p className="text-gray-500 text-sm">Configure your commission percentages and caps</p>
               </div>
             </div>
             
@@ -169,13 +255,34 @@ export default function SettingsPage() {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Used for royalty cap tracking and YTD calculations
+                  Used for cap tracking and YTD calculations
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Default Company Split %
+                  Your Commission %
+                </label>
+                <input
+                  type="number"
+                  name="commissionPercent"
+                  value={profile.commissionPercent}
+                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="70"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Your percentage of the total deal amount
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Company Split %
                 </label>
                 <input
                   type="number"
@@ -190,13 +297,33 @@ export default function SettingsPage() {
                   placeholder="30"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Default percentage your brokerage takes from each deal
+                  Company's percentage of the total deal amount
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Associate Royalty %
+                  Company Split Cap
+                </label>
+                <input
+                  type="number"
+                  name="companySplitCap"
+                  value={profile.companySplitCap}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="5000"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Maximum annual amount for company split
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Royalty %
                 </label>
                 <input
                   type="number"
@@ -211,13 +338,13 @@ export default function SettingsPage() {
                   placeholder="6"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Percentage of GCI that goes toward your royalty cap
+                  Royalty percentage of your commission
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Annual Royalty Cap
+                  Royalty Cap
                 </label>
                 <input
                   type="number"
@@ -271,6 +398,344 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Personal & Business Information */}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">👤</span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Personal & Business Information</h2>
+                <p className="text-gray-500 text-sm">Your contact and business details (all optional)</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={profile.firstName ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Enter your first name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={profile.lastName ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Enter your last name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={profile.email ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={profile.phone ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Company/Brokerage</label>
+                <input
+                  type="text"
+                  name="company"
+                  value={profile.company ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Your brokerage name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">License Number</label>
+                <input
+                  type="text"
+                  name="licenseNumber"
+                  value={profile.licenseNumber ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Real estate license number"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
+                <select
+                  name="state"
+                  value={profile.state ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="">Select your state</option>
+                  <option value="AL">Alabama</option>
+                  <option value="AK">Alaska</option>
+                  <option value="AZ">Arizona</option>
+                  <option value="AR">Arkansas</option>
+                  <option value="CA">California</option>
+                  <option value="CO">Colorado</option>
+                  <option value="CT">Connecticut</option>
+                  <option value="DE">Delaware</option>
+                  <option value="FL">Florida</option>
+                  <option value="GA">Georgia</option>
+                  <option value="HI">Hawaii</option>
+                  <option value="ID">Idaho</option>
+                  <option value="IL">Illinois</option>
+                  <option value="IN">Indiana</option>
+                  <option value="IA">Iowa</option>
+                  <option value="KS">Kansas</option>
+                  <option value="KY">Kentucky</option>
+                  <option value="LA">Louisiana</option>
+                  <option value="ME">Maine</option>
+                  <option value="MD">Maryland</option>
+                  <option value="MA">Massachusetts</option>
+                  <option value="MI">Michigan</option>
+                  <option value="MN">Minnesota</option>
+                  <option value="MS">Mississippi</option>
+                  <option value="MO">Missouri</option>
+                  <option value="MT">Montana</option>
+                  <option value="NE">Nebraska</option>
+                  <option value="NV">Nevada</option>
+                  <option value="NH">New Hampshire</option>
+                  <option value="NJ">New Jersey</option>
+                  <option value="NM">New Mexico</option>
+                  <option value="NY">New York</option>
+                  <option value="NC">North Carolina</option>
+                  <option value="ND">North Dakota</option>
+                  <option value="OH">Ohio</option>
+                  <option value="OK">Oklahoma</option>
+                  <option value="OR">Oregon</option>
+                  <option value="PA">Pennsylvania</option>
+                  <option value="RI">Rhode Island</option>
+                  <option value="SC">South Carolina</option>
+                  <option value="SD">South Dakota</option>
+                  <option value="TN">Tennessee</option>
+                  <option value="TX">Texas</option>
+                  <option value="UT">Utah</option>
+                  <option value="VT">Vermont</option>
+                  <option value="VA">Virginia</option>
+                  <option value="WA">Washington</option>
+                  <option value="WV">West Virginia</option>
+                  <option value="WI">Wisconsin</option>
+                  <option value="WY">Wyoming</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">ZIP Code</label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={profile.zipCode ?? ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="12345"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Goals */}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Financial Goals</h2>
+                <p className="text-gray-500 text-sm">Set income targets and savings goals (optional)</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Income Goal</label>
+                <input
+                  type="number"
+                  name="monthlyGoal"
+                  value={profile.monthlyGoal ?? ""}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-2">Target monthly take-home income</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Annual Income Goal</label>
+                <input
+                  type="number"
+                  name="annualGoal"
+                  value={profile.annualGoal ?? ""}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-2">Target annual take-home income</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Emergency Fund Target</label>
+                <input
+                  type="number"
+                  name="emergencyFund"
+                  value={profile.emergencyFund ?? ""}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-2">Target emergency fund amount</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Retirement Contribution</label>
+                <input
+                  type="number"
+                  name="retirementContribution"
+                  value={profile.retirementContribution ?? ""}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-2">Monthly retirement savings goal</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Settings */}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">⚙️</span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Additional Settings</h2>
+                <p className="text-gray-500 text-sm">Customize your app experience</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Currency</label>
+                <select
+                  name="currency"
+                  value={profile.currency ?? "USD"}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="CAD">CAD (C$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Timezone</label>
+                <select
+                  name="timezone"
+                  value={profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="America/New_York">Eastern Time</option>
+                  <option value="America/Chicago">Central Time</option>
+                  <option value="America/Denver">Mountain Time</option>
+                  <option value="America/Los_Angeles">Pacific Time</option>
+                  <option value="America/Anchorage">Alaska Time</option>
+                  <option value="Pacific/Honolulu">Hawaii Time</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Notification Settings */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Preferences</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <div className="font-medium text-gray-900">Cap Alerts</div>
+                    <div className="text-sm text-gray-500">Get notified when approaching royalty or company caps</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profile.notifications?.capAlerts || false}
+                      onChange={() => handleNotificationChange('capAlerts')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <div className="font-medium text-gray-900">Email Notifications</div>
+                    <div className="text-sm text-gray-500">Receive updates via email</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profile.notifications?.email || false}
+                      onChange={() => handleNotificationChange('email')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <div className="font-medium text-gray-900">Push Notifications</div>
+                    <div className="text-sm text-gray-500">Receive browser push notifications</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profile.notifications?.push || false}
+                      onChange={() => handleNotificationChange('push')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Save Button */}
           <div className="flex justify-end">
             <button
@@ -308,20 +773,19 @@ export default function SettingsPage() {
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
               <span className="text-xl">💡</span>
             </div>
-            <h3 className="text-xl font-bold">Need Help?</h3>
+            <h3 className="text-xl font-bold">How It Works</h3>
           </div>
           <p className="text-blue-100 mb-4">
-            These settings control how your commissions and taxes are calculated throughout the app. 
-            Make sure to update them whenever your commission structure changes.
+            When you enter a deal, the system automatically calculates your earnings based on these settings:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h4 className="font-semibold mb-2">Commission Year</h4>
-              <p className="text-blue-100">Set this to track your royalty cap from the correct start date.</p>
+              <h4 className="font-semibold mb-2">Commission Flow</h4>
+              <p className="text-blue-100">Total Deal → Your Commission → Company Split → Royalty → Gross → Taxes → Net</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Tax Estimates</h4>
-              <p className="text-blue-100">Used for take-home income projections on your dashboard.</p>
+              <h4 className="font-semibold mb-2">Cap Tracking</h4>
+              <p className="text-blue-100">Both company split and royalty have annual caps tracked on your dashboard.</p>
             </div>
           </div>
         </div>

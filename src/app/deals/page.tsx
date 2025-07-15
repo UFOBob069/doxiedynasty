@@ -10,9 +10,11 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
-  companySplitPercent: number;
-  royaltyPercent: number;
-  royaltyCap: number;
+  commissionPercent: number; // Agent's commission percentage on total deal
+  companySplitPercent: number; // Company's percentage
+  companySplitCap: number; // Company split cap
+  royaltyPercent: number; // Royalty percentage
+  royaltyCap: number; // Royalty cap
   estimatedTaxPercent: number;
 }
 
@@ -22,12 +24,16 @@ interface Deal {
   address?: string;
   client?: string;
   closeDate?: string;
-  gci?: number;
-  brokerageSplit?: number;
-  referralFee?: number;
-  transactionFee?: number;
-  netCommission?: number;
-  royaltyUsed?: number;
+  totalDealAmount?: number; // Total deal amount
+  commissionPercent?: number; // Agent's commission percentage
+  agentCommission?: number; // Agent's commission amount
+  companySplit?: number; // Company split amount
+  royaltyUsed?: number; // Royalty amount
+  grossIncome?: number; // Gross before taxes
+  estimatedTaxes?: number; // Estimated taxes
+  netIncome?: number; // Take-home amount
+  referralFee?: number; // Optional referral fee
+  transactionFee?: number; // Optional transaction fee
   createdAt?: Timestamp;
   [key: string]: unknown;
 }
@@ -60,26 +66,68 @@ function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestam
     .reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
 }
 
-// Updated commission calculation with royalty cap
-function calculateNetCommission(
-  gci: number, 
-  brokerageSplit: number, 
-  referralFee: number, 
-  transactionFee: number,
+// Helper function to calculate YTD company split usage
+function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
+  const startDate = startOfCommissionYear.toDate();
+  const endDate = new Date();
+  
+  return deals
+    .filter(deal => {
+      const dealDate = new Date(deal.closeDate || "");
+      return dealDate >= startDate && dealDate <= endDate;
+    })
+    .reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
+}
+
+// Updated commission calculation with both caps
+function calculateDealBreakdown(
+  totalDealAmount: number,
+  commissionPercent: number,
+  companySplitPercent: number,
+  companySplitCap: number,
   royaltyPercent: number,
   royaltyCap: number,
-  ytdRoyaltyUsage: number
-): { netCommission: number; royaltyUsed: number } {
-  const companySplit = gci * (brokerageSplit / 100);
-  const royalty = gci * (royaltyPercent / 100);
+  ytdRoyaltyUsage: number,
+  ytdCompanySplitUsage: number,
+  estimatedTaxPercent: number,
+  referralFee: number = 0,
+  transactionFee: number = 0
+): {
+  agentCommission: number;
+  companySplit: number;
+  royaltyUsed: number;
+  grossIncome: number;
+  estimatedTaxes: number;
+  netIncome: number;
+} {
+  // Calculate agent's commission
+  const agentCommission = totalDealAmount * (commissionPercent / 100);
   
-  // Calculate remaining royalty cap
-  const remainingCap = royaltyCap - ytdRoyaltyUsage;
-  const royaltyUsed = Math.max(0, Math.min(royalty, remainingCap));
+  // Calculate company split (capped)
+  const remainingCompanyCap = companySplitCap - ytdCompanySplitUsage;
+  const companySplit = Math.max(0, Math.min(agentCommission * (companySplitPercent / 100), remainingCompanyCap));
   
-  const netCommission = gci - companySplit - royaltyUsed - referralFee - transactionFee;
+  // Calculate royalty (capped)
+  const remainingRoyaltyCap = royaltyCap - ytdRoyaltyUsage;
+  const royaltyUsed = Math.max(0, Math.min(agentCommission * (royaltyPercent / 100), remainingRoyaltyCap));
   
-  return { netCommission, royaltyUsed };
+  // Calculate gross income
+  const grossIncome = agentCommission - companySplit - royaltyUsed - referralFee - transactionFee;
+  
+  // Calculate estimated taxes
+  const estimatedTaxes = grossIncome * (estimatedTaxPercent / 100);
+  
+  // Calculate net income
+  const netIncome = grossIncome - estimatedTaxes;
+  
+  return {
+    agentCommission,
+    companySplit,
+    royaltyUsed,
+    grossIncome,
+    estimatedTaxes,
+    netIncome
+  };
 }
 
 export default function DealsPage() {
@@ -92,8 +140,8 @@ export default function DealsPage() {
     address: "",
     client: "",
     closeDate: "",
-    gci: "",
-    brokerageSplit: "",
+    totalDealAmount: "",
+    commissionPercent: "",
     referralFee: "",
     transactionFee: "",
   });
@@ -167,23 +215,28 @@ export default function DealsPage() {
     try {
       if (!user || !userProfile) throw new Error("You must be signed in and have profile settings configured.");
       
-      const gci = parseFloat(form.gci) || 0;
-      const brokerageSplit = parseFloat(form.brokerageSplit) || userProfile.companySplitPercent;
+      const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
+      const commissionPercent = parseFloat(form.commissionPercent) || userProfile.commissionPercent;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
-      // Calculate YTD royalty usage
+      // Calculate YTD usage for both caps
       const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
+      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
       
-      // Calculate net commission with royalty cap
-      const { netCommission, royaltyUsed } = calculateNetCommission(
-        gci,
-        brokerageSplit,
-        referralFee,
-        transactionFee,
+      // Calculate deal breakdown
+      const breakdown = calculateDealBreakdown(
+        totalDealAmount,
+        commissionPercent,
+        userProfile.companySplitPercent,
+        userProfile.companySplitCap,
         userProfile.royaltyPercent,
         userProfile.royaltyCap,
-        ytdRoyaltyUsage
+        ytdRoyaltyUsage,
+        ytdCompanySplitUsage,
+        userProfile.estimatedTaxPercent,
+        referralFee,
+        transactionFee
       );
 
       await addDoc(collection(db, "deals"), {
@@ -191,15 +244,19 @@ export default function DealsPage() {
         address: form.address,
         client: form.client,
         closeDate: form.closeDate,
-        gci,
-        brokerageSplit,
+        totalDealAmount,
+        commissionPercent,
+        agentCommission: breakdown.agentCommission,
+        companySplit: breakdown.companySplit,
+        royaltyUsed: breakdown.royaltyUsed,
+        grossIncome: breakdown.grossIncome,
+        estimatedTaxes: breakdown.estimatedTaxes,
+        netIncome: breakdown.netIncome,
         referralFee,
         transactionFee,
-        netCommission,
-        royaltyUsed,
         createdAt: Timestamp.now(),
       });
-      setForm({ address: "", client: "", closeDate: "", gci: "", brokerageSplit: "", referralFee: "", transactionFee: "" });
+      setForm({ address: "", client: "", closeDate: "", totalDealAmount: "", commissionPercent: "", referralFee: "", transactionFee: "" });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to add deal";
       setError(errorMessage);
@@ -207,11 +264,17 @@ export default function DealsPage() {
   };
 
   // Calculate totals
-  const totalGCI = deals.reduce((sum, deal) => sum + (deal.gci || 0), 0);
-  const totalNetCommission = deals.reduce((sum, deal) => sum + (deal.netCommission || 0), 0);
+  const totalDealAmount = deals.reduce((sum, deal) => sum + (deal.totalDealAmount || 0), 0);
+  const totalAgentCommission = deals.reduce((sum, deal) => sum + (deal.agentCommission || 0), 0);
+  const totalNetIncome = deals.reduce((sum, deal) => sum + (deal.netIncome || 0), 0);
   const totalRoyaltyUsed = deals.reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
+  const totalCompanySplit = deals.reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
+  
   const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
+  const ytdCompanySplitUsage = userProfile ? calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear) : 0;
+  
   const remainingRoyaltyCap = userProfile ? userProfile.royaltyCap - ytdRoyaltyUsage : 0;
+  const remainingCompanyCap = userProfile ? userProfile.companySplitCap - ytdCompanySplitUsage : 0;
 
   if (authLoading || loading) {
     return (
@@ -252,10 +315,10 @@ export default function DealsPage() {
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                 <span className="text-2xl">💰</span>
               </div>
-              <span className="text-green-600 text-sm font-medium">Total GCI</span>
+              <span className="text-green-600 text-sm font-medium">Total Deals</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${totalGCI.toLocaleString()}</div>
-            <p className="text-gray-500 text-sm">Gross Commission Income</p>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${totalDealAmount.toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">Total deal volume</p>
           </div>
           
           <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -263,32 +326,32 @@ export default function DealsPage() {
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <span className="text-2xl">📈</span>
               </div>
-              <span className="text-blue-600 text-sm font-medium">Net Commission</span>
+              <span className="text-blue-600 text-sm font-medium">Agent Commission</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${totalNetCommission.toLocaleString()}</div>
-            <p className="text-gray-500 text-sm">After splits & fees</p>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">👑</span>
-              </div>
-              <span className="text-orange-600 text-sm font-medium">Royalty Used</span>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${totalRoyaltyUsed.toLocaleString()}</div>
-            <p className="text-gray-500 text-sm">This year</p>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${totalAgentCommission.toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">Your commission total</p>
           </div>
           
           <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">👑</span>
+              </div>
+              <span className="text-purple-600 text-sm font-medium">Take-Home</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${totalNetIncome.toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">Net after taxes</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
                 <span className="text-2xl">🎯</span>
               </div>
-              <span className="text-purple-600 text-sm font-medium">Cap Remaining</span>
+              <span className="text-orange-600 text-sm font-medium">Caps Remaining</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${Math.max(0, remainingRoyaltyCap).toLocaleString()}</div>
-            <p className="text-gray-500 text-sm">Royalty cap left</p>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${(remainingRoyaltyCap + remainingCompanyCap).toLocaleString()}</div>
+            <p className="text-gray-500 text-sm">Royalty + Company</p>
           </div>
         </div>
 
@@ -300,7 +363,7 @@ export default function DealsPage() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Add New Deal</h2>
-              <p className="text-gray-500 text-sm">Enter deal details to calculate commissions</p>
+              <p className="text-gray-500 text-sm">Enter deal details and see automatic breakdown</p>
             </div>
           </div>
           
@@ -352,11 +415,11 @@ export default function DealsPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">GCI (Gross Commission Income)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Total Deal Amount</label>
               <input 
                 type="number" 
-                name="gci" 
-                value={form.gci} 
+                name="totalDealAmount" 
+                value={form.totalDealAmount} 
                 onChange={handleChange} 
                 step="0.01" 
                 min="0" 
@@ -367,23 +430,23 @@ export default function DealsPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Brokerage Split %</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Your Commission %</label>
               <input 
                 type="number" 
-                name="brokerageSplit" 
-                value={form.brokerageSplit || userProfile?.companySplitPercent || ""} 
+                name="commissionPercent" 
+                value={form.commissionPercent || userProfile?.commissionPercent || ""} 
                 onChange={handleChange} 
-                step="0.01" 
+                step="0.1" 
                 min="0" 
                 max="100" 
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
-                placeholder={userProfile?.companySplitPercent?.toString()}
+                placeholder={userProfile?.commissionPercent?.toString()}
               />
-              <p className="text-xs text-gray-500 mt-1">Default: {userProfile?.companySplitPercent}%</p>
+              <p className="text-xs text-gray-500 mt-1">Default: {userProfile?.commissionPercent}%</p>
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Referral Fee</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Referral Fee (optional)</label>
               <input 
                 type="number" 
                 name="referralFee" 
@@ -397,7 +460,7 @@ export default function DealsPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Transaction Fee</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Transaction Fee (optional)</label>
               <input 
                 type="number" 
                 name="transactionFee" 
@@ -445,9 +508,11 @@ export default function DealsPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Address</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Client</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">GCI</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Commission</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Total Deal</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Agent Commission</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Company Split</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Royalty</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Income</th>
                 </tr>
               </thead>
               <tbody>
@@ -456,14 +521,16 @@ export default function DealsPage() {
                     <td className="px-4 py-3 font-medium">{String(deal.address ?? "")}</td>
                     <td className="px-4 py-3">{String(deal.client ?? "")}</td>
                     <td className="px-4 py-3 text-gray-600">{String(deal.closeDate ?? "")}</td>
-                    <td className="px-4 py-3 font-semibold text-green-600">${safeDisplay(deal.gci)}</td>
-                    <td className="px-4 py-3 font-semibold text-blue-600">${safeDisplay(deal.netCommission)}</td>
-                    <td className="px-4 py-3 font-semibold text-orange-600">${safeDisplay(deal.royaltyUsed)}</td>
+                    <td className="px-4 py-3 font-semibold text-green-600">${safeDisplay(deal.totalDealAmount)}</td>
+                    <td className="px-4 py-3 font-semibold text-blue-600">${safeDisplay(deal.agentCommission)}</td>
+                    <td className="px-4 py-3 font-semibold text-orange-600">${safeDisplay(deal.companySplit)}</td>
+                    <td className="px-4 py-3 font-semibold text-purple-600">${safeDisplay(deal.royaltyUsed)}</td>
+                    <td className="px-4 py-3 font-semibold text-emerald-600">${safeDisplay(deal.netIncome)}</td>
                   </tr>
                 ))}
                 {deals.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center text-gray-400 py-8">
+                    <td colSpan={8} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">📋</span>
                         <p className="text-lg font-medium">No deals yet</p>

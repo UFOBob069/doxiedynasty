@@ -282,15 +282,15 @@ export default function ExpensesPage() {
             
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Receipt (optional)</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
+              <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
                 <input 
                   type="file" 
                   name="receipt" 
                   accept="image/*,application/pdf" 
                   onChange={handleChange} 
-                  className="w-full opacity-0 absolute inset-0 cursor-pointer" 
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
                 />
-                <div className="space-y-2">
+                <div className="space-y-2 pointer-events-none">
                   <span className="text-4xl">📄</span>
                   <p className="text-gray-600">Click to upload receipt</p>
                   <p className="text-sm text-gray-500">Supports images and PDFs</p>
