@@ -94,7 +94,8 @@ function calculateDealBreakdown(
   ytdRoyaltyUsage: number,
   ytdCompanySplitUsage: number,
   referralFee: number = 0,
-  transactionFee: number = 0
+  transactionFee: number = 0,
+  commissionPercent: number
 ): {
   steps: {
     step1: { label: string; amount: number; description: string };
@@ -155,7 +156,6 @@ function calculateDealBreakdown(
     };
   } else {
     // Percentage-based commission structure
-    const commissionPercent = safeNumber(userProfile.commissionPercent);
     const companySplitPercent = safeNumber(userProfile.companySplitPercent);
     const companySplitCap = safeNumber(userProfile.companySplitCap);
     const royaltyPercent = safeNumber(userProfile.royaltyPercent);
@@ -304,6 +304,7 @@ export default function DealsPage() {
     if (totalDealAmount > 0) {
       const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
       const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
+      const commissionPercent = parseFloat(form.commissionPercent) || 0;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
@@ -313,13 +314,14 @@ export default function DealsPage() {
         ytdRoyaltyUsage,
         ytdCompanySplitUsage,
         referralFee,
-        transactionFee
+        transactionFee,
+        commissionPercent
       );
       setBreakdown(breakdownResult);
     } else {
       setBreakdown(null);
     }
-  }, [userProfile, form.totalDealAmount, form.referralFee, form.transactionFee, deals]);
+  }, [userProfile, form.totalDealAmount, form.commissionPercent, form.referralFee, form.transactionFee, deals]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -344,7 +346,7 @@ export default function DealsPage() {
       if (!user || !userProfile) throw new Error("You must be signed in and have profile settings configured.");
       
       const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
-      const commissionPercent = parseFloat(form.commissionPercent) || safeNumber(userProfile.commissionPercent);
+      const commissionPercent = parseFloat(form.commissionPercent) || 0;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
@@ -359,14 +361,15 @@ export default function DealsPage() {
         ytdRoyaltyUsage,
         ytdCompanySplitUsage,
         referralFee,
-        transactionFee
+        transactionFee,
+        commissionPercent
       );
 
       await addDoc(collection(db, "deals"), {
         userId: (user as { uid: string }).uid,
         address: form.address,
         client: form.client,
-        closeDate: form.closeDate,
+        closeDate: form.closeDate ? new Date(form.closeDate).toISOString().slice(0, 10) : "",
         totalDealAmount,
         commissionPercent,
         agentCommission: breakdown.agentCommission,
@@ -574,7 +577,7 @@ export default function DealsPage() {
                 <input 
                   type="number" 
                   name="commissionPercent" 
-                  value={form.commissionPercent || userProfile?.commissionPercent || ""} 
+                  value={form.commissionPercent || ""} 
                   onChange={handleChange} 
                   step="0.1" 
                   min="0" 
@@ -695,6 +698,7 @@ export default function DealsPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Agent Commission</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Company Split</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Royalty</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Estimated Taxes</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Income</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
                 </tr>
@@ -709,6 +713,7 @@ export default function DealsPage() {
                     <td className="px-4 py-3 font-semibold text-blue-600">${safeDisplay(deal.agentCommission)}</td>
                     <td className="px-4 py-3 font-semibold text-orange-600">${safeDisplay(deal.companySplit)}</td>
                     <td className="px-4 py-3 font-semibold text-purple-600">${safeDisplay(deal.royaltyUsed)}</td>
+                    <td className="px-4 py-3 font-semibold text-red-500">${safeDisplay(deal.estimatedTaxes)}</td>
                     <td className="px-4 py-3 font-semibold text-emerald-600">${safeDisplay(deal.netIncome)}</td>
                     <td className="px-4 py-3">
                       <button
@@ -734,7 +739,7 @@ export default function DealsPage() {
                 ))}
                 {deals.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="text-center text-gray-400 py-8">
+                    <td colSpan={10} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">📋</span>
                         <p className="text-lg font-medium">No deals yet</p>

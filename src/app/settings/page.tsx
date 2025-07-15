@@ -10,7 +10,6 @@ interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
   commissionType?: 'percentage' | 'fixed';
-  commissionPercent: number | string; // Agent's commission percentage on total deal
   companySplitPercent: number | string; // Company's percentage
   companySplitCap: number | string; // Company split cap
   royaltyPercent: number | string; // Royalty percentage
@@ -53,7 +52,6 @@ export default function SettingsPage() {
     userId: "",
     startOfCommissionYear: Timestamp.fromDate(new Date(new Date().getFullYear(), 0, 1)), // January 1st of current year
     commissionType: 'percentage',
-    commissionPercent: 70, // Agent gets 70% of total deal
     companySplitPercent: 30, // Company gets 30% of total deal
     companySplitCap: 5000, // Company cap at $5,000
     royaltyPercent: 6, // 6% royalty
@@ -115,7 +113,6 @@ export default function SettingsPage() {
           userId,
           startOfCommissionYear: Timestamp.fromDate(new Date(new Date().getFullYear(), 0, 1)),
           commissionType: 'percentage',
-          commissionPercent: 70,
           companySplitPercent: 30,
           companySplitCap: 5000,
           royaltyPercent: 6,
@@ -169,21 +166,17 @@ export default function SettingsPage() {
       };
       
       // Auto-calculate company split when commission percent changes
-      if (name === 'commissionPercent' && type === 'number' && prev.commissionType !== 'fixed') {
-        const commissionPercent = value === '' ? 0 : parseFloat(value) || 0;
-        newProfile.companySplitPercent = 100 - commissionPercent;
-      }
-      
-      // If commissionType changes, reset related fields
       if (name === 'commissionType') {
         if (value === 'fixed') {
-          newProfile.commissionPercent = '';
           newProfile.companySplitPercent = '';
           newProfile.companySplitCap = '';
           newProfile.royaltyPercent = '';
           newProfile.royaltyCap = '';
         } else {
-          newProfile.fixedCommissionAmount = '';
+          newProfile.companySplitPercent = ''; // Reset to empty string
+          newProfile.companySplitCap = ''; // Reset to empty string
+          newProfile.royaltyPercent = ''; // Reset to empty string
+          newProfile.royaltyCap = ''; // Reset to empty string
         }
       }
       return newProfile;
@@ -215,7 +208,6 @@ export default function SettingsPage() {
       // Convert string values back to numbers for storage and handle undefined values
       const profileToSave = {
         ...profile,
-        commissionPercent: typeof profile.commissionPercent === 'string' ? parseFloat(profile.commissionPercent) || 0 : profile.commissionPercent,
         companySplitPercent: typeof profile.companySplitPercent === 'string' ? parseFloat(profile.companySplitPercent) || 0 : profile.companySplitPercent,
         companySplitCap: typeof profile.companySplitCap === 'string' ? parseFloat(profile.companySplitCap) || 0 : profile.companySplitCap,
         royaltyPercent: typeof profile.royaltyPercent === 'string' ? parseFloat(profile.royaltyPercent) || 0 : profile.royaltyPercent,
@@ -335,27 +327,6 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Your Commission %
-                  </label>
-                  <input
-                    type="number"
-                    name="commissionPercent"
-                    value={profile.commissionPercent === '' ? '' : profile.commissionPercent}
-                    onChange={handleChange}
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="70"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Your percentage of the total deal amount
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Company Split %
                   </label>
                   <input
@@ -369,7 +340,6 @@ export default function SettingsPage() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     required
                     placeholder="30"
-                    readOnly
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Automatically calculated: 100% - Your Commission %

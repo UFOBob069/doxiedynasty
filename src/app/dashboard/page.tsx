@@ -50,11 +50,21 @@ interface Expense {
 // Helper function to calculate YTD royalty usage
 function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
   const startDate = startOfCommissionYear.toDate();
-  const endDate = new Date();
+  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
   
   return deals
     .filter(deal => {
-      const dealDate = new Date(deal.closeDate || "");
+      let dealDate: Date | null = null;
+      if (deal.closeDate) {
+        dealDate = new Date(deal.closeDate);
+        if (isNaN(dealDate.getTime())) dealDate = null;
+      }
+      if (!dealDate && deal.createdAt) {
+        try {
+          dealDate = (deal.createdAt as any).toDate();
+        } catch { dealDate = null; }
+      }
+      if (!dealDate) return false;
       return dealDate >= startDate && dealDate <= endDate;
     })
     .reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
@@ -63,11 +73,21 @@ function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestam
 // Helper function to calculate YTD company split usage
 function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
   const startDate = startOfCommissionYear.toDate();
-  const endDate = new Date();
+  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
   
   return deals
     .filter(deal => {
-      const dealDate = new Date(deal.closeDate || "");
+      let dealDate: Date | null = null;
+      if (deal.closeDate) {
+        dealDate = new Date(deal.closeDate);
+        if (isNaN(dealDate.getTime())) dealDate = null;
+      }
+      if (!dealDate && deal.createdAt) {
+        try {
+          dealDate = (deal.createdAt as any).toDate();
+        } catch { dealDate = null; }
+      }
+      if (!dealDate) return false;
       return dealDate >= startDate && dealDate <= endDate;
     })
     .reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
@@ -207,7 +227,6 @@ export default function DashboardPage() {
 
   // Check if settings are incomplete
   const isSettingsIncomplete = !userProfile || 
-    !safeNumber(userProfile.commissionPercent) || 
     !safeNumber(userProfile.companySplitPercent) || 
     !safeNumber(userProfile.companySplitCap) || 
     !safeNumber(userProfile.royaltyPercent) || 
@@ -270,12 +289,9 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-bold text-amber-800 mb-2">Complete Your Settings</h3>
                 <p className="text-amber-700 mb-4">
                   To get the most out of your dashboard and ensure accurate commission calculations, 
-                  please complete your profile settings including commission percentages, caps, and tax rates.
+                  please complete your profile settings including caps and tax rates.
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {!safeNumber(userProfile?.commissionPercent) && (
-                    <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Commission %</span>
-                  )}
                   {!safeNumber(userProfile?.companySplitPercent) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Company Split %</span>
                   )}
