@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
 import { collection, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
 
 interface UserProfile {
   userId: string;
@@ -60,9 +61,9 @@ function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestam
         if (isNaN(dealDate.getTime())) dealDate = null;
       }
       if (!dealDate && deal.createdAt) {
-        try {
-          dealDate = (deal.createdAt as any).toDate();
-        } catch { dealDate = null; }
+        if (typeof (deal.createdAt as Timestamp).toDate === "function") {
+          dealDate = (deal.createdAt as Timestamp).toDate();
+        }
       }
       if (!dealDate) return false;
       return dealDate >= startDate && dealDate <= endDate;
@@ -83,9 +84,9 @@ function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Tim
         if (isNaN(dealDate.getTime())) dealDate = null;
       }
       if (!dealDate && deal.createdAt) {
-        try {
-          dealDate = (deal.createdAt as any).toDate();
-        } catch { dealDate = null; }
+        if (typeof (deal.createdAt as Timestamp).toDate === "function") {
+          dealDate = (deal.createdAt as Timestamp).toDate();
+        }
       }
       if (!dealDate) return false;
       return dealDate >= startDate && dealDate <= endDate;
