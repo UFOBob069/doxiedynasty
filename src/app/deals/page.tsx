@@ -296,6 +296,31 @@ export default function DealsPage() {
     return () => unsub();
   }, [user]);
 
+  // Calculate breakdown when user profile loads or form values change
+  useEffect(() => {
+    if (!userProfile || !form.totalDealAmount) return;
+    
+    const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
+    if (totalDealAmount > 0) {
+      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
+      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
+      const referralFee = parseFloat(form.referralFee) || 0;
+      const transactionFee = parseFloat(form.transactionFee) || 0;
+      
+      const breakdownResult = calculateDealBreakdown(
+        totalDealAmount,
+        userProfile,
+        ytdRoyaltyUsage,
+        ytdCompanySplitUsage,
+        referralFee,
+        transactionFee
+      );
+      setBreakdown(breakdownResult);
+    } else {
+      setBreakdown(null);
+    }
+  }, [userProfile, form.totalDealAmount, form.referralFee, form.transactionFee, deals]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -304,29 +329,6 @@ export default function DealsPage() {
       addressTimeout.current = setTimeout(async () => {
         setAddressSuggestions(await fetchAddressSuggestions(value));
       }, 300);
-    }
-    
-    // Calculate breakdown when deal amount changes
-    if (name === "totalDealAmount" && userProfile) {
-      const totalDealAmount = parseFloat(value) || 0;
-      if (totalDealAmount > 0) {
-        const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
-        const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
-        const referralFee = parseFloat(form.referralFee) || 0;
-        const transactionFee = parseFloat(form.transactionFee) || 0;
-        
-        const breakdownResult = calculateDealBreakdown(
-          totalDealAmount,
-          userProfile,
-          ytdRoyaltyUsage,
-          ytdCompanySplitUsage,
-          referralFee,
-          transactionFee
-        );
-        setBreakdown(breakdownResult);
-      } else {
-        setBreakdown(null);
-      }
     }
   };
 
@@ -628,7 +630,7 @@ export default function DealsPage() {
           </form>
           
           {/* Step-by-Step Breakdown */}
-          {breakdown && (
+          {breakdown ? (
             <div className="mt-8 border-t border-gray-200 pt-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -658,6 +660,13 @@ export default function DealsPage() {
                   </div>
                   <div className="text-2xl font-bold text-emerald-600">${breakdown.netIncome.toLocaleString()}</div>
                 </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-8 border-t border-gray-200 pt-8">
+              <div className="text-center py-8">
+                <div className="text-gray-500 text-sm mb-2">Enter a deal amount above to see the commission breakdown</div>
+                <div className="text-xs text-gray-400">The breakdown will show step-by-step how your commission is calculated</div>
               </div>
             </div>
           )}
