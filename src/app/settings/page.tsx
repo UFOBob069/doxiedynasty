@@ -9,12 +9,12 @@ import { Timestamp } from "firebase/firestore";
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
-  commissionPercent: number; // Agent's commission percentage on total deal
-  companySplitPercent: number; // Company's percentage
-  companySplitCap: number; // Company split cap
-  royaltyPercent: number; // Royalty percentage
-  royaltyCap: number; // Royalty cap
-  estimatedTaxPercent: number;
+  commissionPercent: number | string; // Agent's commission percentage on total deal
+  companySplitPercent: number | string; // Company's percentage
+  companySplitCap: number | string; // Company split cap
+  royaltyPercent: number | string; // Royalty percentage
+  royaltyCap: number | string; // Royalty cap
+  estimatedTaxPercent: number | string;
   // Personal/Business Information
   firstName?: string;
   lastName?: string;
@@ -25,10 +25,10 @@ interface UserProfile {
   zipCode?: string;
   state?: string;
   // Financial Tracking
-  monthlyGoal?: number;
-  annualGoal?: number;
-  emergencyFund?: number;
-  retirementContribution?: number;
+  monthlyGoal?: number | string;
+  annualGoal?: number | string;
+  emergencyFund?: number | string;
+  retirementContribution?: number | string;
   // Additional Settings
   currency?: string;
   timezone?: string;
@@ -146,16 +146,26 @@ export default function SettingsPage() {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
-    setProfile(prev => ({
-      ...prev,
-      [name]: type === 'date' 
-        ? Timestamp.fromDate(new Date(value))
-        : type === 'number' 
-          ? parseFloat(value) || 0 
-          : type === 'checkbox'
-            ? checked
-            : value
-    }));
+    setProfile(prev => {
+      const newProfile = {
+        ...prev,
+        [name]: type === 'date' 
+          ? Timestamp.fromDate(new Date(value))
+          : type === 'number' 
+            ? value === '' ? '' : parseFloat(value) || 0 
+            : type === 'checkbox'
+              ? checked
+              : value
+      };
+      
+      // Auto-calculate company split when commission percent changes
+      if (name === 'commissionPercent' && type === 'number') {
+        const commissionPercent = value === '' ? 0 : parseFloat(value) || 0;
+        newProfile.companySplitPercent = 100 - commissionPercent;
+      }
+      
+      return newProfile;
+    });
   };
 
   const handleNotificationChange = (key: keyof NonNullable<UserProfile['notifications']>) => {
@@ -180,11 +190,24 @@ export default function SettingsPage() {
       const userId = (user as { uid: string }).uid;
       const profileRef = doc(db, "userProfiles", userId);
       
-      await setDoc(profileRef, {
+      // Convert string values back to numbers for storage
+      const profileToSave = {
         ...profile,
+        commissionPercent: typeof profile.commissionPercent === 'string' ? parseFloat(profile.commissionPercent) || 0 : profile.commissionPercent,
+        companySplitPercent: typeof profile.companySplitPercent === 'string' ? parseFloat(profile.companySplitPercent) || 0 : profile.companySplitPercent,
+        companySplitCap: typeof profile.companySplitCap === 'string' ? parseFloat(profile.companySplitCap) || 0 : profile.companySplitCap,
+        royaltyPercent: typeof profile.royaltyPercent === 'string' ? parseFloat(profile.royaltyPercent) || 0 : profile.royaltyPercent,
+        royaltyCap: typeof profile.royaltyCap === 'string' ? parseFloat(profile.royaltyCap) || 0 : profile.royaltyCap,
+        estimatedTaxPercent: typeof profile.estimatedTaxPercent === 'string' ? parseFloat(profile.estimatedTaxPercent) || 0 : profile.estimatedTaxPercent,
+        monthlyGoal: typeof profile.monthlyGoal === 'string' ? parseFloat(profile.monthlyGoal) || 0 : profile.monthlyGoal,
+        annualGoal: typeof profile.annualGoal === 'string' ? parseFloat(profile.annualGoal) || 0 : profile.annualGoal,
+        emergencyFund: typeof profile.emergencyFund === 'string' ? parseFloat(profile.emergencyFund) || 0 : profile.emergencyFund,
+        retirementContribution: typeof profile.retirementContribution === 'string' ? parseFloat(profile.retirementContribution) || 0 : profile.retirementContribution,
         userId,
         updatedAt: Timestamp.now(),
-      });
+      };
+      
+      await setDoc(profileRef, profileToSave);
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -266,7 +289,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="commissionPercent"
-                  value={profile.commissionPercent}
+                  value={profile.commissionPercent === '' ? '' : profile.commissionPercent}
                   onChange={handleChange}
                   min="0"
                   max="100"
@@ -287,7 +310,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="companySplitPercent"
-                  value={profile.companySplitPercent}
+                  value={profile.companySplitPercent === '' ? '' : profile.companySplitPercent}
                   onChange={handleChange}
                   min="0"
                   max="100"
@@ -295,9 +318,10 @@ export default function SettingsPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   required
                   placeholder="30"
+                  readOnly
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Company&apos;s percentage of the total deal amount
+                  Automatically calculated: 100% - Your Commission %
                 </p>
               </div>
 
@@ -308,7 +332,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="companySplitCap"
-                  value={profile.companySplitCap}
+                  value={profile.companySplitCap === '' ? '' : profile.companySplitCap}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -328,7 +352,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="royaltyPercent"
-                  value={profile.royaltyPercent}
+                  value={profile.royaltyPercent === '' ? '' : profile.royaltyPercent}
                   onChange={handleChange}
                   min="0"
                   max="100"
@@ -349,7 +373,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="royaltyCap"
-                  value={profile.royaltyCap}
+                  value={profile.royaltyCap === '' ? '' : profile.royaltyCap}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -383,7 +407,7 @@ export default function SettingsPage() {
               <input
                 type="number"
                 name="estimatedTaxPercent"
-                value={profile.estimatedTaxPercent}
+                value={profile.estimatedTaxPercent === '' ? '' : profile.estimatedTaxPercent}
                 onChange={handleChange}
                 min="0"
                 max="100"
@@ -577,7 +601,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="monthlyGoal"
-                  value={profile.monthlyGoal ?? ""}
+                  value={profile.monthlyGoal === '' ? '' : profile.monthlyGoal ?? ""}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -592,7 +616,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="annualGoal"
-                  value={profile.annualGoal ?? ""}
+                  value={profile.annualGoal === '' ? '' : profile.annualGoal ?? ""}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -607,7 +631,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="emergencyFund"
-                  value={profile.emergencyFund ?? ""}
+                  value={profile.emergencyFund === '' ? '' : profile.emergencyFund ?? ""}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -622,7 +646,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   name="retirementContribution"
-                  value={profile.retirementContribution ?? ""}
+                  value={profile.retirementContribution === '' ? '' : profile.retirementContribution ?? ""}
                   onChange={handleChange}
                   min="0"
                   step="0.01"

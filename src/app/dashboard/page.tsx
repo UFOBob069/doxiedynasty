@@ -8,12 +8,12 @@ import { onAuthStateChanged } from "firebase/auth";
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
-  commissionPercent: number; // Agent's commission percentage on total deal
-  companySplitPercent: number; // Company's percentage
-  companySplitCap: number; // Company split cap
-  royaltyPercent: number; // Royalty percentage
-  royaltyCap: number; // Royalty cap
-  estimatedTaxPercent: number;
+  commissionPercent: number | string; // Agent's commission percentage on total deal
+  companySplitPercent: number | string; // Company's percentage
+  companySplitCap: number | string; // Company split cap
+  royaltyPercent: number | string; // Royalty percentage
+  royaltyCap: number | string; // Royalty cap
+  estimatedTaxPercent: number | string;
 }
 
 interface Deal {
@@ -110,6 +110,12 @@ function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: n
   return Object.entries(monthlyData).map(([month, netIncome]) => ({ month, netIncome }));
 }
 
+function safeNumber(val: number | string | undefined): number {
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return 0;
+}
+
 export default function DashboardPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -184,11 +190,11 @@ export default function DashboardPage() {
   const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
   const ytdCompanySplitUsage = userProfile ? calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear) : 0;
   
-  const remainingRoyaltyCap = userProfile ? userProfile.royaltyCap - ytdRoyaltyUsage : 0;
-  const remainingCompanyCap = userProfile ? userProfile.companySplitCap - ytdCompanySplitUsage : 0;
+  const remainingRoyaltyCap = userProfile ? safeNumber(userProfile.royaltyCap) - ytdRoyaltyUsage : 0;
+  const remainingCompanyCap = userProfile ? safeNumber(userProfile.companySplitCap) - ytdCompanySplitUsage : 0;
   
-  const royaltyCapPercentage = userProfile ? (ytdRoyaltyUsage / userProfile.royaltyCap) * 100 : 0;
-  const companyCapPercentage = userProfile ? (ytdCompanySplitUsage / userProfile.companySplitCap) * 100 : 0;
+  const royaltyCapPercentage = userProfile ? (ytdRoyaltyUsage / safeNumber(userProfile.royaltyCap)) * 100 : 0;
+  const companyCapPercentage = userProfile ? (ytdCompanySplitUsage / safeNumber(userProfile.companySplitCap)) * 100 : 0;
   
   // Calculate monthly net income for chart
   const monthlyNetIncome = calculateMonthlyNetIncome(deals, expenses, 6);
@@ -201,12 +207,12 @@ export default function DashboardPage() {
 
   // Check if settings are incomplete
   const isSettingsIncomplete = !userProfile || 
-    !userProfile.commissionPercent || 
-    !userProfile.companySplitPercent || 
-    !userProfile.companySplitCap || 
-    !userProfile.royaltyPercent || 
-    !userProfile.royaltyCap || 
-    !userProfile.estimatedTaxPercent ||
+    !safeNumber(userProfile.commissionPercent) || 
+    !safeNumber(userProfile.companySplitPercent) || 
+    !safeNumber(userProfile.companySplitCap) || 
+    !safeNumber(userProfile.royaltyPercent) || 
+    !safeNumber(userProfile.royaltyCap) || 
+    !safeNumber(userProfile.estimatedTaxPercent) ||
     !userProfile.startOfCommissionYear;
 
   if (authLoading || loading) {
@@ -267,22 +273,22 @@ export default function DashboardPage() {
                   please complete your profile settings including commission percentages, caps, and tax rates.
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {!userProfile?.commissionPercent && (
+                  {!safeNumber(userProfile?.commissionPercent) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Commission %</span>
                   )}
-                  {!userProfile?.companySplitPercent && (
+                  {!safeNumber(userProfile?.companySplitPercent) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Company Split %</span>
                   )}
-                  {!userProfile?.companySplitCap && (
+                  {!safeNumber(userProfile?.companySplitCap) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Company Cap</span>
                   )}
-                  {!userProfile?.royaltyPercent && (
+                  {!safeNumber(userProfile?.royaltyPercent) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Royalty %</span>
                   )}
-                  {!userProfile?.royaltyCap && (
+                  {!safeNumber(userProfile?.royaltyCap) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Royalty Cap</span>
                   )}
-                  {!userProfile?.estimatedTaxPercent && (
+                  {!safeNumber(userProfile?.estimatedTaxPercent) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Tax Rate</span>
                   )}
                   {!userProfile?.startOfCommissionYear && (
@@ -363,7 +369,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">${ytdRoyaltyUsage.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">of ${(userProfile?.royaltyCap || 0).toLocaleString()}</div>
+                <div className="text-sm text-gray-500">of ${safeNumber(userProfile?.royaltyCap).toLocaleString()}</div>
               </div>
             </div>
             
@@ -386,7 +392,7 @@ export default function DashboardPage() {
             <div className="flex justify-between text-sm">
               <span className={`font-medium ${
                 remainingRoyaltyCap <= 0 ? 'text-red-600' : 
-                remainingRoyaltyCap < (userProfile?.royaltyCap || 0) * 0.1 ? 'text-orange-600' : 'text-green-600'
+                remainingRoyaltyCap < safeNumber(userProfile?.royaltyCap) * 0.1 ? 'text-orange-600' : 'text-green-600'
               }`}>
                 {remainingRoyaltyCap <= 0 ? 'Cap reached!' : `$${remainingRoyaltyCap.toLocaleString()} remaining`}
               </span>
@@ -410,7 +416,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">${ytdCompanySplitUsage.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">of ${(userProfile?.companySplitCap || 0).toLocaleString()}</div>
+                <div className="text-sm text-gray-500">of ${safeNumber(userProfile?.companySplitCap).toLocaleString()}</div>
               </div>
             </div>
             
@@ -433,7 +439,7 @@ export default function DashboardPage() {
             <div className="flex justify-between text-sm">
               <span className={`font-medium ${
                 remainingCompanyCap <= 0 ? 'text-red-600' : 
-                remainingCompanyCap < (userProfile?.companySplitCap || 0) * 0.1 ? 'text-orange-600' : 'text-green-600'
+                remainingCompanyCap < safeNumber(userProfile?.companySplitCap) * 0.1 ? 'text-orange-600' : 'text-green-600'
               }`}>
                 {remainingCompanyCap <= 0 ? 'Cap reached!' : `$${remainingCompanyCap.toLocaleString()} remaining`}
               </span>

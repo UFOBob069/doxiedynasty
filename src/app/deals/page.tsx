@@ -10,12 +10,12 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
-  commissionPercent: number; // Agent's commission percentage on total deal
-  companySplitPercent: number; // Company's percentage
-  companySplitCap: number; // Company split cap
-  royaltyPercent: number; // Royalty percentage
-  royaltyCap: number; // Royalty cap
-  estimatedTaxPercent: number;
+  commissionPercent: number | string; // Agent's commission percentage on total deal
+  companySplitPercent: number | string; // Company's percentage
+  companySplitCap: number | string; // Company split cap
+  royaltyPercent: number | string; // Royalty percentage
+  royaltyCap: number | string; // Royalty cap
+  estimatedTaxPercent: number | string;
 }
 
 interface Deal {
@@ -51,6 +51,12 @@ function safeDisplay(val: unknown): string {
   if (typeof val === 'number') return val.toLocaleString();
   if (typeof val === 'string') return val;
   return '';
+}
+
+function safeNumber(val: number | string | undefined): number {
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return 0;
 }
 
 // Helper function to calculate YTD royalty usage
@@ -215,7 +221,7 @@ export default function DealsPage() {
       if (!user || !userProfile) throw new Error("You must be signed in and have profile settings configured.");
       
       const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
-      const commissionPercent = parseFloat(form.commissionPercent) || userProfile.commissionPercent;
+      const commissionPercent = parseFloat(form.commissionPercent) || safeNumber(userProfile.commissionPercent);
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
@@ -227,13 +233,13 @@ export default function DealsPage() {
       const breakdown = calculateDealBreakdown(
         totalDealAmount,
         commissionPercent,
-        userProfile.companySplitPercent,
-        userProfile.companySplitCap,
-        userProfile.royaltyPercent,
-        userProfile.royaltyCap,
+        safeNumber(userProfile.companySplitPercent),
+        safeNumber(userProfile.companySplitCap),
+        safeNumber(userProfile.royaltyPercent),
+        safeNumber(userProfile.royaltyCap),
         ytdRoyaltyUsage,
         ytdCompanySplitUsage,
-        userProfile.estimatedTaxPercent,
+        safeNumber(userProfile.estimatedTaxPercent),
         referralFee,
         transactionFee
       );
@@ -270,8 +276,8 @@ export default function DealsPage() {
   const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
   const ytdCompanySplitUsage = userProfile ? calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear) : 0;
   
-  const remainingRoyaltyCap = userProfile ? userProfile.royaltyCap - ytdRoyaltyUsage : 0;
-  const remainingCompanyCap = userProfile ? userProfile.companySplitCap - ytdCompanySplitUsage : 0;
+  const remainingRoyaltyCap = userProfile ? safeNumber(userProfile.royaltyCap) - ytdRoyaltyUsage : 0;
+  const remainingCompanyCap = userProfile ? safeNumber(userProfile.companySplitCap) - ytdCompanySplitUsage : 0;
 
   if (authLoading || loading) {
     return (
