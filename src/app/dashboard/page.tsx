@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
 import { collection, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { Timestamp } from "firebase/firestore";
 
 interface UserProfile {
   userId: string;
