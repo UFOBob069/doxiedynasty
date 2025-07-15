@@ -190,7 +190,7 @@ export default function SettingsPage() {
       const userId = (user as { uid: string }).uid;
       const profileRef = doc(db, "userProfiles", userId);
       
-      // Convert string values back to numbers for storage
+      // Convert string values back to numbers for storage and handle undefined values
       const profileToSave = {
         ...profile,
         commissionPercent: typeof profile.commissionPercent === 'string' ? parseFloat(profile.commissionPercent) || 0 : profile.commissionPercent,
@@ -199,10 +199,26 @@ export default function SettingsPage() {
         royaltyPercent: typeof profile.royaltyPercent === 'string' ? parseFloat(profile.royaltyPercent) || 0 : profile.royaltyPercent,
         royaltyCap: typeof profile.royaltyCap === 'string' ? parseFloat(profile.royaltyCap) || 0 : profile.royaltyCap,
         estimatedTaxPercent: typeof profile.estimatedTaxPercent === 'string' ? parseFloat(profile.estimatedTaxPercent) || 0 : profile.estimatedTaxPercent,
-        monthlyGoal: typeof profile.monthlyGoal === 'string' ? parseFloat(profile.monthlyGoal) || 0 : profile.monthlyGoal,
-        annualGoal: typeof profile.annualGoal === 'string' ? parseFloat(profile.annualGoal) || 0 : profile.annualGoal,
-        emergencyFund: typeof profile.emergencyFund === 'string' ? parseFloat(profile.emergencyFund) || 0 : profile.emergencyFund,
-        retirementContribution: typeof profile.retirementContribution === 'string' ? parseFloat(profile.retirementContribution) || 0 : profile.retirementContribution,
+        monthlyGoal: typeof profile.monthlyGoal === 'string' ? parseFloat(profile.monthlyGoal) || 0 : (profile.monthlyGoal ?? 0),
+        annualGoal: typeof profile.annualGoal === 'string' ? parseFloat(profile.annualGoal) || 0 : (profile.annualGoal ?? 0),
+        emergencyFund: typeof profile.emergencyFund === 'string' ? parseFloat(profile.emergencyFund) || 0 : (profile.emergencyFund ?? 0),
+        retirementContribution: typeof profile.retirementContribution === 'string' ? parseFloat(profile.retirementContribution) || 0 : (profile.retirementContribution ?? 0),
+        // Handle optional string fields - remove undefined values
+        firstName: profile.firstName || null,
+        lastName: profile.lastName || null,
+        email: profile.email || null,
+        phone: profile.phone || null,
+        company: profile.company || null,
+        licenseNumber: profile.licenseNumber || null,
+        zipCode: profile.zipCode || null,
+        state: profile.state || null,
+        currency: profile.currency || "USD",
+        timezone: profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        notifications: {
+          email: profile.notifications?.email ?? false,
+          push: profile.notifications?.push ?? false,
+          capAlerts: profile.notifications?.capAlerts ?? false,
+        },
         userId,
         updatedAt: Timestamp.now(),
       };
