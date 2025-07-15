@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -10,12 +10,14 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
+  commissionType?: 'percentage' | 'fixed';
   commissionPercent: number | string; // Agent's commission percentage on total deal
   companySplitPercent: number | string; // Company's percentage
   companySplitCap: number | string; // Company split cap
   royaltyPercent: number | string; // Royalty percentage
   royaltyCap: number | string; // Royalty cap
   estimatedTaxPercent: number | string;
+  fixedCommissionAmount?: number | string;
 }
 
 interface Deal {
@@ -85,20 +87,22 @@ function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Tim
     .reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
 }
 
-// Updated commission calculation with both caps
+// Step-by-step commission calculation with detailed breakdown
 function calculateDealBreakdown(
   totalDealAmount: number,
-  commissionPercent: number,
-  companySplitPercent: number,
-  companySplitCap: number,
-  royaltyPercent: number,
-  royaltyCap: number,
+  userProfile: UserProfile,
   ytdRoyaltyUsage: number,
   ytdCompanySplitUsage: number,
-  estimatedTaxPercent: number,
   referralFee: number = 0,
   transactionFee: number = 0
 ): {
+  steps: {
+    step1: { label: string; amount: number; description: string };
+    step2: { label: string; amount: number; description: string };
+    step3: { label: string; amount: number; description: string };
+    step4: { label: string; amount: number; description: string };
+    step5: { label: string; amount: number; description: string };
+  };
   agentCommission: number;
   companySplit: number;
   royaltyUsed: number;
@@ -106,34 +110,112 @@ function calculateDealBreakdown(
   estimatedTaxes: number;
   netIncome: number;
 } {
-  // Calculate agent's commission
-  const agentCommission = totalDealAmount * (commissionPercent / 100);
+  const commissionType = userProfile.commissionType || 'percentage';
   
-  // Calculate company split (capped)
-  const remainingCompanyCap = companySplitCap - ytdCompanySplitUsage;
-  const companySplit = Math.max(0, Math.min(agentCommission * (companySplitPercent / 100), remainingCompanyCap));
-  
-  // Calculate royalty (capped)
-  const remainingRoyaltyCap = royaltyCap - ytdRoyaltyUsage;
-  const royaltyUsed = Math.max(0, Math.min(agentCommission * (royaltyPercent / 100), remainingRoyaltyCap));
-  
-  // Calculate gross income
-  const grossIncome = agentCommission - companySplit - royaltyUsed - referralFee - transactionFee;
-  
-  // Calculate estimated taxes
-  const estimatedTaxes = grossIncome * (estimatedTaxPercent / 100);
-  
-  // Calculate net income
-  const netIncome = grossIncome - estimatedTaxes;
-  
-  return {
-    agentCommission,
-    companySplit,
-    royaltyUsed,
-    grossIncome,
-    estimatedTaxes,
-    netIncome
-  };
+  if (commissionType === 'fixed') {
+    // Fixed amount commission structure
+    const fixedAmount = safeNumber(userProfile.fixedCommissionAmount);
+    const estimatedTaxes = fixedAmount * (safeNumber(userProfile.estimatedTaxPercent) / 100);
+    const netIncome = fixedAmount - estimatedTaxes;
+    
+    return {
+      steps: {
+        step1: {
+          label: "Property Sale Price",
+          amount: totalDealAmount,
+          description: `Property sold for $${totalDealAmount.toLocaleString()}`
+        },
+        step2: {
+          label: "Fixed Commission",
+          amount: fixedAmount,
+          description: `Flat commission of $${fixedAmount.toLocaleString()} per deal`
+        },
+        step3: {
+          label: "Gross Income",
+          amount: fixedAmount,
+          description: "No company split or royalty with fixed commission"
+        },
+        step4: {
+          label: "Estimated Taxes",
+          amount: estimatedTaxes,
+          description: `${safeNumber(userProfile.estimatedTaxPercent)}% of gross income`
+        },
+        step5: {
+          label: "Net Take-Home",
+          amount: netIncome,
+          description: "Gross income minus taxes"
+        }
+      },
+      agentCommission: fixedAmount,
+      companySplit: 0,
+      royaltyUsed: 0,
+      grossIncome: fixedAmount,
+      estimatedTaxes,
+      netIncome
+    };
+  } else {
+    // Percentage-based commission structure
+    const commissionPercent = safeNumber(userProfile.commissionPercent);
+    const companySplitPercent = safeNumber(userProfile.companySplitPercent);
+    const companySplitCap = safeNumber(userProfile.companySplitCap);
+    const royaltyPercent = safeNumber(userProfile.royaltyPercent);
+    const royaltyCap = safeNumber(userProfile.royaltyCap);
+    const estimatedTaxPercent = safeNumber(userProfile.estimatedTaxPercent);
+    
+    // Step 1: Calculate total commission from sale price
+    const totalCommission = totalDealAmount * (commissionPercent / 100);
+    
+    // Step 2: Calculate company split (capped)
+    const remainingCompanyCap = companySplitCap - ytdCompanySplitUsage;
+    const companySplit = Math.max(0, Math.min(totalCommission * (companySplitPercent / 100), remainingCompanyCap));
+    
+    // Step 3: Calculate royalty (capped)
+    const remainingRoyaltyCap = royaltyCap - ytdRoyaltyUsage;
+    const royaltyUsed = Math.max(0, Math.min(totalCommission * (royaltyPercent / 100), remainingRoyaltyCap));
+    
+    // Step 4: Calculate gross income
+    const grossIncome = totalCommission - companySplit - royaltyUsed - referralFee - transactionFee;
+    
+    // Step 5: Calculate taxes and net
+    const estimatedTaxes = grossIncome * (estimatedTaxPercent / 100);
+    const netIncome = grossIncome - estimatedTaxes;
+    
+    return {
+      steps: {
+        step1: {
+          label: "Property Sale Price",
+          amount: totalDealAmount,
+          description: `Property sold for $${totalDealAmount.toLocaleString()}`
+        },
+        step2: {
+          label: "Total Commission",
+          amount: totalCommission,
+          description: `${commissionPercent}% of sale price`
+        },
+        step3: {
+          label: "After Company Split & Royalty",
+          amount: grossIncome,
+          description: `Minus company split ($${companySplit.toLocaleString()}) and royalty ($${royaltyUsed.toLocaleString()})`
+        },
+        step4: {
+          label: "Estimated Taxes",
+          amount: estimatedTaxes,
+          description: `${estimatedTaxPercent}% of gross income`
+        },
+        step5: {
+          label: "Net Take-Home",
+          amount: netIncome,
+          description: "Gross income minus taxes"
+        }
+      },
+      agentCommission: totalCommission,
+      companySplit,
+      royaltyUsed,
+      grossIncome,
+      estimatedTaxes,
+      netIncome
+    };
+  }
 }
 
 export default function DealsPage() {
@@ -152,6 +234,22 @@ export default function DealsPage() {
     transactionFee: "",
   });
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [breakdown, setBreakdown] = useState<{
+    steps: {
+      step1: { label: string; amount: number; description: string };
+      step2: { label: string; amount: number; description: string };
+      step3: { label: string; amount: number; description: string };
+      step4: { label: string; amount: number; description: string };
+      step5: { label: string; amount: number; description: string };
+    };
+    agentCommission: number;
+    companySplit: number;
+    royaltyUsed: number;
+    grossIncome: number;
+    estimatedTaxes: number;
+    netIncome: number;
+  } | null>(null);
   const router = useRouter();
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const addressTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -207,6 +305,29 @@ export default function DealsPage() {
         setAddressSuggestions(await fetchAddressSuggestions(value));
       }, 300);
     }
+    
+    // Calculate breakdown when deal amount changes
+    if (name === "totalDealAmount" && userProfile) {
+      const totalDealAmount = parseFloat(value) || 0;
+      if (totalDealAmount > 0) {
+        const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
+        const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
+        const referralFee = parseFloat(form.referralFee) || 0;
+        const transactionFee = parseFloat(form.transactionFee) || 0;
+        
+        const breakdownResult = calculateDealBreakdown(
+          totalDealAmount,
+          userProfile,
+          ytdRoyaltyUsage,
+          ytdCompanySplitUsage,
+          referralFee,
+          transactionFee
+        );
+        setBreakdown(breakdownResult);
+      } else {
+        setBreakdown(null);
+      }
+    }
   };
 
   const selectAddress = (address: string) => {
@@ -232,14 +353,9 @@ export default function DealsPage() {
       // Calculate deal breakdown
       const breakdown = calculateDealBreakdown(
         totalDealAmount,
-        commissionPercent,
-        safeNumber(userProfile.companySplitPercent),
-        safeNumber(userProfile.companySplitCap),
-        safeNumber(userProfile.royaltyPercent),
-        safeNumber(userProfile.royaltyCap),
+        userProfile,
         ytdRoyaltyUsage,
         ytdCompanySplitUsage,
-        safeNumber(userProfile.estimatedTaxPercent),
         referralFee,
         transactionFee
       );
@@ -265,6 +381,16 @@ export default function DealsPage() {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to add deal";
       setError(errorMessage);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this deal? This action cannot be undone.")) return;
+    setDeletingId(id);
+    try {
+      await deleteDoc(doc(db, "deals", id));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -432,21 +558,31 @@ export default function DealsPage() {
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Your Commission %</label>
-              <input 
-                type="number" 
-                name="commissionPercent" 
-                value={form.commissionPercent || userProfile?.commissionPercent || ""} 
-                onChange={handleChange} 
-                step="0.1" 
-                min="0" 
-                max="100" 
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
-                placeholder={userProfile?.commissionPercent?.toString()}
-              />
-              <p className="text-xs text-gray-500 mt-1">Default: {userProfile?.commissionPercent}%</p>
-            </div>
+            {userProfile?.commissionType === 'fixed' ? (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission</label>
+                <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-gray-600">
+                  ${safeNumber(userProfile.fixedCommissionAmount).toLocaleString()} per deal
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Fixed amount from your settings</p>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Your Commission %</label>
+                <input 
+                  type="number" 
+                  name="commissionPercent" 
+                  value={form.commissionPercent || userProfile?.commissionPercent || ""} 
+                  onChange={handleChange} 
+                  step="0.1" 
+                  min="0" 
+                  max="100" 
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  placeholder={userProfile?.commissionPercent?.toString()}
+                />
+                <p className="text-xs text-gray-500 mt-1">Default: {userProfile?.commissionPercent}%</p>
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Referral Fee (optional)</label>
@@ -490,6 +626,41 @@ export default function DealsPage() {
               </button>
             </div>
           </form>
+          
+          {/* Step-by-Step Breakdown */}
+          {breakdown && (
+            <div className="mt-8 border-t border-gray-200 pt-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <span className="text-xl">🧮</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Commission Breakdown</h3>
+                  <p className="text-gray-500 text-sm">See exactly how your commission is calculated</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {Object.entries(breakdown.steps).map(([key, step]: [string, { label: string; amount: number; description: string }]) => (
+                  <div key={key} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                    <div className="text-xs font-semibold text-gray-600 mb-1">{step.label}</div>
+                    <div className="text-lg font-bold text-gray-900 mb-2">${step.amount.toLocaleString()}</div>
+                    <div className="text-xs text-gray-600 leading-relaxed">{step.description}</div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-emerald-800">Final Take-Home</div>
+                    <div className="text-xs text-emerald-600">After all deductions and taxes</div>
+                  </div>
+                  <div className="text-2xl font-bold text-emerald-600">${breakdown.netIncome.toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Deals Table */}
@@ -516,6 +687,7 @@ export default function DealsPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Company Split</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Royalty</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Income</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -529,11 +701,31 @@ export default function DealsPage() {
                     <td className="px-4 py-3 font-semibold text-orange-600">${safeDisplay(deal.companySplit)}</td>
                     <td className="px-4 py-3 font-semibold text-purple-600">${safeDisplay(deal.royaltyUsed)}</td>
                     <td className="px-4 py-3 font-semibold text-emerald-600">${safeDisplay(deal.netIncome)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDelete(deal.id)}
+                        disabled={deletingId === deal.id}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          deletingId === deal.id
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700'
+                        }`}
+                      >
+                        {deletingId === deal.id ? (
+                          <span className="flex items-center gap-1">
+                            <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                            Deleting...
+                          </span>
+                        ) : (
+                          '🗑️ Delete'
+                        )}
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {deals.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center text-gray-400 py-8">
+                    <td colSpan={9} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">📋</span>
                         <p className="text-lg font-medium">No deals yet</p>

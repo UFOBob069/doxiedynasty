@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -109,12 +109,19 @@ export default function MileagePage() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    const q = query(collection(db, "mileage"), where("userId", "==", (user as { uid: string }).uid), orderBy("date", "desc"));
+    const q = query(collection(db, "mileage"), where("userId", "==", (user as { uid: string }).uid));
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      setMileageEntries(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
+      const entries = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
         id: doc.id, 
         ...(doc.data() as Record<string, unknown>) 
-      })));
+      })) as MileageEntry[];
+      // Sort by date descending client-side
+      entries.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date as string).getTime() : 0;
+        const dateB = b.date ? new Date(b.date as string).getTime() : 0;
+        return dateB - dateA;
+      });
+      setMileageEntries(entries);
       setLoading(false);
     });
     return () => unsub();

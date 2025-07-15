@@ -9,12 +9,14 @@ import { Timestamp } from "firebase/firestore";
 interface UserProfile {
   userId: string;
   startOfCommissionYear: Timestamp;
+  commissionType?: 'percentage' | 'fixed';
   commissionPercent: number | string; // Agent's commission percentage on total deal
   companySplitPercent: number | string; // Company's percentage
   companySplitCap: number | string; // Company split cap
   royaltyPercent: number | string; // Royalty percentage
   royaltyCap: number | string; // Royalty cap
   estimatedTaxPercent: number | string;
+  fixedCommissionAmount?: number | string;
   // Personal/Business Information
   firstName?: string;
   lastName?: string;
@@ -50,12 +52,14 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile>({
     userId: "",
     startOfCommissionYear: Timestamp.fromDate(new Date(new Date().getFullYear(), 0, 1)), // January 1st of current year
+    commissionType: 'percentage',
     commissionPercent: 70, // Agent gets 70% of total deal
     companySplitPercent: 30, // Company gets 30% of total deal
     companySplitCap: 5000, // Company cap at $5,000
     royaltyPercent: 6, // 6% royalty
     royaltyCap: 3000, // $3,000 royalty cap
     estimatedTaxPercent: 25,
+    fixedCommissionAmount: 0,
     // Personal/Business Information
     firstName: "",
     lastName: "",
@@ -100,18 +104,24 @@ export default function SettingsPage() {
     const unsub = onSnapshot(profileRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data() as UserProfile;
-        setProfile(data);
+        setProfile({
+          commissionType: 'percentage', // default fallback
+          fixedCommissionAmount: 0,
+          ...data,
+        });
       } else {
         // Create default profile
         const defaultProfile: UserProfile = {
           userId,
           startOfCommissionYear: Timestamp.fromDate(new Date(new Date().getFullYear(), 0, 1)),
+          commissionType: 'percentage',
           commissionPercent: 70,
           companySplitPercent: 30,
           companySplitCap: 5000,
           royaltyPercent: 6,
           royaltyCap: 3000,
           estimatedTaxPercent: 25,
+          fixedCommissionAmount: 0,
           // Personal/Business Information
           firstName: "",
           lastName: "",
@@ -159,11 +169,23 @@ export default function SettingsPage() {
       };
       
       // Auto-calculate company split when commission percent changes
-      if (name === 'commissionPercent' && type === 'number') {
+      if (name === 'commissionPercent' && type === 'number' && prev.commissionType !== 'fixed') {
         const commissionPercent = value === '' ? 0 : parseFloat(value) || 0;
         newProfile.companySplitPercent = 100 - commissionPercent;
       }
       
+      // If commissionType changes, reset related fields
+      if (name === 'commissionType') {
+        if (value === 'fixed') {
+          newProfile.commissionPercent = '';
+          newProfile.companySplitPercent = '';
+          newProfile.companySplitCap = '';
+          newProfile.royaltyPercent = '';
+          newProfile.royaltyCap = '';
+        } else {
+          newProfile.fixedCommissionAmount = '';
+        }
+      }
       return newProfile;
     });
   };
@@ -199,6 +221,7 @@ export default function SettingsPage() {
         royaltyPercent: typeof profile.royaltyPercent === 'string' ? parseFloat(profile.royaltyPercent) || 0 : profile.royaltyPercent,
         royaltyCap: typeof profile.royaltyCap === 'string' ? parseFloat(profile.royaltyCap) || 0 : profile.royaltyCap,
         estimatedTaxPercent: typeof profile.estimatedTaxPercent === 'string' ? parseFloat(profile.estimatedTaxPercent) || 0 : profile.estimatedTaxPercent,
+        fixedCommissionAmount: typeof profile.fixedCommissionAmount === 'string' ? parseFloat(profile.fixedCommissionAmount) || 0 : (profile.fixedCommissionAmount ?? 0),
         monthlyGoal: typeof profile.monthlyGoal === 'string' ? parseFloat(profile.monthlyGoal) || 0 : (profile.monthlyGoal ?? 0),
         annualGoal: typeof profile.annualGoal === 'string' ? parseFloat(profile.annualGoal) || 0 : (profile.annualGoal ?? 0),
         emergencyFund: typeof profile.emergencyFund === 'string' ? parseFloat(profile.emergencyFund) || 0 : (profile.emergencyFund ?? 0),
@@ -276,132 +299,164 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Commission Structure</h2>
-                <p className="text-gray-500 text-sm">Configure your commission percentages and caps</p>
+                <p className="text-gray-500 text-sm">Configure your commission structure</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Start of Commission Year
-                </label>
-                <input
-                  type="date"
-                  name="startOfCommissionYear"
-                  value={profile.startOfCommissionYear.toDate().toISOString().split('T')[0]}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Used for cap tracking and YTD calculations
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Your Commission %
-                </label>
-                <input
-                  type="number"
-                  name="commissionPercent"
-                  value={profile.commissionPercent === '' ? '' : profile.commissionPercent}
-                  onChange={handleChange}
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="70"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Your percentage of the total deal amount
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Company Split %
-                </label>
-                <input
-                  type="number"
-                  name="companySplitPercent"
-                  value={profile.companySplitPercent === '' ? '' : profile.companySplitPercent}
-                  onChange={handleChange}
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="30"
-                  readOnly
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Automatically calculated: 100% - Your Commission %
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Company Split Cap
-                </label>
-                <input
-                  type="number"
-                  name="companySplitCap"
-                  value={profile.companySplitCap === '' ? '' : profile.companySplitCap}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="5000"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Maximum annual amount for company split
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Royalty %
-                </label>
-                <input
-                  type="number"
-                  name="royaltyPercent"
-                  value={profile.royaltyPercent === '' ? '' : profile.royaltyPercent}
-                  onChange={handleChange}
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="6"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Royalty percentage of your commission
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Royalty Cap
-                </label>
-                <input
-                  type="number"
-                  name="royaltyCap"
-                  value={profile.royaltyCap === '' ? '' : profile.royaltyCap}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="3000"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Maximum annual amount for royalty deductions
-                </p>
-              </div>
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Commission Type</label>
+              <select
+                name="commissionType"
+                value={profile.commissionType || 'percentage'}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              >
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount ($)</option>
+              </select>
             </div>
+            {profile.commissionType === 'percentage' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Start of Commission Year
+                  </label>
+                  <input
+                    type="date"
+                    name="startOfCommissionYear"
+                    value={profile.startOfCommissionYear.toDate().toISOString().split('T')[0]}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Used for cap tracking and YTD calculations
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Commission %
+                  </label>
+                  <input
+                    type="number"
+                    name="commissionPercent"
+                    value={profile.commissionPercent === '' ? '' : profile.commissionPercent}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                    placeholder="70"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Your percentage of the total deal amount
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Company Split %
+                  </label>
+                  <input
+                    type="number"
+                    name="companySplitPercent"
+                    value={profile.companySplitPercent === '' ? '' : profile.companySplitPercent}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                    placeholder="30"
+                    readOnly
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Automatically calculated: 100% - Your Commission %
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Company Split Cap
+                  </label>
+                  <input
+                    type="number"
+                    name="companySplitCap"
+                    value={profile.companySplitCap === '' ? '' : profile.companySplitCap}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                    placeholder="5000"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Maximum annual amount for company split
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Royalty %
+                  </label>
+                  <input
+                    type="number"
+                    name="royaltyPercent"
+                    value={profile.royaltyPercent === '' ? '' : profile.royaltyPercent}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                    placeholder="6"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Royalty percentage of your commission
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Royalty Cap
+                  </label>
+                  <input
+                    type="number"
+                    name="royaltyCap"
+                    value={profile.royaltyCap === '' ? '' : profile.royaltyCap}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                    placeholder="3000"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Maximum annual amount for royalty deductions
+                  </p>
+                </div>
+              </div>
+            )}
+            {profile.commissionType === 'fixed' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Commission per Deal ($)</label>
+                  <input
+                    type="number"
+                    name="fixedCommissionAmount"
+                    value={profile.fixedCommissionAmount === '' ? '' : profile.fixedCommissionAmount}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required
+                    placeholder="500"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Flat commission per deal. No percentage or splits will be applied.</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tax Estimator Settings */}
