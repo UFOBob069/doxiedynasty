@@ -183,7 +183,6 @@ export default function DealsPage() {
     setLoading(true);
     const q = query(collection(db, "deals"), where("userId", "==", (user as { uid: string }).uid), orderBy("closeDate", "desc"));
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setDeals(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
         id: doc.id, 
         ...(doc.data() as Record<string, unknown>) 
@@ -267,8 +266,6 @@ export default function DealsPage() {
   const totalDealAmount = deals.reduce((sum, deal) => sum + (deal.totalDealAmount || 0), 0);
   const totalAgentCommission = deals.reduce((sum, deal) => sum + (deal.agentCommission || 0), 0);
   const totalNetIncome = deals.reduce((sum, deal) => sum + (deal.netIncome || 0), 0);
-  const totalRoyaltyUsed = deals.reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
-  const totalCompanySplit = deals.reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
   
   const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
   const ytdCompanySplitUsage = userProfile ? calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear) : 0;

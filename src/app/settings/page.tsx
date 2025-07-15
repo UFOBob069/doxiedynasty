@@ -158,7 +158,7 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleNotificationChange = (key: keyof UserProfile['notifications']) => {
+  const handleNotificationChange = (key: keyof NonNullable<UserProfile['notifications']>) => {
     setProfile(prev => ({
       ...prev,
       notifications: {
@@ -297,7 +297,7 @@ export default function SettingsPage() {
                   placeholder="30"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Company's percentage of the total deal amount
+                  Company&apos;s percentage of the total deal amount
                 </p>
               </div>
 

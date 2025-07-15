@@ -111,7 +111,6 @@ export default function MileagePage() {
     setLoading(true);
     const q = query(collection(db, "mileage"), where("userId", "==", (user as { uid: string }).uid), orderBy("date", "desc"));
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setMileageEntries(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
         id: doc.id, 
         ...(doc.data() as Record<string, unknown>) 

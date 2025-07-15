@@ -66,7 +66,6 @@ export default function ExpensesPage() {
       orderBy("date", "desc")
     );
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setExpenses(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() })));
     });
     return () => unsub();

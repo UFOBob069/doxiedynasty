@@ -152,7 +152,6 @@ export default function DashboardPage() {
     setLoading(true);
     const q = query(collection(db, "deals"), where("userId", "==", (user as { uid: string }).uid), orderBy("closeDate", "desc"));
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setDeals(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
         id: doc.id, 
         ...(doc.data() as Record<string, unknown>) 
@@ -167,7 +166,6 @@ export default function DashboardPage() {
     if (!user) return;
     const q = query(collection(db, "expenses"), where("userId", "==", (user as { uid: string }).uid), orderBy("date", "desc"));
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setExpenses(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
         id: doc.id, 
         ...(doc.data() as Record<string, unknown>) 
@@ -181,8 +179,6 @@ export default function DashboardPage() {
   const totalAgentCommission = deals.reduce((sum, deal) => sum + (deal.agentCommission || 0), 0);
   const totalNetIncome = deals.reduce((sum, deal) => sum + (deal.netIncome || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-  const totalRoyaltyUsed = deals.reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
-  const totalCompanySplit = deals.reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
   
   // Calculate YTD usage for both caps
   const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
@@ -478,7 +474,7 @@ export default function DashboardPage() {
               </div>
               
               <div className="space-y-4">
-                {monthlyNetIncome.map((month, index) => {
+                {monthlyNetIncome.map((month) => {
                   const maxValue = Math.max(...monthlyNetIncome.map(m => Math.abs(m.netIncome || 0)), 1);
                   return (
                     <div key={month.month} className="flex items-center gap-4">
