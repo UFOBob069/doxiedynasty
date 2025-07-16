@@ -2,10 +2,10 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { auth } from '../firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 
 export default function Header() {
-  const [user, setUser] = useState<unknown>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function Header() {
             <Link href="/mileage" onClick={closeMobileMenu} className="hover:underline">Log Mileage</Link>
             <Link href="/settings" onClick={closeMobileMenu} className="hover:underline">Settings</Link>
             <Link href="/dashboard#subscription" onClick={closeMobileMenu} className="hover:underline text-blue-700 font-semibold">Subscription</Link>
-            {user && user !== null && (
+            {user && (
               <button onClick={handleSignOut} className="ml-4 text-gray-500 hover:text-red-600 font-semibold">Sign Out</button>
             )}
           </nav>
@@ -75,7 +75,7 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
-              {user && typeof user === 'object' && ('displayName' in user || 'email' in user) ? (
+              {user ? (
                 <>
                   <Link 
                     href="/dashboard" 
@@ -113,7 +113,7 @@ export default function Header() {
                     Settings
                   </Link>
                   <div className="px-3 py-2 text-gray-700 text-sm font-medium border-t border-gray-200 mt-2 pt-2">
-                    {(user as { displayName?: string; email?: string }).displayName || (user as { email?: string }).email}
+                    {user.displayName || user.email}
                   </div>
                   <button
                     onClick={handleSignOut}
