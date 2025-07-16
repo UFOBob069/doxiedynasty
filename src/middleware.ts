@@ -4,12 +4,6 @@ import type { NextRequest } from 'next/server';
 // Routes that don't require authentication
 const publicRoutes = ['/signin', '/signup', '/'];
 
-// Routes that require authentication but not subscription
-const authOnlyRoutes = ['/settings'];
-
-// Routes that require active subscription
-const protectedRoutes = ['/dashboard', '/deals', '/expenses', '/mileage'];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 

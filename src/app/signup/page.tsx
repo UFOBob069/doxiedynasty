@@ -19,7 +19,8 @@ export default function SignUpPage() {
     password: '',
     confirmPassword: '',
   });
-  const router = useRouter();
+  // Remove unused router
+  // const router = useRouter();
 
   // Check if user is already signed in
   useEffect(() => {

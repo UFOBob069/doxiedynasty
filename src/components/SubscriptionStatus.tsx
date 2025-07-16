@@ -2,7 +2,7 @@ import React from 'react';
 import { useSubscription } from '../hooks/useSubscription';
 
 export default function SubscriptionStatus() {
-  const { subscription, loading, hasActiveSubscription, isInTrial, getDaysLeftInTrial, getSubscriptionStatus } = useSubscription();
+  const { subscription, loading, isInTrial, getDaysLeftInTrial, getSubscriptionStatus } = useSubscription();
 
   if (loading) {
     return (
