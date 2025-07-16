@@ -49,12 +49,6 @@ async function fetchAddressSuggestions(query: string) {
   return data.features?.map((f: { place_name: string }) => f.place_name) || [];
 }
 
-function safeDisplay(val: unknown): string {
-  if (typeof val === 'number') return val.toLocaleString();
-  if (typeof val === 'string') return val;
-  return '';
-}
-
 function safeNumber(val: number | string | undefined): number {
   if (typeof val === 'number') return val;
   if (typeof val === 'string') return parseFloat(val) || 0;
@@ -166,14 +160,14 @@ function calculateDealBreakdown(
     
     const totalCommission = round2(totalDealAmount * (commissionPercent / 100));
     // Cap logic: Only take up to the remaining cap, otherwise $0
-    let remainingCompanyCap = round2(companySplitCap - ytdCompanySplitUsage);
+    const remainingCompanyCap = round2(companySplitCap - ytdCompanySplitUsage);
     let companySplit = 0;
     if (remainingCompanyCap > 0) {
       companySplit = Math.min(round2(totalCommission * (companySplitPercent / 100)), remainingCompanyCap);
     }
     companySplit = round2(companySplit);
     
-    let remainingRoyaltyCap = round2(royaltyCap - ytdRoyaltyUsage);
+    const remainingRoyaltyCap = round2(royaltyCap - ytdRoyaltyUsage);
     let royaltyUsed = 0;
     if (remainingRoyaltyCap > 0) {
       royaltyUsed = Math.min(round2(totalCommission * (royaltyPercent / 100)), remainingRoyaltyCap);
