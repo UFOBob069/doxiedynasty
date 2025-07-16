@@ -48,7 +48,7 @@ export default function Header() {
             <Link href="/mileage" onClick={closeMobileMenu} className="hover:underline">Log Mileage</Link>
             <Link href="/settings" onClick={closeMobileMenu} className="hover:underline">Settings</Link>
             <Link href="/dashboard#subscription" onClick={closeMobileMenu} className="hover:underline text-blue-700 font-semibold">Subscription</Link>
-            {user && (
+            {user && user !== null && (
               <button onClick={handleSignOut} className="ml-4 text-gray-500 hover:text-red-600 font-semibold">Sign Out</button>
             )}
           </nav>
