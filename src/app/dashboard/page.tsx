@@ -158,36 +158,17 @@ export default function DashboardPage() {
     return () => unsub();
   }, [router]);
 
-  // Block dashboard if no active/trialing subscription
-  if (subLoading || authLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading...</div>;
-  }
-  if (!subscription || (subscription.status !== 'active' && subscription.status !== 'trialing')) {
-    return (
-      <div className="max-w-xl mx-auto mt-16 p-8 bg-white rounded-xl shadow text-center">
-        <SubscriptionStatus />
-        <div className="mt-6 text-lg text-amber-700 font-semibold">
-          You need an active subscription to access the dashboard.<br />
-          Please start your free trial or manage your subscription below.
-        </div>
-      </div>
-    );
-  }
-
   // Load user profile
   useEffect(() => {
     if (!user) return;
-    
     const userId = (user as { uid: string }).uid;
     const profileRef = doc(db, "userProfiles", userId);
-    
     const unsub = onSnapshot(profileRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data() as UserProfile;
         setUserProfile(data);
       }
     });
-
     return () => unsub();
   }, [user]);
 
@@ -218,6 +199,22 @@ export default function DashboardPage() {
     });
     return () => unsub();
   }, [user]);
+
+  // Only do conditional rendering after all hooks
+  if (subLoading || authLoading) {
+    return <div className="p-8 text-center text-gray-500">Loading...</div>;
+  }
+  if (!subscription || (subscription.status !== 'active' && subscription.status !== 'trialing')) {
+    return (
+      <div className="max-w-xl mx-auto mt-16 p-8 bg-white rounded-xl shadow text-center">
+        <SubscriptionStatus />
+        <div className="mt-6 text-lg text-amber-700 font-semibold">
+          You need an active subscription to access the dashboard.<br />
+          Please start your free trial or manage your subscription below.
+        </div>
+      </div>
+    );
+  }
 
   // Calculate totals
   const totalDealAmount = deals.reduce((sum, deal) => sum + (deal.totalDealAmount || 0), 0);
