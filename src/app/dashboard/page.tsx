@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
 import { collection, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import SubscriptionStatus from '../../components/SubscriptionStatus';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface UserProfile {
   userId: string;
@@ -144,6 +146,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
+  const { subscription, loading: subLoading } = useSubscription();
 
   // Auth guard
   useEffect(() => {
@@ -154,6 +157,22 @@ export default function DashboardPage() {
     });
     return () => unsub();
   }, [router]);
+
+  // Block dashboard if no active/trialing subscription
+  if (subLoading || authLoading) {
+    return <div className="p-8 text-center text-gray-500">Loading...</div>;
+  }
+  if (!subscription || (subscription.status !== 'active' && subscription.status !== 'trialing')) {
+    return (
+      <div className="max-w-xl mx-auto mt-16 p-8 bg-white rounded-xl shadow text-center">
+        <SubscriptionStatus />
+        <div className="mt-6 text-lg text-amber-700 font-semibold">
+          You need an active subscription to access the dashboard.<br />
+          Please start your free trial or manage your subscription below.
+        </div>
+      </div>
+    );
+  }
 
   // Load user profile
   useEffect(() => {

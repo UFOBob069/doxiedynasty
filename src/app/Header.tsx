@@ -41,29 +41,15 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
-            {user && typeof user === 'object' && ('displayName' in user || 'email' in user) ? (
-              <>
-                <Link href="/dashboard" className="text-blue-700 font-semibold hover:underline">Dashboard</Link>
-                <Link href="/deals" className="text-gray-700 hover:text-blue-700">Deals</Link>
-                <Link href="/expenses" className="text-gray-700 hover:text-blue-700">Expenses</Link>
-                <Link href="/mileage" className="text-gray-700 hover:text-blue-700">Log Mileage</Link>
-                <Link href="/settings" className="text-gray-700 hover:text-blue-700">Settings</Link>
-                <span className="text-gray-700 text-sm font-medium">{(user as { displayName?: string; email?: string }).displayName || (user as { email?: string }).email}</span>
-                <button
-                  onClick={handleSignOut}
-                  className="text-blue-700 font-semibold hover:underline bg-transparent border-none cursor-pointer"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/signin" className="text-gray-700 hover:text-blue-700">Sign In</Link>
-                <Link href="/signup" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
-                  Sign Up
-                </Link>
-              </>
+          <nav className="hidden md:flex gap-6 items-center">
+            <Link href="/dashboard" onClick={closeMobileMenu} className="hover:underline">Dashboard</Link>
+            <Link href="/deals" onClick={closeMobileMenu} className="hover:underline">Deals</Link>
+            <Link href="/expenses" onClick={closeMobileMenu} className="hover:underline">Expenses</Link>
+            <Link href="/mileage" onClick={closeMobileMenu} className="hover:underline">Log Mileage</Link>
+            <Link href="/settings" onClick={closeMobileMenu} className="hover:underline">Settings</Link>
+            <Link href="/dashboard#subscription" onClick={closeMobileMenu} className="hover:underline text-blue-700 font-semibold">Subscription</Link>
+            {user && (
+              <button onClick={handleSignOut} className="ml-4 text-gray-500 hover:text-red-600 font-semibold">Sign Out</button>
             )}
           </nav>
 

@@ -5,6 +5,7 @@ import { auth } from '../../firebase';
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth';
 import PricingPlans from '../../components/PricingPlans';
 import { getStripe } from '../../lib/stripe';
+import { setCookie } from 'cookies-next';
 
 type SignupStep = 'account' | 'pricing' | 'checkout';
 
@@ -107,6 +108,9 @@ export default function SignUpPage() {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         if (error) {
           setError(error.message || 'Failed to redirect to checkout');
+        } else {
+          // Simulate setting the cookie after successful checkout (in production, set this after webhook)
+          setCookie('hasActiveSubscription', '1', { path: '/' });
         }
       }
     } catch {

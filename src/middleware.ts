@@ -1,33 +1,37 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes that don't require authentication
-const publicRoutes = ['/signin', '/signup', '/'];
+// Routes that don't require authentication or subscription
+const publicRoutes = ['/signin', '/signup', '/subscription-required', '/'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public routes
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.includes(pathname) || pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  // For now, allow all authenticated routes
-  // In production, you would check for active subscription here
-  // This would require server-side session validation
-  
+  // Check for user session (placeholder: check for a session cookie)
+  const hasSession = Boolean(request.cookies.get('session')?.value);
+  if (!hasSession) {
+    // Not signed in, redirect to signin
+    return NextResponse.redirect(new URL('/signin', request.url));
+  }
+
+  // Subscription check placeholder (since we can't check Firestore in middleware)
+  // In production, you would check the user's subscription status via a JWT, session, or custom header
+  const hasActiveSubscription = Boolean(request.cookies.get('hasActiveSubscription')?.value);
+  if (!hasActiveSubscription) {
+    // No active/trialing subscription, redirect to subscription required page
+    return NextResponse.redirect(new URL('/subscription-required', request.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

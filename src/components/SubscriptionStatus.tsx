@@ -71,7 +71,7 @@ export default function SubscriptionStatus() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div id="subscription" className="bg-white rounded-2xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
