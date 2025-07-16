@@ -61,6 +61,10 @@ function safeNumber(val: number | string | undefined): number {
   return 0;
 }
 
+function round2(val: number): number {
+  return Math.round((val + Number.EPSILON) * 100) / 100;
+}
+
 // Helper function to calculate YTD royalty usage
 function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
   const startDate = startOfCommissionYear.toDate();
@@ -114,17 +118,16 @@ function calculateDealBreakdown(
   const commissionType = userProfile.commissionType || 'percentage';
   
   if (commissionType === 'fixed') {
-    // Fixed amount commission structure
-    const fixedAmount = safeNumber(userProfile.fixedCommissionAmount);
-    const estimatedTaxes = fixedAmount * (safeNumber(userProfile.estimatedTaxPercent) / 100);
-    const netIncome = fixedAmount - estimatedTaxes;
+    const fixedAmount = round2(safeNumber(userProfile.fixedCommissionAmount));
+    const estimatedTaxes = round2(fixedAmount * (safeNumber(userProfile.estimatedTaxPercent) / 100));
+    const netIncome = round2(fixedAmount - estimatedTaxes);
     
     return {
       steps: {
         step1: {
           label: "Property Sale Price",
-          amount: totalDealAmount,
-          description: `Property sold for $${totalDealAmount.toLocaleString()}`
+          amount: round2(totalDealAmount),
+          description: `Property sold for $${round2(totalDealAmount).toLocaleString()}`
         },
         step2: {
           label: "Fixed Commission",
@@ -155,37 +158,38 @@ function calculateDealBreakdown(
       netIncome
     };
   } else {
-    // Percentage-based commission structure
     const companySplitPercent = safeNumber(userProfile.companySplitPercent);
     const companySplitCap = safeNumber(userProfile.companySplitCap);
     const royaltyPercent = safeNumber(userProfile.royaltyPercent);
     const royaltyCap = safeNumber(userProfile.royaltyCap);
     const estimatedTaxPercent = safeNumber(userProfile.estimatedTaxPercent);
     
-    // Step 1: Calculate total commission from sale price
-    const totalCommission = totalDealAmount * (commissionPercent / 100);
+    const totalCommission = round2(totalDealAmount * (commissionPercent / 100));
+    // Cap logic: Only take up to the remaining cap, otherwise $0
+    let remainingCompanyCap = round2(companySplitCap - ytdCompanySplitUsage);
+    let companySplit = 0;
+    if (remainingCompanyCap > 0) {
+      companySplit = Math.min(round2(totalCommission * (companySplitPercent / 100)), remainingCompanyCap);
+    }
+    companySplit = round2(companySplit);
     
-    // Step 2: Calculate company split (capped)
-    const remainingCompanyCap = companySplitCap - ytdCompanySplitUsage;
-    const companySplit = Math.max(0, Math.min(totalCommission * (companySplitPercent / 100), remainingCompanyCap));
+    let remainingRoyaltyCap = round2(royaltyCap - ytdRoyaltyUsage);
+    let royaltyUsed = 0;
+    if (remainingRoyaltyCap > 0) {
+      royaltyUsed = Math.min(round2(totalCommission * (royaltyPercent / 100)), remainingRoyaltyCap);
+    }
+    royaltyUsed = round2(royaltyUsed);
     
-    // Step 3: Calculate royalty (capped)
-    const remainingRoyaltyCap = royaltyCap - ytdRoyaltyUsage;
-    const royaltyUsed = Math.max(0, Math.min(totalCommission * (royaltyPercent / 100), remainingRoyaltyCap));
-    
-    // Step 4: Calculate gross income
-    const grossIncome = totalCommission - companySplit - royaltyUsed - referralFee - transactionFee;
-    
-    // Step 5: Calculate taxes and net
-    const estimatedTaxes = grossIncome * (estimatedTaxPercent / 100);
-    const netIncome = grossIncome - estimatedTaxes;
+    const grossIncome = round2(totalCommission - companySplit - royaltyUsed - referralFee - transactionFee);
+    const estimatedTaxes = round2(grossIncome * (estimatedTaxPercent / 100));
+    const netIncome = round2(grossIncome - estimatedTaxes);
     
     return {
       steps: {
         step1: {
           label: "Property Sale Price",
-          amount: totalDealAmount,
-          description: `Property sold for $${totalDealAmount.toLocaleString()}`
+          amount: round2(totalDealAmount),
+          description: `Property sold for $${round2(totalDealAmount).toLocaleString()}`
         },
         step2: {
           label: "Total Commission",
@@ -451,7 +455,7 @@ export default function DealsPage() {
               </div>
               <span className="text-green-600 text-sm font-medium">Total Deals</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${totalDealAmount.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${round2(totalDealAmount).toLocaleString()}</div>
             <p className="text-gray-500 text-sm">Total deal volume</p>
           </div>
           
@@ -462,7 +466,7 @@ export default function DealsPage() {
               </div>
               <span className="text-blue-600 text-sm font-medium">Agent Commission</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${totalAgentCommission.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${round2(totalAgentCommission).toLocaleString()}</div>
             <p className="text-gray-500 text-sm">Your commission total</p>
           </div>
           
@@ -473,7 +477,7 @@ export default function DealsPage() {
               </div>
               <span className="text-purple-600 text-sm font-medium">Take-Home</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${totalNetIncome.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${round2(totalNetIncome).toLocaleString()}</div>
             <p className="text-gray-500 text-sm">Net after taxes</p>
           </div>
           
@@ -484,7 +488,7 @@ export default function DealsPage() {
               </div>
               <span className="text-orange-600 text-sm font-medium">Caps Remaining</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">${(remainingRoyaltyCap + remainingCompanyCap).toLocaleString()}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">${round2(remainingRoyaltyCap + remainingCompanyCap).toLocaleString()}</div>
             <p className="text-gray-500 text-sm">Royalty + Company</p>
           </div>
         </div>
@@ -549,7 +553,7 @@ export default function DealsPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Total Deal Amount</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Total Deal Amount (house sale price or locator fees)</label>
               <input 
                 type="number" 
                 name="totalDealAmount" 
@@ -567,7 +571,7 @@ export default function DealsPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission</label>
                 <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-gray-600">
-                  ${safeNumber(userProfile.fixedCommissionAmount).toLocaleString()} per deal
+                  ${round2(safeNumber(userProfile.fixedCommissionAmount)).toLocaleString()} per deal
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Fixed amount from your settings</p>
               </div>
@@ -649,7 +653,7 @@ export default function DealsPage() {
                 {Object.entries(breakdown.steps).map(([key, step]: [string, { label: string; amount: number; description: string }]) => (
                   <div key={key} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                     <div className="text-xs font-semibold text-gray-600 mb-1">{step.label}</div>
-                    <div className="text-lg font-bold text-gray-900 mb-2">${step.amount.toLocaleString()}</div>
+                    <div className="text-lg font-bold text-gray-900 mb-2">${round2(step.amount).toLocaleString()}</div>
                     <div className="text-xs text-gray-600 leading-relaxed">{step.description}</div>
                   </div>
                 ))}
@@ -661,7 +665,7 @@ export default function DealsPage() {
                     <div className="text-sm font-semibold text-emerald-800">Final Take-Home</div>
                     <div className="text-xs text-emerald-600">After all deductions and taxes</div>
                   </div>
-                  <div className="text-2xl font-bold text-emerald-600">${breakdown.netIncome.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-emerald-600">${round2(breakdown.netIncome).toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -709,12 +713,12 @@ export default function DealsPage() {
                     <td className="px-4 py-3 font-medium">{String(deal.address ?? "")}</td>
                     <td className="px-4 py-3">{String(deal.client ?? "")}</td>
                     <td className="px-4 py-3 text-gray-600">{String(deal.closeDate ?? "")}</td>
-                    <td className="px-4 py-3 font-semibold text-green-600">${safeDisplay(deal.totalDealAmount)}</td>
-                    <td className="px-4 py-3 font-semibold text-blue-600">${safeDisplay(deal.agentCommission)}</td>
-                    <td className="px-4 py-3 font-semibold text-orange-600">${safeDisplay(deal.companySplit)}</td>
-                    <td className="px-4 py-3 font-semibold text-purple-600">${safeDisplay(deal.royaltyUsed)}</td>
-                    <td className="px-4 py-3 font-semibold text-red-500">${safeDisplay(deal.estimatedTaxes)}</td>
-                    <td className="px-4 py-3 font-semibold text-emerald-600">${safeDisplay(deal.netIncome)}</td>
+                    <td className="px-4 py-3 font-semibold text-green-600">${round2(deal.totalDealAmount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-blue-600">${round2(deal.agentCommission || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-orange-600">${round2(deal.companySplit || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-purple-600">${round2(deal.royaltyUsed || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-red-500">${round2(deal.estimatedTaxes || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-emerald-600">${round2(deal.netIncome || 0).toLocaleString()}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleDelete(deal.id)}
