@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '../../../../lib/stripe';
 import { db } from '../../../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import Stripe from 'stripe';
+
+type WebhookInvoice = Stripe.Invoice & { subscription?: string };
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -51,8 +54,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Error processing webhook:', error);
+  } catch {
+    console.error('Error processing webhook');
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCheckoutSessionCompleted(session: any) {
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId;
   if (!userId) return;
 
@@ -72,39 +75,41 @@ async function handleCheckoutSessionCompleted(session: any) {
   }, { merge: true });
 }
 
-async function handleSubscriptionCreated(subscription: any) {
+async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 
+  const item = subscription.items.data[0];
   const userRef = doc(db, 'userSubscriptions', userId);
   await setDoc(userRef, {
     stripeSubscriptionId: subscription.id,
     status: subscription.status,
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    currentPeriodStart: item.current_period_start ? new Date(item.current_period_start * 1000) : null,
+    currentPeriodEnd: item.current_period_end ? new Date(item.current_period_end * 1000) : null,
     trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
     trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-    planType: subscription.metadata?.planType,
+    planType: subscription.metadata?.planType as 'monthly' | 'yearly' | undefined,
     updatedAt: new Date(),
   }, { merge: true });
 }
 
-async function handleSubscriptionUpdated(subscription: any) {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 
+  const item = subscription.items.data[0];
   const userRef = doc(db, 'userSubscriptions', userId);
   await setDoc(userRef, {
     status: subscription.status,
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    currentPeriodStart: item.current_period_start ? new Date(item.current_period_start * 1000) : null,
+    currentPeriodEnd: item.current_period_end ? new Date(item.current_period_end * 1000) : null,
     trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
     trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
     updatedAt: new Date(),
   }, { merge: true });
 }
 
-async function handleSubscriptionDeleted(subscription: any) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 
@@ -115,8 +120,10 @@ async function handleSubscriptionDeleted(subscription: any) {
   }, { merge: true });
 }
 
-async function handlePaymentSucceeded(invoice: any) {
-  const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+async function handlePaymentSucceeded(invoice: WebhookInvoice) {
+  const subscriptionId = invoice.subscription;
+  if (!subscriptionId) return;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 
@@ -127,8 +134,10 @@ async function handlePaymentSucceeded(invoice: any) {
   }, { merge: true });
 }
 
-async function handlePaymentFailed(invoice: any) {
-  const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+async function handlePaymentFailed(invoice: WebhookInvoice) {
+  const subscriptionId = invoice.subscription;
+  if (!subscriptionId) return;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 

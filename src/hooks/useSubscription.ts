@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { UserSubscription, SubscriptionStatus } from '../lib/stripe';
+import { UserSubscription } from '../lib/stripe';
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
@@ -46,13 +46,6 @@ export function useSubscription() {
     return () => unsubscribe();
   }, [user]);
 
-  const hasActiveSubscription = (): boolean => {
-    if (!subscription) return false;
-    
-    const activeStatuses: SubscriptionStatus[] = ['trialing', 'active'];
-    return activeStatuses.includes(subscription.status);
-  };
-
   const isInTrial = (): boolean => {
     if (!subscription) return false;
     return subscription.status === 'trialing';
@@ -92,7 +85,6 @@ export function useSubscription() {
   return {
     subscription,
     loading,
-    hasActiveSubscription,
     isInTrial,
     getDaysLeftInTrial,
     getSubscriptionStatus,

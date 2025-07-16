@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe, STRIPE_CONFIG } from '../../../../lib/stripe';
 import { db } from '../../../../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import Stripe from 'stripe';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare checkout session parameters
-    const sessionParams: any = {
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: stripeCustomerId,
       payment_method_types: ['card'],
       line_items: [
@@ -85,8 +86,8 @@ export async function POST(request: NextRequest) {
     }, { merge: true });
 
     return NextResponse.json({ sessionId: session.id });
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
+  } catch {
+    console.error('Error creating checkout session');
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

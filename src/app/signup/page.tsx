@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { auth } from '../../firebase';
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 import PricingPlans from '../../components/PricingPlans';
 import { getStripe } from '../../lib/stripe';
 
@@ -13,7 +12,7 @@ export default function SignUpPage() {
   const [step, setStep] = useState<SignupStep>('account');
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<import('firebase/auth').User | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -110,7 +109,7 @@ export default function SignUpPage() {
           setError(error.message || 'Failed to redirect to checkout');
         }
       }
-    } catch (err) {
+    } catch {
       setError('Failed to create checkout session');
     } finally {
       setLoading(false);
