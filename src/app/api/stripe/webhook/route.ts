@@ -10,42 +10,59 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature')!;
 
+  console.log('Webhook received with signature:', signature ? 'Present :Missing');
+
   let event;
 
   try {
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('Stripe webhook secret not found');
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
+    
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET
     );
-  } catch {
-    console.error('Webhook signature verification failed');
+    
+    console.log('Webhook event received:', event.type);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
   try {
+    console.log('Processing webhook event type:', event.type);
+    
     switch (event.type) {
       case 'checkout.session.completed':
+        console.log('Handling checkout.session.completed');
         await handleCheckoutSessionCompleted(event.data.object);
         break;
       
       case 'customer.subscription.created':
+        console.log('Handling customer.subscription.created');
         await handleSubscriptionCreated(event.data.object);
         break;
       
       case 'customer.subscription.updated':
+        console.log('Handling customer.subscription.updated');
         await handleSubscriptionUpdated(event.data.object);
         break;
       
       case 'customer.subscription.deleted':
+        console.log('Handling customer.subscription.deleted');
         await handleSubscriptionDeleted(event.data.object);
         break;
       
       case 'invoice.payment_succeeded':
+        console.log('Handling invoice.payment_succeeded');
         await handlePaymentSucceeded(event.data.object);
         break;
       
       case 'invoice.payment_failed':
+        console.log('Handling invoice.payment_failed');
         await handlePaymentFailed(event.data.object);
         break;
       
@@ -53,9 +70,10 @@ export async function POST(request: NextRequest) {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
+    console.log('Webhook processed successfully');
     return NextResponse.json({ received: true });
-  } catch {
-    console.error('Error processing webhook');
+  } catch (err) {
+    console.error('Error processing webhook:', err);
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }
@@ -64,6 +82,14 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  console.log('Checkout session completed webhook received:', {
+    sessionId: session.id,
+    userId: session.metadata?.userId,
+    customerId: session.customer,
+    successUrl: session.success_url,
+    cancelUrl: session.cancel_url
+  });
+
   const userId = session.metadata?.userId;
   if (!userId) return;
 
@@ -73,6 +99,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     status: 'trialing',
     updatedAt: new Date(),
   }, { merge: true });
+
+  console.log('Updated user subscription for userId:', userId);
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {

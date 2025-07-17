@@ -1,15 +1,26 @@
 import Stripe from 'stripe';
 
 // Server-side Stripe instance
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-06-30.basil',
-});
+export const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-06-30.basil',
+    })
+  : null;
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('Stripe secret key not found in environment variables.');
+}
 
 // Client-side Stripe instance
 export const getStripe = async () => {
   if (typeof window !== 'undefined') {
     const { loadStripe } = await import('@stripe/stripe-js');
-    return loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      console.warn('Stripe publishable key not found in environment variables.');
+      return null;
+    }
+    return loadStripe(publishableKey);
   }
   return null;
 };

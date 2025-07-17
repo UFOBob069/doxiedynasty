@@ -62,6 +62,14 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    console.log(Creating checkout session with params:, {
+      success_url: sessionParams.success_url,
+      cancel_url: sessionParams.cancel_url,
+      priceId,
+      userId,
+      planType
+    });
+
     // Add coupon if provided
     if (couponCode) {
       sessionParams.discounts = [
@@ -73,6 +81,11 @@ export async function POST(request: NextRequest) {
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log('Checkout session created:, [object Object]sessionId: session.id,
+      success_url: session.success_url,
+      cancel_url: session.cancel_url
+    });
 
     // Save initial subscription record
     await setDoc(userRef, {
