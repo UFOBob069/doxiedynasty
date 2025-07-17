@@ -801,6 +801,90 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Subscription Management */}
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">💳</span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Subscription Management</h2>
+                <p className="text-gray-500 text-sm">Manage your billing and subscription</p>
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+              <div>
+                <div className="text-lg font-semibold text-gray-900">Current Plan</div>
+                <div className="text-sm text-gray-600">Agent Money Tracker Pro</div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-green-600">$4.97</div>
+                <div className="text-sm text-gray-500">per month (or yearly)</div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/stripe/create-portal-session', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        userId: user ? (user as { uid: string }).uid : '',
+                      }),
+                    });
+                    if (response.ok) {
+                      const { url } = await response.json();
+                      window.location.href = url;
+                    } else {
+                      alert('Failed to create portal session.');
+                    }
+                  } catch (error) {
+                    alert('Error creating portal session.');
+                  }
+                }}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                Manage Billing
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (confirm('Are you sure you want to cancel your subscription? You will lose access to all premium features at the end of your current billing period.')) {
+                    // Redirect to Stripe portal where they can cancel
+                    const response = await fetch('/api/stripe/create-portal-session', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        userId: user ? (user as { uid: string }).uid : '',
+                      }),
+                    });
+                    if (response.ok) {
+                      const { url } = await response.json();
+                      window.location.href = url;
+                    } else {
+                      alert('Failed to open billing portal.');
+                    }
+                  }
+                }}
+                className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                Cancel Subscription
+              </button>
+            </div>
+            <div className="mt-2 text-sm text-gray-600">
+              <p>• Manage payment methods and billing information</p>
+              <p>• View billing history and download invoices</p>
+              <p>• Cancel subscription (access continues until end of billing period)</p>
+              <p>• Reactivate subscription anytime</p>
+            </div>
+          </div>
+
           {/* Save Button */}
           <div className="flex justify-end">
             <button
