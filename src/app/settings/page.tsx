@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc as firestoreDoc, Timestamp as FirestoreTimestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc as firestoreDoc, Timestamp as FirestoreTimestamp, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Timestamp } from "firebase/firestore";
 
@@ -38,6 +38,20 @@ interface UserProfile {
     push?: boolean;
     capAlerts?: boolean;
   };
+}
+
+interface CommissionSchedule {
+  id: string;
+  userId: string;
+  yearStart: Timestamp;
+  commissionType: 'percentage' | 'fixed';
+  companySplitPercent: number | string;
+  companySplitCap: number | string;
+  royaltyPercent: number | string;
+  royaltyCap: number | string;
+  estimatedTaxPercent: number | string;
+  fixedCommissionAmount?: number | string;
+  createdAt?: Timestamp;
 }
 
 export default function SettingsPage() {
@@ -81,7 +95,7 @@ export default function SettingsPage() {
     },
   });
 
-  const [commissionSchedules, setCommissionSchedules] = useState<any[]>([]);
+  const [commissionSchedules, setCommissionSchedules] = useState<CommissionSchedule[]>([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState({
     yearStart: '',
@@ -167,7 +181,7 @@ export default function SettingsPage() {
     const userId = (user as { uid: string }).uid;
     const q = query(collection(db, "commissionSchedules"), where("userId", "==", userId));
     getDocs(q).then(snapshot => {
-      setCommissionSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCommissionSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommissionSchedule[]);
     });
   }, [user, saved]);
 
@@ -301,7 +315,7 @@ export default function SettingsPage() {
         estimatedTaxPercent: '',
         fixedCommissionAmount: '',
       });
-    } catch (err) {
+    } catch {
       alert('Failed to add commission schedule.');
     } finally {
       setLoading(false);
@@ -314,7 +328,7 @@ export default function SettingsPage() {
     try {
       await deleteDoc(firestoreDoc(db, "commissionSchedules", id));
       setSaved(true);
-    } catch (err) {
+    } catch {
       alert('Failed to delete commission schedule.');
     } finally {
       setLoading(false);

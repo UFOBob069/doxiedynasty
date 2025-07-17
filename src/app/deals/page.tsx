@@ -217,9 +217,9 @@ function calculateDealBreakdown(
 }
 
 // Utility function to convert array of objects to CSV
-function arrayToCSV(items: any[]): string {
+function arrayToCSV(items: Record<string, unknown>[]): string {
   if (!items.length) return '';
-  const replacer = (key: string, value: any) => (value === null || value === undefined ? '' : value);
+  const replacer = (key: string, value: unknown) => (value === null || value === undefined ? '' : value);
   const header = Object.keys(items[0]);
   const csv = [
     header.join(','),
@@ -230,7 +230,7 @@ function arrayToCSV(items: any[]): string {
   return csv;
 }
 
-function downloadCSV(data: any[], filename: string) {
+function downloadCSV(data: Record<string, unknown>[], filename: string) {
   const csv = arrayToCSV(data);
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);

@@ -49,6 +49,20 @@ interface Expense {
   [key: string]: unknown;
 }
 
+interface CommissionSchedule {
+  id: string;
+  userId: string;
+  yearStart: Timestamp;
+  commissionType: 'percentage' | 'fixed';
+  companySplitPercent: number | string;
+  companySplitCap: number | string;
+  royaltyPercent: number | string;
+  royaltyCap: number | string;
+  estimatedTaxPercent: number | string;
+  fixedCommissionAmount?: number | string;
+  createdAt?: Timestamp;
+}
+
 // Helper function to calculate YTD royalty usage
 function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
   const startDate = startOfCommissionYear.toDate();
@@ -147,9 +161,9 @@ export default function DashboardPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
   const { subscription, loading: subLoading } = useSubscription();
-  const [commissionSchedules, setCommissionSchedules] = useState<any[]>([]);
+  const [commissionSchedules, setCommissionSchedules] = useState<CommissionSchedule[]>([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
-  const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<CommissionSchedule | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -209,24 +223,24 @@ export default function DashboardPage() {
     const userId = (user as { uid: string }).uid;
     const q = query(collection(db, "commissionSchedules"), where("userId", "==", userId));
     getDocs(q).then(snapshot => {
-      const schedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const schedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommissionSchedule[];
       setCommissionSchedules(schedules);
       // Default to the most recent schedule
       if (schedules.length > 0 && !selectedScheduleId) {
         setSelectedScheduleId(schedules[schedules.length - 1].id);
       }
     });
-  }, [user]);
+  }, [user, selectedScheduleId]);
 
   // Set selected schedule object
   useEffect(() => {
     if (!commissionSchedules.length || !selectedScheduleId) return;
-    const sched = commissionSchedules.find(s => s.id === selectedScheduleId);
-    setSelectedSchedule(sched || null);
+    const sched = commissionSchedules.find(s => s.id === selectedScheduleId) || null;
+    setSelectedSchedule(sched);
   }, [commissionSchedules, selectedScheduleId]);
 
   // Helper: get start and end date for a schedule
-  function getScheduleRange(schedule: any, nextSchedule?: any) {
+  function getScheduleRange(schedule: CommissionSchedule, nextSchedule?: CommissionSchedule) {
     const start = schedule?.yearStart?.toDate ? schedule.yearStart.toDate() : null;
     let end = null;
     if (nextSchedule && nextSchedule.yearStart?.toDate) {
@@ -246,6 +260,7 @@ export default function DashboardPage() {
     const idx = commissionSchedules.findIndex(s => s.id === selectedScheduleId);
     const nextSchedule = commissionSchedules[idx + 1];
     const { start, end } = getScheduleRange(selectedSchedule, nextSchedule);
+    if (!start || !end) return false;
     return dealDate >= start && dealDate <= end;
   }) : deals;
 
@@ -281,7 +296,7 @@ export default function DashboardPage() {
     const startDate = userProfile.startOfCommissionYear.toDate();
     const now = new Date();
     // Calculate next anniversary (if today is after the anniversary, it's time to update)
-    let nextAnniversary = new Date(startDate);
+    const nextAnniversary = new Date(startDate);
     while (nextAnniversary <= now) {
       nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
     }
@@ -298,7 +313,7 @@ export default function DashboardPage() {
             <div className="flex-1">
               <h3 className="text-lg font-bold text-yellow-800 mb-2">Update Your Commission Year</h3>
               <p className="text-yellow-700 mb-4">
-                It's been over a year since your last commission year start date (<b>{startDate.toLocaleDateString()}</b>).<br />
+                It&apos;s been over a year since your last commission year start date (<b>{startDate.toLocaleDateString()}</b>).<br />
                 Please update your Commission Year in <b>Settings</b> to ensure accurate cap tracking.
               </p>
               <button
