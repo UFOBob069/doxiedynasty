@@ -21,6 +21,9 @@ export async function POST(request: NextRequest) {
       : STRIPE_CONFIG.MONTHLY_PRICE_ID;
 
     // Check if user already has a Stripe customer ID
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe is not initialized' }, { status: 500 });
+    }
     const userRef = doc(db, 'userSubscriptions', userId);
     const userDoc = await getDoc(userRef);
     let stripeCustomerId = userDoc.exists() ? userDoc.data()?.stripeCustomerId : null;
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    console.log(Creating checkout session with params:, {
+    console.log('Creating checkout session with params:', {
       success_url: sessionParams.success_url,
       cancel_url: sessionParams.cancel_url,
       priceId,
@@ -80,9 +83,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create checkout session
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe is not initialized' }, { status: 500 });
+    }
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    console.log('Checkout session created:, [object Object]sessionId: session.id,
+    console.log('Checkout session created:', {
+      sessionId: session.id,
       success_url: session.success_url,
       cancel_url: session.cancel_url
     });
