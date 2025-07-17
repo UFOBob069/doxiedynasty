@@ -367,153 +367,106 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Commission Settings */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">🛠️</span>
+        {/* Commission Schedules - moved to top */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">📅</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Commission Schedules</h2>
+              <p className="text-gray-500 text-sm">Manage your historical and current commission contracts</p>
+            </div>
+          </div>
+          <div className="mb-4">
+            <button
+              onClick={() => setShowScheduleForm(!showScheduleForm)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              {showScheduleForm ? 'Cancel' : 'Add New Schedule'}
+            </button>
+          </div>
+          {showScheduleForm && (
+            <form onSubmit={handleAddSchedule} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                <input type="date" required value={newSchedule.yearStart} onChange={e => setNewSchedule(s => ({ ...s, yearStart: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Commission Structure</h2>
-                <p className="text-gray-500 text-sm">Configure your commission structure</p>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Commission Type</label>
+                <select value={newSchedule.commissionType} onChange={e => setNewSchedule(s => ({ ...s, commissionType: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                  <option value="percentage">Percentage</option>
+                  <option value="fixed">Fixed</option>
+                </select>
               </div>
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Commission Type</label>
-              <select
-                name="commissionType"
-                value={profile.commissionType || 'percentage'}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              >
-                <option value="percentage">Percentage (%)</option>
-                <option value="fixed">Fixed Amount ($)</option>
-              </select>
-            </div>
-            {profile.commissionType === 'percentage' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Start of Commission Year
-                  </label>
-                  <input
-                    type="date"
-                    name="startOfCommissionYear"
-                    value={profile.startOfCommissionYear.toDate().toISOString().split('T')[0]}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Used for cap tracking and YTD calculations
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Company Split %
-                  </label>
-                  <input
-                    type="number"
-                    name="companySplitPercent"
-                    value={profile.companySplitPercent === '' ? '' : profile.companySplitPercent}
-                    onChange={handleChange}
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="30"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Automatically calculated: 100% - Your Commission %
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Company Split Cap
-                  </label>
-                  <input
-                    type="number"
-                    name="companySplitCap"
-                    value={profile.companySplitCap === '' ? '' : profile.companySplitCap}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="5000"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Maximum annual amount for company split
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Royalty %
-                  </label>
-                  <input
-                    type="number"
-                    name="royaltyPercent"
-                    value={profile.royaltyPercent === '' ? '' : profile.royaltyPercent}
-                    onChange={handleChange}
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="6"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Royalty percentage of your commission
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Royalty Cap
-                  </label>
-                  <input
-                    type="number"
-                    name="royaltyCap"
-                    value={profile.royaltyCap === '' ? '' : profile.royaltyCap}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="3000"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Maximum annual amount for royalty deductions
-                  </p>
-                </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Company Split %</label>
+                <input type="number" value={newSchedule.companySplitPercent} onChange={e => setNewSchedule(s => ({ ...s, companySplitPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
               </div>
-            )}
-            {profile.commissionType === 'fixed' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Commission per Deal ($)</label>
-                  <input
-                    type="number"
-                    name="fixedCommissionAmount"
-                    value={profile.fixedCommissionAmount === '' ? '' : profile.fixedCommissionAmount}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="500"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">Flat commission per deal. No percentage or splits will be applied.</p>
-                </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Company Split Cap</label>
+                <input type="number" value={newSchedule.companySplitCap} onChange={e => setNewSchedule(s => ({ ...s, companySplitCap: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
               </div>
-            )}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Royalty %</label>
+                <input type="number" value={newSchedule.royaltyPercent} onChange={e => setNewSchedule(s => ({ ...s, royaltyPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Royalty Cap</label>
+                <input type="number" value={newSchedule.royaltyCap} onChange={e => setNewSchedule(s => ({ ...s, royaltyCap: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Estimated Tax %</label>
+                <input type="number" value={newSchedule.estimatedTaxPercent} onChange={e => setNewSchedule(s => ({ ...s, estimatedTaxPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission Amount</label>
+                <input type="number" value={newSchedule.fixedCommissionAmount} onChange={e => setNewSchedule(s => ({ ...s, fixedCommissionAmount: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div className="md:col-span-2 flex justify-end">
+                <button type="submit" disabled={loading} className="bg-gradient-to-r from-green-600 to-lime-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+                  {loading ? 'Saving...' : 'Save Schedule'}
+                </button>
+              </div>
+            </form>
+          )}
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-xl">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left">Start Date</th>
+                  <th className="px-4 py-2 text-left">Type</th>
+                  <th className="px-4 py-2 text-left">Split %</th>
+                  <th className="px-4 py-2 text-left">Split Cap</th>
+                  <th className="px-4 py-2 text-left">Royalty %</th>
+                  <th className="px-4 py-2 text-left">Royalty Cap</th>
+                  <th className="px-4 py-2 text-left">Tax %</th>
+                  <th className="px-4 py-2 text-left">Fixed Amt</th>
+                  <th className="px-4 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {commissionSchedules.sort((a, b) => (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)).map(sched => (
+                  <tr key={sched.id} className="border-t">
+                    <td className="px-4 py-2">{sched.yearStart?.toDate ? sched.yearStart.toDate().toLocaleDateString() : ''}</td>
+                    <td className="px-4 py-2">{sched.commissionType}</td>
+                    <td className="px-4 py-2">{sched.companySplitPercent}</td>
+                    <td className="px-4 py-2">{sched.companySplitCap}</td>
+                    <td className="px-4 py-2">{sched.royaltyPercent}</td>
+                    <td className="px-4 py-2">{sched.royaltyCap}</td>
+                    <td className="px-4 py-2">{sched.estimatedTaxPercent}</td>
+                    <td className="px-4 py-2">{sched.fixedCommissionAmount}</td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => handleDeleteSchedule(sched.id)} className="text-red-600 hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
 
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Tax Estimator Settings */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -968,105 +921,6 @@ export default function SettingsPage() {
               <p>• View billing history and download invoices</p>
               <p>• Cancel subscription (access continues until end of billing period)</p>
               <p>• Reactivate subscription anytime</p>
-            </div>
-          </div>
-
-          {/* Commission Schedules */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">📅</span>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Commission Schedules</h2>
-                <p className="text-gray-500 text-sm">Manage your historical and current commission contracts</p>
-              </div>
-            </div>
-            <div className="mb-4">
-              <button
-                onClick={() => setShowScheduleForm(!showScheduleForm)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                {showScheduleForm ? 'Cancel' : 'Add New Schedule'}
-              </button>
-            </div>
-            {showScheduleForm && (
-              <form onSubmit={handleAddSchedule} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-                  <input type="date" required value={newSchedule.yearStart} onChange={e => setNewSchedule(s => ({ ...s, yearStart: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Commission Type</label>
-                  <select value={newSchedule.commissionType} onChange={e => setNewSchedule(s => ({ ...s, commissionType: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl">
-                    <option value="percentage">Percentage</option>
-                    <option value="fixed">Fixed</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Company Split %</label>
-                  <input type="number" value={newSchedule.companySplitPercent} onChange={e => setNewSchedule(s => ({ ...s, companySplitPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Company Split Cap</label>
-                  <input type="number" value={newSchedule.companySplitCap} onChange={e => setNewSchedule(s => ({ ...s, companySplitCap: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Royalty %</label>
-                  <input type="number" value={newSchedule.royaltyPercent} onChange={e => setNewSchedule(s => ({ ...s, royaltyPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Royalty Cap</label>
-                  <input type="number" value={newSchedule.royaltyCap} onChange={e => setNewSchedule(s => ({ ...s, royaltyCap: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Estimated Tax %</label>
-                  <input type="number" value={newSchedule.estimatedTaxPercent} onChange={e => setNewSchedule(s => ({ ...s, estimatedTaxPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission Amount</label>
-                  <input type="number" value={newSchedule.fixedCommissionAmount} onChange={e => setNewSchedule(s => ({ ...s, fixedCommissionAmount: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
-                </div>
-                <div className="md:col-span-2 flex justify-end">
-                  <button type="submit" disabled={loading} className="bg-gradient-to-r from-green-600 to-lime-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-                    {loading ? 'Saving...' : 'Save Schedule'}
-                  </button>
-                </div>
-              </form>
-            )}
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-xl">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left">Start Date</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Split %</th>
-                    <th className="px-4 py-2 text-left">Split Cap</th>
-                    <th className="px-4 py-2 text-left">Royalty %</th>
-                    <th className="px-4 py-2 text-left">Royalty Cap</th>
-                    <th className="px-4 py-2 text-left">Tax %</th>
-                    <th className="px-4 py-2 text-left">Fixed Amt</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {commissionSchedules.sort((a, b) => (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)).map(sched => (
-                    <tr key={sched.id} className="border-t">
-                      <td className="px-4 py-2">{sched.yearStart?.toDate ? sched.yearStart.toDate().toLocaleDateString() : ''}</td>
-                      <td className="px-4 py-2">{sched.commissionType}</td>
-                      <td className="px-4 py-2">{sched.companySplitPercent}</td>
-                      <td className="px-4 py-2">{sched.companySplitCap}</td>
-                      <td className="px-4 py-2">{sched.royaltyPercent}</td>
-                      <td className="px-4 py-2">{sched.royaltyCap}</td>
-                      <td className="px-4 py-2">{sched.estimatedTaxPercent}</td>
-                      <td className="px-4 py-2">{sched.fixedCommissionAmount}</td>
-                      <td className="px-4 py-2">
-                        <button onClick={() => handleDeleteSchedule(sched.id)} className="text-red-600 hover:underline">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
 

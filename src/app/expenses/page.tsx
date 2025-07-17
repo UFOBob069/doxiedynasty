@@ -15,6 +15,7 @@ import {
   QuerySnapshot,
   DocumentData,
   QueryDocumentSnapshot,
+  updateDoc,
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { onAuthStateChanged } from "firebase/auth";
@@ -71,6 +72,10 @@ export default function ExpensesPage() {
   const [user, setUser] = useState<unknown>(null);
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [editLoading, setEditLoading] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -151,6 +156,41 @@ export default function ExpensesPage() {
       await deleteDoc(doc(db, "expenses", id));
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const openEditModal = (expense: any) => {
+    setEditingExpense(expense);
+    setEditForm({ ...expense });
+    setEditModalOpen(true);
+  };
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingExpense(null);
+    setEditForm({});
+  };
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditForm((f: any) => ({ ...f, [name]: value }));
+  };
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpense) return;
+    setEditLoading(true);
+    try {
+      const docRef = doc(db, "expenses", editingExpense.id);
+      await updateDoc(docRef, {
+        date: editForm.date,
+        category: editForm.category,
+        amount: parseFloat(editForm.amount) || 0,
+        notes: editForm.notes || "",
+        deal: editForm.deal || "",
+      });
+      closeEditModal();
+    } catch (err) {
+      alert("Failed to update expense");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -426,6 +466,12 @@ export default function ExpensesPage() {
                     <td className="px-4 py-3 text-gray-600">{safeDisplay(exp.deal) || "-"}</td>
                     <td className="px-4 py-3">
                       <button
+                        onClick={() => openEditModal(exp)}
+                        className="text-blue-600 hover:text-blue-800 font-medium mr-2"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
                         onClick={() => handleDelete(exp.id)}
                         disabled={deletingId === exp.id}
                         className="text-red-600 hover:text-red-800 font-medium disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
@@ -451,6 +497,48 @@ export default function ExpensesPage() {
           </div>
         </div>
       </div>
+      {/* Edit Expense Modal */}
+      {editModalOpen && editingExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg relative">
+            <button onClick={closeEditModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <h3 className="text-2xl font-bold mb-4">Edit Expense</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <input type="date" name="date" value={editForm.date || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                <select name="category" value={editForm.category || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required>
+                  <option value="">Select category...</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Amount</label>
+                <input type="number" name="amount" value={editForm.amount || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                <input type="text" name="notes" value={editForm.notes || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Deal</label>
+                <input type="text" name="deal" value={editForm.deal || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <button type="button" onClick={closeEditModal} className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold">Cancel</button>
+                <button type="submit" disabled={editLoading} className="px-6 py-2 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 disabled:opacity-60">
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 } 

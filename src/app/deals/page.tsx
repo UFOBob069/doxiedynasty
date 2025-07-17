@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -276,6 +276,10 @@ export default function DealsPage() {
   const router = useRouter();
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const addressTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [editLoading, setEditLoading] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -419,6 +423,44 @@ export default function DealsPage() {
       await deleteDoc(doc(db, "deals", id));
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const openEditModal = (deal: Deal) => {
+    setEditingDeal(deal);
+    setEditForm({ ...deal });
+    setEditModalOpen(true);
+  };
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingDeal(null);
+    setEditForm({});
+  };
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditForm((f: any) => ({ ...f, [name]: value }));
+  };
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDeal) return;
+    setEditLoading(true);
+    try {
+      const docRef = doc(db, "deals", editingDeal.id);
+      await updateDoc(docRef, {
+        address: editForm.address,
+        client: editForm.client,
+        closeDate: editForm.closeDate,
+        totalDealAmount: parseFloat(editForm.totalDealAmount) || 0,
+        commissionPercent: parseFloat(editForm.commissionPercent) || 0,
+        referralFee: parseFloat(editForm.referralFee) || 0,
+        transactionFee: parseFloat(editForm.transactionFee) || 0,
+        notes: editForm.notes || "",
+      });
+      closeEditModal();
+    } catch (err) {
+      alert("Failed to update deal");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -746,6 +788,12 @@ export default function DealsPage() {
                     <td className="px-4 py-3 font-semibold text-emerald-600">${round2(deal.netIncome || 0).toLocaleString()}</td>
                     <td className="px-4 py-3">
                       <button
+                        onClick={() => openEditModal(deal)}
+                        className="px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 mr-2"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
                         onClick={() => handleDelete(deal.id)}
                         disabled={deletingId === deal.id}
                         className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -782,6 +830,51 @@ export default function DealsPage() {
           </div>
         </div>
       </div>
+      {/* Edit Deal Modal */}
+      {editModalOpen && editingDeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg relative">
+            <button onClick={closeEditModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <h3 className="text-2xl font-bold mb-4">Edit Deal</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                <input type="text" name="address" value={editForm.address || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Client</label>
+                <input type="text" name="client" value={editForm.client || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Close Date</label>
+                <input type="date" name="closeDate" value={editForm.closeDate || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Total Deal Amount</label>
+                <input type="number" name="totalDealAmount" value={editForm.totalDealAmount || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Commission %</label>
+                <input type="number" name="commissionPercent" value={editForm.commissionPercent || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Referral Fee</label>
+                <input type="number" name="referralFee" value={editForm.referralFee || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Transaction Fee</label>
+                <input type="number" name="transactionFee" value={editForm.transactionFee || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <button type="button" onClick={closeEditModal} className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold">Cancel</button>
+                <button type="submit" disabled={editLoading} className="px-6 py-2 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 disabled:opacity-60">
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 } 

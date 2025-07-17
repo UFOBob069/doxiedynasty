@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -119,6 +119,11 @@ export default function MileagePage() {
   const router = useRouter();
   const beginTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const endTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -255,6 +260,55 @@ export default function MileagePage() {
       setError(errorMessage);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (entry: any) => {
+    setEditingEntry(entry);
+    setEditForm({ ...entry });
+    setEditModalOpen(true);
+  };
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingEntry(null);
+    setEditForm({});
+  };
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target;
+    setEditForm((f: any) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+  };
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEntry) return;
+    setEditLoading(true);
+    try {
+      const docRef = doc(db, "mileage", editingEntry.id);
+      await updateDoc(docRef, {
+        beginAddress: editForm.beginAddress,
+        endAddress: editForm.endAddress,
+        roundTrip: !!editForm.roundTrip,
+        miles: parseFloat(editForm.miles) || 0,
+        costPerMile: parseFloat(editForm.costPerMile) || 0,
+        totalCost: parseFloat(editForm.totalCost) || 0,
+        deal: editForm.deal || "",
+        date: editForm.date || "",
+        notes: editForm.notes || "",
+      });
+      closeEditModal();
+    } catch (err) {
+      alert("Failed to update mileage entry");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this mileage entry?")) return;
+    setDeletingId(id);
+    try {
+      await deleteDoc(doc(db, "mileage", id));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -517,6 +571,7 @@ export default function MileagePage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Rate</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Total</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Deal</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -529,6 +584,21 @@ export default function MileagePage() {
                     <td className="px-4 py-3 text-gray-600">${(entry.costPerMile || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 font-semibold text-green-600">${(entry.totalCost || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 text-gray-600">{String(entry.deal ?? "") || "-"}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => openEditModal(entry)}
+                        className="text-blue-600 hover:text-blue-800 font-medium mr-2"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        disabled={deletingId === entry.id}
+                        className="text-red-600 hover:text-red-800 font-medium disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {deletingId === entry.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {mileageEntries.length === 0 && (
@@ -547,6 +617,59 @@ export default function MileagePage() {
           </div>
         </div>
       </div>
+      {/* Edit Mileage Modal */}
+      {editModalOpen && editingEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg relative">
+            <button onClick={closeEditModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <h3 className="text-2xl font-bold mb-4">Edit Mileage Entry</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <input type="date" name="date" value={editForm.date || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Begin Address</label>
+                <input type="text" name="beginAddress" value={editForm.beginAddress || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">End Address</label>
+                <input type="text" name="endAddress" value={editForm.endAddress || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" required />
+              </div>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" name="roundTrip" checked={!!editForm.roundTrip} onChange={handleEditChange} id="editRoundTrip" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                <label htmlFor="editRoundTrip" className="text-sm font-medium text-gray-700">Round Trip</label>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Miles</label>
+                <input type="number" name="miles" value={editForm.miles || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Cost per Mile</label>
+                <input type="number" name="costPerMile" value={editForm.costPerMile || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Total Cost</label>
+                <input type="number" name="totalCost" value={editForm.totalCost || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Deal</label>
+                <input type="text" name="deal" value={editForm.deal || ''} onChange={handleEditChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                <textarea name="notes" value={editForm.notes || ''} onChange={handleEditChange} rows={3} className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none" />
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <button type="button" onClick={closeEditModal} className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold">Cancel</button>
+                <button type="submit" disabled={editLoading} className="px-6 py-2 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 disabled:opacity-60">
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 } 
