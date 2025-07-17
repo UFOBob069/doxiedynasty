@@ -274,8 +274,12 @@ export default function MileagePage() {
     setEditForm({});
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target;
-    setEditForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+    const { name, value, type } = e.target;
+    let newValue: string | boolean = value;
+    if (type === 'checkbox') {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+    setEditForm((f) => ({ ...f, [name]: newValue }));
   };
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -283,13 +287,14 @@ export default function MileagePage() {
     setEditLoading(true);
     try {
       const docRef = doc(db, "mileage", editingEntry.id);
+      const toNumber = (val: string | number | undefined) => typeof val === 'number' ? val : parseFloat(val || '0') || 0;
       await updateDoc(docRef, {
         beginAddress: editForm.beginAddress,
         endAddress: editForm.endAddress,
         roundTrip: !!editForm.roundTrip,
-        miles: parseFloat(editForm.miles as string) || 0,
-        costPerMile: parseFloat(editForm.costPerMile as string) || 0,
-        totalCost: parseFloat(editForm.totalCost as string) || 0,
+        miles: toNumber(editForm.miles),
+        costPerMile: toNumber(editForm.costPerMile),
+        totalCost: toNumber(editForm.totalCost),
         deal: editForm.deal || "",
         date: editForm.date || "",
         notes: editForm.notes || "",
