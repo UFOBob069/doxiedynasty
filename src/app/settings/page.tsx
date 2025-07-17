@@ -45,7 +45,6 @@ export default function SettingsPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
   
   const [profile, setProfile] = useState<UserProfile>({
@@ -198,7 +197,6 @@ export default function SettingsPage() {
     if (!user) return;
 
     setLoading(true);
-    setError("");
     setSaved(false);
 
     try {
@@ -244,7 +242,7 @@ export default function SettingsPage() {
       setTimeout(() => setSaved(false), 3000);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to save settings";
-      setError(errorMessage);
+      alert(errorMessage); // Changed from setError to alert
     } finally {
       setLoading(false);
     }
@@ -842,7 +840,7 @@ export default function SettingsPage() {
                     } else {
                       alert('Failed to create portal session.');
                     }
-                  } catch (error) {
+                  } catch {
                     alert('Error creating portal session.');
                   }
                 }}
@@ -897,15 +895,6 @@ export default function SettingsPage() {
           </div>
 
           {/* Status Messages */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-red-500">⚠️</span>
-                <p className="text-red-600 text-sm font-medium">{error}</p>
-              </div>
-            </div>
-          )}
-
           {saved && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4">
               <div className="flex items-center gap-2">
