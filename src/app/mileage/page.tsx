@@ -70,6 +70,31 @@ async function getMiles(begin: string, end: string) {
   return meters / 1609.34; // meters to miles
 }
 
+// Utility function to convert array of objects to CSV
+function arrayToCSV(items: any[]): string {
+  if (!items.length) return '';
+  const replacer = (key: string, value: any) => (value === null || value === undefined ? '' : value);
+  const header = Object.keys(items[0]);
+  const csv = [
+    header.join(','),
+    ...items.map(row =>
+      header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(',')
+    ),
+  ].join('\r\n');
+  return csv;
+}
+
+function downloadCSV(data: any[], filename: string) {
+  const csv = arrayToCSV(data);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
 export default function MileagePage() {
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,10 +281,16 @@ export default function MileagePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Mileage Tracker</h1>
-              <p className="text-gray-600 text-lg">Log your business travel and track deductible mileage</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Mileage Tracking</h1>
+              <p className="text-gray-600 text-lg">Log and track your business mileage</p>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => downloadCSV(mileageEntries, 'mileage.csv')}
+                className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
+              >
+                📥 Download CSV
+              </button>
               <button
                 onClick={() => router.push('/dashboard')}
                 className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"

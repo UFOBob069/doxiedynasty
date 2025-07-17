@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc as firestoreDoc, Timestamp as FirestoreTimestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Timestamp } from "firebase/firestore";
 
@@ -81,6 +81,19 @@ export default function SettingsPage() {
     },
   });
 
+  const [commissionSchedules, setCommissionSchedules] = useState<any[]>([]);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [newSchedule, setNewSchedule] = useState({
+    yearStart: '',
+    commissionType: 'percentage',
+    companySplitPercent: '',
+    companySplitCap: '',
+    royaltyPercent: '',
+    royaltyCap: '',
+    estimatedTaxPercent: '',
+    fixedCommissionAmount: '',
+  });
+
   // Auth guard
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user: unknown) => {
@@ -147,6 +160,16 @@ export default function SettingsPage() {
 
     return () => unsub();
   }, [user]);
+
+  // Load commission schedules
+  useEffect(() => {
+    if (!user) return;
+    const userId = (user as { uid: string }).uid;
+    const q = query(collection(db, "commissionSchedules"), where("userId", "==", userId));
+    getDocs(q).then(snapshot => {
+      setCommissionSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+  }, [user, saved]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -243,6 +266,56 @@ export default function SettingsPage() {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to save settings";
       alert(errorMessage); // Changed from setError to alert
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setLoading(true);
+    try {
+      const userId = (user as { uid: string }).uid;
+      await addDoc(collection(db, "commissionSchedules"), {
+        userId,
+        yearStart: FirestoreTimestamp.fromDate(new Date(newSchedule.yearStart)),
+        commissionType: newSchedule.commissionType,
+        companySplitPercent: newSchedule.companySplitPercent,
+        companySplitCap: newSchedule.companySplitCap,
+        royaltyPercent: newSchedule.royaltyPercent,
+        royaltyCap: newSchedule.royaltyCap,
+        estimatedTaxPercent: newSchedule.estimatedTaxPercent,
+        fixedCommissionAmount: newSchedule.fixedCommissionAmount,
+        createdAt: Timestamp.now(),
+      });
+      setShowScheduleForm(false);
+      setSaved(true);
+      setNewSchedule({
+        yearStart: '',
+        commissionType: 'percentage',
+        companySplitPercent: '',
+        companySplitCap: '',
+        royaltyPercent: '',
+        royaltyCap: '',
+        estimatedTaxPercent: '',
+        fixedCommissionAmount: '',
+      });
+    } catch (err) {
+      alert('Failed to add commission schedule.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this commission schedule? This cannot be undone.')) return;
+    setLoading(true);
+    try {
+      await deleteDoc(firestoreDoc(db, "commissionSchedules", id));
+      setSaved(true);
+    } catch (err) {
+      alert('Failed to delete commission schedule.');
     } finally {
       setLoading(false);
     }
@@ -838,7 +911,8 @@ export default function SettingsPage() {
                       const { url } = await response.json();
                       window.location.href = url;
                     } else {
-                      alert('Failed to create portal session.');
+                      const errorData = await response.json();
+                      alert(errorData.error || 'Failed to create portal session.');
                     }
                   } catch {
                     alert('Error creating portal session.');
@@ -880,6 +954,105 @@ export default function SettingsPage() {
               <p>• View billing history and download invoices</p>
               <p>• Cancel subscription (access continues until end of billing period)</p>
               <p>• Reactivate subscription anytime</p>
+            </div>
+          </div>
+
+          {/* Commission Schedules */}
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">📅</span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Commission Schedules</h2>
+                <p className="text-gray-500 text-sm">Manage your historical and current commission contracts</p>
+              </div>
+            </div>
+            <div className="mb-4">
+              <button
+                onClick={() => setShowScheduleForm(!showScheduleForm)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                {showScheduleForm ? 'Cancel' : 'Add New Schedule'}
+              </button>
+            </div>
+            {showScheduleForm && (
+              <form onSubmit={handleAddSchedule} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                  <input type="date" required value={newSchedule.yearStart} onChange={e => setNewSchedule(s => ({ ...s, yearStart: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Commission Type</label>
+                  <select value={newSchedule.commissionType} onChange={e => setNewSchedule(s => ({ ...s, commissionType: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Company Split %</label>
+                  <input type="number" value={newSchedule.companySplitPercent} onChange={e => setNewSchedule(s => ({ ...s, companySplitPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Company Split Cap</label>
+                  <input type="number" value={newSchedule.companySplitCap} onChange={e => setNewSchedule(s => ({ ...s, companySplitCap: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Royalty %</label>
+                  <input type="number" value={newSchedule.royaltyPercent} onChange={e => setNewSchedule(s => ({ ...s, royaltyPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Royalty Cap</label>
+                  <input type="number" value={newSchedule.royaltyCap} onChange={e => setNewSchedule(s => ({ ...s, royaltyCap: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Estimated Tax %</label>
+                  <input type="number" value={newSchedule.estimatedTaxPercent} onChange={e => setNewSchedule(s => ({ ...s, estimatedTaxPercent: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission Amount</label>
+                  <input type="number" value={newSchedule.fixedCommissionAmount} onChange={e => setNewSchedule(s => ({ ...s, fixedCommissionAmount: e.target.value }))} className="w-full px-4 py-3 border border-gray-300 rounded-xl" />
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <button type="submit" disabled={loading} className="bg-gradient-to-r from-green-600 to-lime-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+                    {loading ? 'Saving...' : 'Save Schedule'}
+                  </button>
+                </div>
+              </form>
+            )}
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white rounded-xl">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left">Start Date</th>
+                    <th className="px-4 py-2 text-left">Type</th>
+                    <th className="px-4 py-2 text-left">Split %</th>
+                    <th className="px-4 py-2 text-left">Split Cap</th>
+                    <th className="px-4 py-2 text-left">Royalty %</th>
+                    <th className="px-4 py-2 text-left">Royalty Cap</th>
+                    <th className="px-4 py-2 text-left">Tax %</th>
+                    <th className="px-4 py-2 text-left">Fixed Amt</th>
+                    <th className="px-4 py-2 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commissionSchedules.sort((a, b) => (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)).map(sched => (
+                    <tr key={sched.id} className="border-t">
+                      <td className="px-4 py-2">{sched.yearStart?.toDate ? sched.yearStart.toDate().toLocaleDateString() : ''}</td>
+                      <td className="px-4 py-2">{sched.commissionType}</td>
+                      <td className="px-4 py-2">{sched.companySplitPercent}</td>
+                      <td className="px-4 py-2">{sched.companySplitCap}</td>
+                      <td className="px-4 py-2">{sched.royaltyPercent}</td>
+                      <td className="px-4 py-2">{sched.royaltyCap}</td>
+                      <td className="px-4 py-2">{sched.estimatedTaxPercent}</td>
+                      <td className="px-4 py-2">{sched.fixedCommissionAmount}</td>
+                      <td className="px-4 py-2">
+                        <button onClick={() => handleDeleteSchedule(sched.id)} className="text-red-600 hover:underline">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 

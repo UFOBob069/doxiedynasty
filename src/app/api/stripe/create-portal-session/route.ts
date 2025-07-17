@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stripe is not initialized' },{ status: 500 });
     }
     
-    // Get usersStripe customer ID from Firestore
+    // Get user subscription from Firestore
     const userRef = doc(db, 'userSubscriptions', userId);
     console.log('Fetching user subscription for userId:', userId);
     
@@ -27,18 +27,22 @@ export async function POST(request: NextRequest) {
     
     if (!userDoc.exists()) {
       console.log('Error: User subscription not found for userId:', userId);
-      return NextResponse.json({ error: 'User subscription not found' },{ status: 404 });
+      return NextResponse.json({ 
+        error: 'User subscription not found. Please ensure you have an active subscription.' 
+      }, { status: 404 });
     }
     
     const userData = userDoc.data();
-    console.log('User data:', userData);
+    console.log('User subscription data:', userData);
     
     const stripeCustomerId = userData.stripeCustomerId;
     console.log('Stripe customer ID:', stripeCustomerId);
     
     if (!stripeCustomerId) {
       console.log('Error: No Stripe customer ID found for userId:', userId);
-      return NextResponse.json({ error: 'No Stripe customer ID found' },{ status: 400 });
+      return NextResponse.json({ 
+        error: 'No Stripe customer ID found. Please contact support.' 
+      }, { status: 400 });
     }
     
     // Create portal session
@@ -52,6 +56,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('Error creating portal session:', error);
-    return NextResponse.json({ error: 'Failed to create portal session' },{ status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to create portal session. Please try again or contact support.' 
+    }, { status: 500 });
   }
 } 

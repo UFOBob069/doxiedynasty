@@ -36,4 +36,8 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app); 
+export const storage = getStorage(app);
+
+// Firestore collection for commission schedules (historical commission years)
+// Usage: collection(db, 'commissionSchedules')
+// Each document: { userId, yearStart, yearEnd, companySplitPercent, companySplitCap, royaltyPercent, royaltyCap, estimatedTaxPercent, ... } 

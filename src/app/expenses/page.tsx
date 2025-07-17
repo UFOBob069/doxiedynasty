@@ -29,6 +29,31 @@ const categories = [
   "Other",
 ];
 
+// Utility function to convert array of objects to CSV
+function arrayToCSV(items: any[]): string {
+  if (!items.length) return '';
+  const replacer = (key: string, value: any) => (value === null || value === undefined ? '' : value);
+  const header = Object.keys(items[0]);
+  const csv = [
+    header.join(','),
+    ...items.map(row =>
+      header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(',')
+    ),
+  ].join('\r\n');
+  return csv;
+}
+
+function downloadCSV(data: any[], filename: string) {
+  const csv = arrayToCSV(data);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
   const [loading, setLoading] = useState(false);
@@ -165,6 +190,12 @@ export default function ExpensesPage() {
               <p className="text-gray-600 text-lg">Manage your business expenses and receipts</p>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => downloadCSV(expenses, 'expenses.csv')}
+                className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
+              >
+                📥 Download CSV
+              </button>
               <button
                 onClick={() => router.push('/dashboard')}
                 className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"

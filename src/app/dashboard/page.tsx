@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import SubscriptionStatus from '../../components/SubscriptionStatus';
 import { useSubscription } from '../../hooks/useSubscription';
@@ -147,6 +147,9 @@ export default function DashboardPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
   const { subscription, loading: subLoading } = useSubscription();
+  const [commissionSchedules, setCommissionSchedules] = useState<any[]>([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -200,7 +203,117 @@ export default function DashboardPage() {
     return () => unsub();
   }, [user]);
 
-  // Only do conditional rendering after all hooks
+  // Fetch commission schedules for the user
+  useEffect(() => {
+    if (!user) return;
+    const userId = (user as { uid: string }).uid;
+    const q = query(collection(db, "commissionSchedules"), where("userId", "==", userId));
+    getDocs(q).then(snapshot => {
+      const schedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCommissionSchedules(schedules);
+      // Default to the most recent schedule
+      if (schedules.length > 0 && !selectedScheduleId) {
+        setSelectedScheduleId(schedules[schedules.length - 1].id);
+      }
+    });
+  }, [user]);
+
+  // Set selected schedule object
+  useEffect(() => {
+    if (!commissionSchedules.length || !selectedScheduleId) return;
+    const sched = commissionSchedules.find(s => s.id === selectedScheduleId);
+    setSelectedSchedule(sched || null);
+  }, [commissionSchedules, selectedScheduleId]);
+
+  // Helper: get start and end date for a schedule
+  function getScheduleRange(schedule: any, nextSchedule?: any) {
+    const start = schedule?.yearStart?.toDate ? schedule.yearStart.toDate() : null;
+    let end = null;
+    if (nextSchedule && nextSchedule.yearStart?.toDate) {
+      end = new Date(nextSchedule.yearStart.toDate().getTime() - 1);
+    } else if (start) {
+      end = new Date(start);
+      end.setFullYear(end.getFullYear() + 1);
+      end.setDate(end.getDate() - 1);
+    }
+    return { start, end };
+  }
+
+  // Filter deals for selected schedule
+  const filteredDeals = selectedSchedule ? deals.filter(deal => {
+    const dealDate = deal.closeDate ? new Date(deal.closeDate) : (deal.createdAt && typeof (deal.createdAt as Timestamp).toDate === 'function' ? (deal.createdAt as Timestamp).toDate() : null);
+    if (!dealDate) return false;
+    const idx = commissionSchedules.findIndex(s => s.id === selectedScheduleId);
+    const nextSchedule = commissionSchedules[idx + 1];
+    const { start, end } = getScheduleRange(selectedSchedule, nextSchedule);
+    return dealDate >= start && dealDate <= end;
+  }) : deals;
+
+  // Use selected schedule for all calculations
+  const ytdRoyaltyUsage = selectedSchedule ? calculateYtdRoyaltyUsage(filteredDeals, selectedSchedule.yearStart) : 0;
+  const ytdCompanySplitUsage = selectedSchedule ? calculateYtdCompanySplitUsage(filteredDeals, selectedSchedule.yearStart) : 0;
+  const remainingRoyaltyCap = selectedSchedule ? safeNumber(selectedSchedule.royaltyCap) - ytdRoyaltyUsage : 0;
+  const remainingCompanyCap = selectedSchedule ? safeNumber(selectedSchedule.companySplitCap) - ytdCompanySplitUsage : 0;
+  const royaltyCapPercentage = selectedSchedule ? (ytdRoyaltyUsage / safeNumber(selectedSchedule.royaltyCap)) * 100 : 0;
+  const companyCapPercentage = selectedSchedule ? (ytdCompanySplitUsage / safeNumber(selectedSchedule.companySplitCap)) * 100 : 0;
+
+  // Calculate monthly net income for chart
+  const monthlyNetIncome = calculateMonthlyNetIncome(deals, expenses, 6);
+  const averageMonthlyNet = monthlyNetIncome.length > 0 
+    ? monthlyNetIncome.reduce((sum, month) => sum + month.netIncome, 0) / monthlyNetIncome.length 
+    : 0;
+  const bestMonth = monthlyNetIncome.length > 0 
+    ? Math.max(...monthlyNetIncome.map(month => month.netIncome)) 
+    : 0;
+
+  // Check if settings are incomplete
+  const isSettingsIncomplete = !userProfile || 
+    !safeNumber(userProfile.companySplitPercent) || 
+    !safeNumber(userProfile.companySplitCap) || 
+    !safeNumber(userProfile.royaltyPercent) || 
+    !safeNumber(userProfile.royaltyCap) || 
+    !safeNumber(userProfile.estimatedTaxPercent) ||
+    !userProfile.startOfCommissionYear;
+
+  // Calculate next anniversary of commission year
+  let commissionYearReminder = null;
+  if (userProfile && userProfile.startOfCommissionYear) {
+    const startDate = userProfile.startOfCommissionYear.toDate();
+    const now = new Date();
+    // Calculate next anniversary (if today is after the anniversary, it's time to update)
+    let nextAnniversary = new Date(startDate);
+    while (nextAnniversary <= now) {
+      nextAnniversary.setFullYear(nextAnniversary.getFullYear() + 1);
+    }
+    // If today is after the anniversary (i.e., more than a year since start), show reminder
+    const lastAnniversary = new Date(nextAnniversary);
+    lastAnniversary.setFullYear(lastAnniversary.getFullYear() - 1);
+    if (now > nextAnniversary || (now >= lastAnniversary && now < nextAnniversary && now.getFullYear() > lastAnniversary.getFullYear())) {
+      commissionYearReminder = (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">⏰</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-yellow-800 mb-2">Update Your Commission Year</h3>
+              <p className="text-yellow-700 mb-4">
+                It's been over a year since your last commission year start date (<b>{startDate.toLocaleDateString()}</b>).<br />
+                Please update your Commission Year in <b>Settings</b> to ensure accurate cap tracking.
+              </p>
+              <button
+                onClick={() => router.push('/settings')}
+                className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                Update Commission Year
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
   if (subLoading || authLoading) {
     return <div className="p-8 text-center text-gray-500">Loading...</div>;
   }
@@ -222,34 +335,7 @@ export default function DashboardPage() {
   const totalNetIncome = deals.reduce((sum, deal) => sum + (deal.netIncome || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
   
-  // Calculate YTD usage for both caps
-  const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
-  const ytdCompanySplitUsage = userProfile ? calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear) : 0;
-  
-  const remainingRoyaltyCap = userProfile ? safeNumber(userProfile.royaltyCap) - ytdRoyaltyUsage : 0;
-  const remainingCompanyCap = userProfile ? safeNumber(userProfile.companySplitCap) - ytdCompanySplitUsage : 0;
-  
-  const royaltyCapPercentage = userProfile ? (ytdRoyaltyUsage / safeNumber(userProfile.royaltyCap)) * 100 : 0;
-  const companyCapPercentage = userProfile ? (ytdCompanySplitUsage / safeNumber(userProfile.companySplitCap)) * 100 : 0;
-  
-  // Calculate monthly net income for chart
-  const monthlyNetIncome = calculateMonthlyNetIncome(deals, expenses, 6);
-  const averageMonthlyNet = monthlyNetIncome.length > 0 
-    ? monthlyNetIncome.reduce((sum, month) => sum + month.netIncome, 0) / monthlyNetIncome.length 
-    : 0;
-  const bestMonth = monthlyNetIncome.length > 0 
-    ? Math.max(...monthlyNetIncome.map(month => month.netIncome)) 
-    : 0;
-
-  // Check if settings are incomplete
-  const isSettingsIncomplete = !userProfile || 
-    !safeNumber(userProfile.companySplitPercent) || 
-    !safeNumber(userProfile.companySplitCap) || 
-    !safeNumber(userProfile.royaltyPercent) || 
-    !safeNumber(userProfile.royaltyCap) || 
-    !safeNumber(userProfile.estimatedTaxPercent) ||
-    !userProfile.startOfCommissionYear;
-
+  // Only do conditional rendering after all hooks
   if (authLoading || loading) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -338,6 +424,31 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Commission Year Reminder */}
+        {commissionYearReminder}
+
+        {/* Commission Year Selector */}
+        <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-4">
+          <label className="font-semibold text-gray-700 mr-2">Commission Year:</label>
+          <select
+            value={selectedScheduleId || ''}
+            onChange={e => setSelectedScheduleId(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-xl"
+          >
+            {commissionSchedules.sort((a, b) => (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)).map((sched, idx, arr) => {
+              const { start, end } = getScheduleRange(sched, arr[idx + 1]);
+              return (
+                <option key={sched.id} value={sched.id}>
+                  {start?.toLocaleDateString()} - {end?.toLocaleDateString()}
+                </option>
+              );
+            })}
+          </select>
+          {selectedSchedule && (
+            <span className="ml-4 text-sm text-gray-500">Split: {selectedSchedule.companySplitPercent}%, Cap: ${selectedSchedule.companySplitCap}, Royalty: {selectedSchedule.royaltyPercent}% / ${selectedSchedule.royaltyCap}, Tax: {selectedSchedule.estimatedTaxPercent}%</span>
+          )}
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -401,7 +512,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">${ytdRoyaltyUsage.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">of ${safeNumber(userProfile?.royaltyCap).toLocaleString()}</div>
+                <div className="text-sm text-gray-500">of ${safeNumber(selectedSchedule?.royaltyCap).toLocaleString()}</div>
               </div>
             </div>
             
@@ -424,12 +535,12 @@ export default function DashboardPage() {
             <div className="flex justify-between text-sm">
               <span className={`font-medium ${
                 remainingRoyaltyCap <= 0 ? 'text-red-600' : 
-                remainingRoyaltyCap < safeNumber(userProfile?.royaltyCap) * 0.1 ? 'text-orange-600' : 'text-green-600'
+                remainingRoyaltyCap < safeNumber(selectedSchedule?.royaltyCap) * 0.1 ? 'text-orange-600' : 'text-green-600'
               }`}>
                 {remainingRoyaltyCap <= 0 ? 'Cap reached!' : `$${remainingRoyaltyCap.toLocaleString()} remaining`}
               </span>
               <span className="text-gray-500">
-                {userProfile?.startOfCommissionYear?.toDate().toLocaleDateString() || 'Not set'} - {new Date().toLocaleDateString()}
+                {selectedSchedule?.yearStart?.toDate().toLocaleDateString() || 'Not set'} - {new Date().toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -448,7 +559,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">${ytdCompanySplitUsage.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">of ${safeNumber(userProfile?.companySplitCap).toLocaleString()}</div>
+                <div className="text-sm text-gray-500">of ${safeNumber(selectedSchedule?.companySplitCap).toLocaleString()}</div>
               </div>
             </div>
             
@@ -471,12 +582,12 @@ export default function DashboardPage() {
             <div className="flex justify-between text-sm">
               <span className={`font-medium ${
                 remainingCompanyCap <= 0 ? 'text-red-600' : 
-                remainingCompanyCap < safeNumber(userProfile?.companySplitCap) * 0.1 ? 'text-orange-600' : 'text-green-600'
+                remainingCompanyCap < safeNumber(selectedSchedule?.companySplitCap) * 0.1 ? 'text-orange-600' : 'text-green-600'
               }`}>
                 {remainingCompanyCap <= 0 ? 'Cap reached!' : `$${remainingCompanyCap.toLocaleString()} remaining`}
               </span>
               <span className="text-gray-500">
-                {userProfile?.startOfCommissionYear?.toDate().toLocaleDateString() || 'Not set'} - {new Date().toLocaleDateString()}
+                {selectedSchedule?.yearStart?.toDate().toLocaleDateString() || 'Not set'} - {new Date().toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -559,7 +670,7 @@ export default function DashboardPage() {
               <h3 className="text-lg font-bold text-gray-900">Recent Deals</h3>
             </div>
             <div className="space-y-3">
-              {deals.slice(0, 5).map((deal) => (
+              {filteredDeals.slice(0, 5).map((deal) => (
                 <div key={deal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <div>
                     <div className="font-medium text-gray-900">{String(deal.address ?? "").split(',')[0]}</div>
@@ -571,7 +682,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
-              {deals.length === 0 && (
+              {filteredDeals.length === 0 && (
                 <div className="text-center text-gray-400 py-4">
                   <p className="text-sm">No deals yet</p>
                 </div>
