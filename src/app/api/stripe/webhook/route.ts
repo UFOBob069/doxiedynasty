@@ -4,6 +4,11 @@ import { db } from '../../../../firebase';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import Stripe from 'stripe';
 
+type StripeSubscriptionWithPeriod = Stripe.Subscription & {
+  current_period_start: number;
+  current_period_end: number;
+};
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
@@ -52,15 +57,15 @@ export async function POST(request: NextRequest) {
       }
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object as StripeSubscriptionWithPeriod;
         if (subscription.metadata?.userId) {
           const userId = subscription.metadata.userId;
           const subscriptionRef = doc(db, 'userSubscriptions', userId);
           await updateDoc(subscriptionRef, {
             stripeSubscriptionId: subscription.id,
             status: subscription.status,
-            currentPeriodStart: new Date((subscription as any)['current_period_start'] * 1000),
-            currentPeriodEnd: new Date((subscription as any)['current_period_end'] * 1000),
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
             trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
             trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
             planType: subscription.items.data[0]?.price.recurring?.interval as 'monthly' | 'yearly',
