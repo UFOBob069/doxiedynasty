@@ -37,6 +37,7 @@ interface Deal {
   referralFee?: number; // Optional referral fee
   transactionFee?: number; // Optional transaction fee
   createdAt?: Timestamp;
+  notes?: string; // New field for notes
   [key: string]: unknown;
 }
 
@@ -278,7 +279,7 @@ export default function DealsPage() {
   const addressTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Partial<Deal>>({});
   const [editLoading, setEditLoading] = useState(false);
 
   // Auth guard
@@ -438,7 +439,7 @@ export default function DealsPage() {
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setEditForm((f: any) => ({ ...f, [name]: value }));
+    setEditForm((f) => ({ ...f, [name]: value }));
   };
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -446,18 +447,19 @@ export default function DealsPage() {
     setEditLoading(true);
     try {
       const docRef = doc(db, "deals", editingDeal.id);
+      const toNumber = (val: string | number | undefined) => typeof val === 'number' ? val : parseFloat(val || '0') || 0;
       await updateDoc(docRef, {
         address: editForm.address,
         client: editForm.client,
         closeDate: editForm.closeDate,
-        totalDealAmount: parseFloat(editForm.totalDealAmount) || 0,
-        commissionPercent: parseFloat(editForm.commissionPercent) || 0,
-        referralFee: parseFloat(editForm.referralFee) || 0,
-        transactionFee: parseFloat(editForm.transactionFee) || 0,
+        totalDealAmount: toNumber(editForm.totalDealAmount),
+        commissionPercent: toNumber(editForm.commissionPercent),
+        referralFee: toNumber(editForm.referralFee),
+        transactionFee: toNumber(editForm.transactionFee),
         notes: editForm.notes || "",
       });
       closeEditModal();
-    } catch (err) {
+    } catch {
       alert("Failed to update deal");
     } finally {
       setEditLoading(false);

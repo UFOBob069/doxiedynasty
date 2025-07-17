@@ -120,8 +120,8 @@ export default function MileagePage() {
   const beginTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const endTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<any>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editingEntry, setEditingEntry] = useState<MileageEntry | null>(null);
+  const [editForm, setEditForm] = useState<Partial<MileageEntry>>({});
   const [editLoading, setEditLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -263,7 +263,7 @@ export default function MileagePage() {
     }
   };
 
-  const openEditModal = (entry: any) => {
+  const openEditModal = (entry: MileageEntry) => {
     setEditingEntry(entry);
     setEditForm({ ...entry });
     setEditModalOpen(true);
@@ -275,7 +275,7 @@ export default function MileagePage() {
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target;
-    setEditForm((f: any) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+    setEditForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
   };
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,15 +287,15 @@ export default function MileagePage() {
         beginAddress: editForm.beginAddress,
         endAddress: editForm.endAddress,
         roundTrip: !!editForm.roundTrip,
-        miles: parseFloat(editForm.miles) || 0,
-        costPerMile: parseFloat(editForm.costPerMile) || 0,
-        totalCost: parseFloat(editForm.totalCost) || 0,
+        miles: parseFloat(editForm.miles as string) || 0,
+        costPerMile: parseFloat(editForm.costPerMile as string) || 0,
+        totalCost: parseFloat(editForm.totalCost as string) || 0,
         deal: editForm.deal || "",
         date: editForm.date || "",
         notes: editForm.notes || "",
       });
       closeEditModal();
-    } catch (err) {
+    } catch {
       alert("Failed to update mileage entry");
     } finally {
       setEditLoading(false);

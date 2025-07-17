@@ -55,8 +55,20 @@ function downloadCSV(data: Record<string, unknown>[], filename: string) {
   window.URL.revokeObjectURL(url);
 }
 
+// Add Expense type
+interface Expense {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  notes: string;
+  deal: string;
+  receiptUrl?: string;
+  [key: string]: unknown;
+}
+
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
+  const [expenses, setExpenses] = useState<Array<Expense>>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     date: "",
@@ -73,8 +85,8 @@ export default function ExpensesPage() {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<any>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Expense>>({});
   const [editLoading, setEditLoading] = useState(false);
 
   // Auth guard
@@ -96,7 +108,7 @@ export default function ExpensesPage() {
       orderBy("date", "desc")
     );
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-      setExpenses(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() })));
+      setExpenses(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() } as Expense)));
     });
     return () => unsub();
   }, [user]);
@@ -159,7 +171,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const openEditModal = (expense: any) => {
+  const openEditModal = (expense: Expense) => {
     setEditingExpense(expense);
     setEditForm({ ...expense });
     setEditModalOpen(true);
@@ -169,9 +181,13 @@ export default function ExpensesPage() {
     setEditingExpense(null);
     setEditForm({});
   };
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setEditForm((f: any) => ({ ...f, [name]: value }));
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    let newValue: string | boolean = value;
+    if (type === 'checkbox' && 'checked' in e.target) {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+    setEditForm((f) => ({ ...f, [name]: newValue }));
   };
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,15 +195,16 @@ export default function ExpensesPage() {
     setEditLoading(true);
     try {
       const docRef = doc(db, "expenses", editingExpense.id);
+      const toNumber = (val: string | number | undefined) => typeof val === 'number' ? val : parseFloat(val || '0') || 0;
       await updateDoc(docRef, {
         date: editForm.date,
         category: editForm.category,
-        amount: parseFloat(editForm.amount) || 0,
+        amount: toNumber(editForm.amount),
         notes: editForm.notes || "",
         deal: editForm.deal || "",
       });
       closeEditModal();
-    } catch (err) {
+    } catch {
       alert("Failed to update expense");
     } finally {
       setEditLoading(false);
