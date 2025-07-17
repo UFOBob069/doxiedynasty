@@ -1,8 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSubscription } from '../hooks/useSubscription';
+import { auth } from '../firebase';
 
 export default function SubscriptionStatus() {
   const { subscription, loading, isInTrial, getDaysLeftInTrial, getSubscriptionStatus } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleManageBilling = async () => {
+    if (!auth.currentUser) return;
+    
+    setPortalLoading(true);
+    try {
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: auth.currentUser.uid,
+        }),
+      });
+
+      const { url, error } = await response.json();
+      
+      if (error) {
+        console.error('Error creating portal session:', error);
+        alert('Unable to open billing portal. Please try again.');
+        return;
+      }
+
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error('Error creating portal session:', error);
+      alert('Unable to open billing portal. Please try again.');
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -138,10 +174,11 @@ export default function SubscriptionStatus() {
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex gap-3">
           <button
-            onClick={() => window.open('https://billing.stripe.com/login', '_blank')}
-            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            onClick={handleManageBilling}
+            disabled={portalLoading}
+            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Manage Billing
+            {portalLoading ? 'Loading...' : 'Manage Billing'}
           </button>
           <button
             onClick={() => window.open('https://support.stripe.com', '_blank')}

@@ -7,7 +7,8 @@ export const stripe = process.env.STRIPE_SECRET_KEY
     })
   : null;
 
-if (!process.env.STRIPE_SECRET_KEY) {
+// Server-side environment variable check
+if (typeof window === 'undefined' && !process.env.STRIPE_SECRET_KEY) {
   console.warn('Stripe secret key not found in environment variables.');
 }
 
