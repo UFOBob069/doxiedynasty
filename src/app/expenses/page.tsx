@@ -67,8 +67,26 @@ interface Expense {
   [key: string]: unknown;
 }
 
+// Add MileageEntry type
+interface MileageEntry {
+  id: string;
+  userId?: string;
+  beginAddress?: string;
+  endAddress?: string;
+  roundTrip?: boolean;
+  miles?: number;
+  costPerMile?: number;
+  totalCost?: number;
+  deal?: string;
+  date?: string;
+  notes?: string;
+  createdAt?: Timestamp;
+  [key: string]: unknown;
+}
+
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Array<Expense>>([]);
+  const [mileageEntries, setMileageEntries] = useState<Array<MileageEntry>>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     date: "",
@@ -109,6 +127,29 @@ export default function ExpensesPage() {
     );
     const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
       setExpenses(snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ id: doc.id, ...doc.data() } as Expense)));
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Fetch mileage entries for current user
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, "mileage"),
+      where("userId", "==", (user as { uid: string }).uid)
+    );
+    const unsub = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+      const entries = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      } as MileageEntry));
+      // Sort by date descending
+      entries.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
+      setMileageEntries(entries);
     });
     return () => unsub();
   }, [user]);
@@ -176,6 +217,12 @@ export default function ExpensesPage() {
     setEditForm({ ...expense });
     setEditModalOpen(true);
   };
+
+  const openMileageEditModal = () => {
+    // For mileage entries, we'll redirect to the mileage page for editing
+    router.push('/mileage');
+  };
+
   const closeEditModal = () => {
     setEditModalOpen(false);
     setEditingExpense(null);
@@ -212,16 +259,44 @@ export default function ExpensesPage() {
   };
 
   function safeDisplay(val: unknown): string {
-    if (typeof val === 'number') return val.toLocaleString();
-    if (typeof val === 'string') return val;
-    return '';
+    if (val === null || val === undefined) return "";
+    return String(val);
   }
 
+  // Combine expenses and mileage entries for display
+  const allExpenses = [
+    ...expenses.map(exp => ({
+      ...exp,
+      type: 'expense' as const,
+      displayId: exp.id
+    })),
+    ...mileageEntries.map(mileage => ({
+      id: mileage.id,
+      displayId: `mileage-${mileage.id}`,
+      type: 'mileage' as const,
+      date: mileage.date || '',
+      category: 'Mileage',
+      amount: mileage.totalCost || 0,
+      notes: mileage.notes || `${mileage.beginAddress} to ${mileage.endAddress}${mileage.roundTrip ? ' (round trip)' : ''}${mileage.notes ? ` - ${mileage.notes}` : ''}`,
+      deal: mileage.deal || '',
+      receiptUrl: undefined,
+      miles: mileage.miles,
+      costPerMile: mileage.costPerMile,
+      beginAddress: mileage.beginAddress,
+      endAddress: mileage.endAddress,
+      roundTrip: mileage.roundTrip
+    }))
+  ].sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : 0;
+    const dateB = b.date ? new Date(b.date).getTime() : 0;
+    return dateB - dateA;
+  });
+
   // Calculate totals
-  const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount as number || 0), 0);
-  const expensesByCategory = expenses.reduce((acc, exp) => {
-    const category = exp.category as string || 'Other';
-    acc[category] = (acc[category] || 0) + (exp.amount as number || 0);
+  const totalExpenses = allExpenses.reduce((sum, item) => sum + (item.amount as number || 0), 0);
+  const expensesByCategory = allExpenses.reduce((acc, item) => {
+    const category = item.category as string || 'Other';
+    acc[category] = (acc[category] || 0) + (item.amount as number || 0);
     return acc;
   }, {} as Record<string, number>);
 
@@ -248,7 +323,7 @@ export default function ExpensesPage() {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => downloadCSV(expenses, 'expenses.csv')}
+                onClick={() => downloadCSV(allExpenses, 'expenses.csv')}
                 className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
               >
                 📥 Download CSV
@@ -283,7 +358,7 @@ export default function ExpensesPage() {
               </div>
               <span className="text-blue-600 text-sm font-medium">Total Entries</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{expenses.length}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">{allExpenses.length}</div>
             <p className="text-gray-500 text-sm">Expense records</p>
           </div>
           
@@ -436,7 +511,7 @@ export default function ExpensesPage() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Expense History</h2>
-              <p className="text-gray-500 text-sm">{expenses.length} expense{expenses.length !== 1 ? 's' : ''} tracked</p>
+              <p className="text-gray-500 text-sm">{allExpenses.length} expense{allExpenses.length !== 1 ? 's' : ''} tracked</p>
             </div>
           </div>
           
@@ -454,22 +529,22 @@ export default function ExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((exp) => (
-                  <tr key={exp.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium">{safeDisplay(exp.date)}</td>
+                {allExpenses.map((item) => (
+                  <tr key={item.displayId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium">{safeDisplay(item.date)}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {safeDisplay(exp.category)}
+                        {safeDisplay(item.category)}
                       </span>
                     </td>
                     <td className="px-4 py-3 font-semibold text-red-600">
-                      ${typeof exp.amount === 'number' ? exp.amount.toFixed(2) : safeDisplay(exp.amount)}
+                      ${typeof item.amount === 'number' ? item.amount.toFixed(2) : safeDisplay(item.amount)}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{safeDisplay(exp.notes)}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{safeDisplay(item.notes)}</td>
                     <td className="px-4 py-3">
-                      {exp.receiptUrl ? (
+                      {item.receiptUrl ? (
                         <a 
-                          href={exp.receiptUrl as string} 
+                          href={item.receiptUrl as string} 
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className="text-blue-600 hover:text-blue-800 underline font-medium"
@@ -480,25 +555,37 @@ export default function ExpensesPage() {
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{safeDisplay(exp.deal) || "-"}</td>
+                    <td className="px-4 py-3 text-gray-600">{safeDisplay(item.deal) || "-"}</td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => openEditModal(exp)}
-                        className="text-blue-600 hover:text-blue-800 font-medium mr-2"
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(exp.id)}
-                        disabled={deletingId === exp.id}
-                        className="text-red-600 hover:text-red-800 font-medium disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {deletingId === exp.id ? "Deleting..." : "Delete"}
-                      </button>
+                      {item.type === 'expense' && (
+                        <>
+                          <button
+                            onClick={() => openEditModal(item as Expense)}
+                            className="text-blue-600 hover:text-blue-800 font-medium mr-2"
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            disabled={deletingId === item.id}
+                            className="text-red-600 hover:text-red-800 font-medium disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {deletingId === item.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </>
+                      )}
+                      {item.type === 'mileage' && (
+                        <button
+                          onClick={() => openMileageEditModal()}
+                          className="text-blue-600 hover:text-blue-800 font-medium mr-2"
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
-                {expenses.length === 0 && (
+                {allExpenses.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">

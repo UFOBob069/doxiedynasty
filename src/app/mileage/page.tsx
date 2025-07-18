@@ -576,6 +576,7 @@ export default function MileagePage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Rate</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Total</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Deal</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Notes</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
@@ -589,6 +590,9 @@ export default function MileagePage() {
                     <td className="px-4 py-3 text-gray-600">${(entry.costPerMile || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 font-semibold text-green-600">${(entry.totalCost || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 text-gray-600">{String(entry.deal ?? "") || "-"}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate" title={String(entry.notes ?? "")}>
+                      {String(entry.notes ?? "") || "-"}
+                    </td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => openEditModal(entry)}
@@ -608,7 +612,7 @@ export default function MileagePage() {
                 ))}
                 {mileageEntries.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center text-gray-400 py-8">
+                    <td colSpan={9} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">🚗</span>
                         <p className="text-lg font-medium">No mileage entries yet</p>

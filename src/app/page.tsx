@@ -68,8 +68,8 @@ const stats = [
 const howItWorks = [
   {
     step: "1",
-    title: "Sign Up",
-    description: "Create your account in 30 seconds. No credit card required."
+    title: "Start Free Trial",
+    description: "Create your account in 30 seconds. 30-day free trial included."
   },
   {
     step: "2", 
@@ -106,27 +106,34 @@ export default function Home() {
             Stay organized, maximize your income, and get instant financial insights.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link href="/dashboard" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
-              Try the Demo
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <Link href="/signup" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
+              Start Free 30-Day Trial
             </Link>
             <Link href="/signup" className="bg-white border-2 border-blue-600 text-blue-700 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
-              Sign Up Free
+              View Pricing
             </Link>
+          </div>
+          
+          <div className="text-center mb-8">
+            <p className="text-lg text-gray-700 font-medium mb-2">
+              Just $4.97/month or $49/year after trial
+            </p>
+            <p className="text-sm text-gray-500">Cancel anytime • No commitment</p>
           </div>
           
           <div className="flex justify-center items-center gap-8 text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <span className="text-green-500">✓</span>
-              No credit card required
+              30-day free trial
             </div>
             <div className="flex items-center gap-2">
               <span className="text-green-500">✓</span>
-              Setup in 2 minutes
+              Secure checkout
             </div>
             <div className="flex items-center gap-2">
               <span className="text-green-500">✓</span>
-              Cancel anytime
+              Built for real estate agents
             </div>
           </div>
         </div>
@@ -246,17 +253,24 @@ export default function Home() {
             Start tracking your deals and expenses today. Join thousands of agents who&apos;ve already transformed their financial management.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link href="/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
-              Start Free Trial
+              Start Free 30-Day Trial
             </Link>
-            <Link href="/dashboard" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 text-lg">
-              View Demo
+            <Link href="/signup" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 text-lg">
+              View Pricing
             </Link>
           </div>
           
+          <div className="text-center mb-8">
+            <p className="text-lg text-white font-medium mb-2">
+              Just $4.97/month or $49/year after trial
+            </p>
+            <p className="text-blue-100 text-sm">Cancel anytime • No commitment</p>
+          </div>
+          
           <div className="mt-8 text-blue-100 text-sm">
-            <p>✓ No credit card required • ✓ Setup in 2 minutes • ✓ Cancel anytime</p>
+            <p>✓ 30-day free trial • ✓ Secure checkout • ✓ Built for real estate agents</p>
             <p className="mt-2">SOC 2 & GDPR Compliant • Bank-level security</p>
           </div>
         </div>
