@@ -15,7 +15,6 @@ interface UserProfile {
   companySplitCap: number | string; // Company split cap
   royaltyPercent: number | string; // Royalty percentage
   royaltyCap: number | string; // Royalty cap
-  estimatedTaxPercent: number | string;
 }
 
 interface Deal {
@@ -286,8 +285,7 @@ export default function DashboardPage() {
     !safeNumber(userProfile.companySplitPercent) || 
     !safeNumber(userProfile.companySplitCap) || 
     !safeNumber(userProfile.royaltyPercent) || 
-    !safeNumber(userProfile.royaltyCap) || 
-    !safeNumber(userProfile.estimatedTaxPercent) ||
+    !safeNumber(userProfile.royaltyCap) ||
     !userProfile.startOfCommissionYear;
 
   // Calculate next anniversary of commission year
@@ -420,9 +418,6 @@ export default function DashboardPage() {
                   )}
                   {!safeNumber(userProfile?.royaltyCap) && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Royalty Cap</span>
-                  )}
-                  {!safeNumber(userProfile?.estimatedTaxPercent) && (
-                    <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Tax Rate</span>
                   )}
                   {!userProfile?.startOfCommissionYear && (
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Commission Year</span>

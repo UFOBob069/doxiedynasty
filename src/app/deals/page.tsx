@@ -1,8 +1,8 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -16,8 +16,21 @@ interface UserProfile {
   companySplitCap: number | string; // Company split cap
   royaltyPercent: number | string; // Royalty percentage
   royaltyCap: number | string; // Royalty cap
+  fixedCommissionAmount?: number | string;
+}
+
+interface CommissionSchedule {
+  id: string;
+  userId: string;
+  yearStart: Timestamp;
+  commissionType: 'percentage' | 'fixed';
+  companySplitPercent: number | string;
+  companySplitCap: number | string;
+  royaltyPercent: number | string;
+  royaltyCap: number | string;
   estimatedTaxPercent: number | string;
   fixedCommissionAmount?: number | string;
+  createdAt?: Timestamp;
 }
 
 interface Deal {
@@ -89,7 +102,7 @@ function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Tim
 // Step-by-step commission calculation with detailed breakdown
 function calculateDealBreakdown(
   totalDealAmount: number,
-  userProfile: UserProfile,
+  commissionSchedule: CommissionSchedule,
   ytdRoyaltyUsage: number,
   ytdCompanySplitUsage: number,
   referralFee: number = 0,
@@ -110,11 +123,11 @@ function calculateDealBreakdown(
   estimatedTaxes: number;
   netIncome: number;
 } {
-  const commissionType = userProfile.commissionType || 'percentage';
+  const commissionType = commissionSchedule.commissionType || 'percentage';
   
   if (commissionType === 'fixed') {
-    const fixedAmount = round2(safeNumber(userProfile.fixedCommissionAmount));
-    const estimatedTaxes = round2(fixedAmount * (safeNumber(userProfile.estimatedTaxPercent) / 100));
+    const fixedAmount = round2(safeNumber(commissionSchedule.fixedCommissionAmount));
+    const estimatedTaxes = round2(fixedAmount * (safeNumber(commissionSchedule.estimatedTaxPercent) / 100));
     const netIncome = round2(fixedAmount - estimatedTaxes);
     
     return {
@@ -137,7 +150,7 @@ function calculateDealBreakdown(
         step4: {
           label: "Estimated Taxes",
           amount: estimatedTaxes,
-          description: `${safeNumber(userProfile.estimatedTaxPercent)}% of gross income`
+          description: `${safeNumber(commissionSchedule.estimatedTaxPercent)}% of gross income`
         },
         step5: {
           label: "Net Take-Home",
@@ -153,11 +166,11 @@ function calculateDealBreakdown(
       netIncome
     };
   } else {
-    const companySplitPercent = safeNumber(userProfile.companySplitPercent);
-    const companySplitCap = safeNumber(userProfile.companySplitCap);
-    const royaltyPercent = safeNumber(userProfile.royaltyPercent);
-    const royaltyCap = safeNumber(userProfile.royaltyCap);
-    const estimatedTaxPercent = safeNumber(userProfile.estimatedTaxPercent);
+    const companySplitPercent = safeNumber(commissionSchedule.companySplitPercent);
+    const companySplitCap = safeNumber(commissionSchedule.companySplitCap);
+    const royaltyPercent = safeNumber(commissionSchedule.royaltyPercent);
+    const royaltyCap = safeNumber(commissionSchedule.royaltyCap);
+    const estimatedTaxPercent = safeNumber(commissionSchedule.estimatedTaxPercent);
     
     const totalCommission = round2(totalDealAmount * (commissionPercent / 100));
     // Cap logic: Only take up to the remaining cap, otherwise $0
@@ -248,6 +261,7 @@ export default function DealsPage() {
   const [user, setUser] = useState<unknown>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [commissionSchedules, setCommissionSchedules] = useState<CommissionSchedule[]>([]);
   const [form, setForm] = useState({
     address: "",
     client: "",
@@ -281,6 +295,40 @@ export default function DealsPage() {
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [editForm, setEditForm] = useState<Partial<Deal>>({});
   const [editLoading, setEditLoading] = useState(false);
+
+  // Helper function to get the appropriate commission schedule for a given date
+  const getCommissionScheduleForDate = useCallback((date: Date): CommissionSchedule | null => {
+    if (!commissionSchedules.length) return null;
+    
+    // Sort schedules by start date
+    const sortedSchedules = [...commissionSchedules].sort((a, b) => 
+      (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)
+    );
+    
+    // Find the schedule that applies to this date
+    for (let i = 0; i < sortedSchedules.length; i++) {
+      const schedule = sortedSchedules[i];
+      const nextSchedule = sortedSchedules[i + 1];
+      
+      const startDate = schedule.yearStart?.toDate ? schedule.yearStart.toDate() : null;
+      let endDate = null;
+      
+      if (nextSchedule && nextSchedule.yearStart?.toDate) {
+        endDate = new Date(nextSchedule.yearStart.toDate().getTime() - 1);
+      } else if (startDate) {
+        endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        endDate.setDate(endDate.getDate() - 1);
+      }
+      
+      if (startDate && endDate && date >= startDate && date <= endDate) {
+        return schedule;
+      }
+    }
+    
+    // If no specific schedule found, return the most recent one
+    return sortedSchedules[sortedSchedules.length - 1] || null;
+  }, [commissionSchedules]);
 
   // Auth guard
   useEffect(() => {
@@ -324,21 +372,40 @@ export default function DealsPage() {
     return () => unsub();
   }, [user]);
 
+  // Fetch commission schedules for the user
+  useEffect(() => {
+    if (!user) return;
+    const userId = (user as { uid: string }).uid;
+    const q = query(collection(db, "commissionSchedules"), where("userId", "==", userId));
+    getDocs(q).then(snapshot => {
+      const schedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommissionSchedule[];
+      setCommissionSchedules(schedules);
+    });
+  }, [user]);
+
   // Calculate breakdown when user profile loads or form values change
   useEffect(() => {
-    if (!userProfile || !form.totalDealAmount) return;
+    if (!form.totalDealAmount || !form.closeDate) return;
     
     const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
     if (totalDealAmount > 0) {
-      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
-      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
+      const closeDate = new Date(form.closeDate);
+      const commissionSchedule = getCommissionScheduleForDate(closeDate);
+      
+      if (!commissionSchedule) {
+        setBreakdown(null);
+        return;
+      }
+      
+      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, commissionSchedule.yearStart);
+      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, commissionSchedule.yearStart);
       const commissionPercent = parseFloat(form.commissionPercent) || 0;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
       const breakdownResult = calculateDealBreakdown(
         totalDealAmount,
-        userProfile,
+        commissionSchedule,
         ytdRoyaltyUsage,
         ytdCompanySplitUsage,
         referralFee,
@@ -349,7 +416,7 @@ export default function DealsPage() {
     } else {
       setBreakdown(null);
     }
-  }, [userProfile, form.totalDealAmount, form.commissionPercent, form.referralFee, form.transactionFee, deals]);
+  }, [commissionSchedules, form.totalDealAmount, form.closeDate, form.commissionPercent, form.referralFee, form.transactionFee, deals, getCommissionScheduleForDate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -371,21 +438,28 @@ export default function DealsPage() {
     e.preventDefault();
     setError("");
     try {
-      if (!user || !userProfile) throw new Error("You must be signed in and have profile settings configured.");
+      if (!user || !form.closeDate) throw new Error("You must be signed in and select a close date.");
       
       const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
       const commissionPercent = parseFloat(form.commissionPercent) || 0;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
+      const closeDate = new Date(form.closeDate);
+      const commissionSchedule = getCommissionScheduleForDate(closeDate);
+      
+      if (!commissionSchedule) {
+        throw new Error("No commission schedule found for the selected close date. Please add a commission schedule in Settings.");
+      }
+      
       // Calculate YTD usage for both caps
-      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear);
-      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear);
+      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, commissionSchedule.yearStart);
+      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, commissionSchedule.yearStart);
       
       // Calculate deal breakdown
       const breakdown = calculateDealBreakdown(
         totalDealAmount,
-        userProfile,
+        commissionSchedule,
         ytdRoyaltyUsage,
         ytdCompanySplitUsage,
         referralFee,
@@ -636,31 +710,48 @@ export default function DealsPage() {
               />
             </div>
             
-            {userProfile?.commissionType === 'fixed' ? (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission</label>
-                <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-gray-600">
-                  ${round2(safeNumber(userProfile.fixedCommissionAmount)).toLocaleString()} per deal
+            {form.closeDate && (() => {
+              const closeDate = new Date(form.closeDate);
+              const commissionSchedule = getCommissionScheduleForDate(closeDate);
+              
+              if (!commissionSchedule) {
+                return (
+                  <div className="md:col-span-2">
+                    <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl text-sm">
+                      ⚠️ No commission schedule found for {form.closeDate}. Please add a commission schedule in Settings.
+                    </div>
+                  </div>
+                );
+              }
+              
+              return commissionSchedule.commissionType === 'fixed' ? (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Fixed Commission</label>
+                  <div className="w-full px-4 py-3 bg-gray-100 rounded-xl text-gray-600">
+                    ${round2(safeNumber(commissionSchedule.fixedCommissionAmount)).toLocaleString()} per deal
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Fixed amount from commission schedule</p>
+                  <p className="text-xs text-blue-600 mt-1">Schedule: {commissionSchedule.yearStart?.toDate ? commissionSchedule.yearStart.toDate().toLocaleDateString() : ''}</p>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Fixed amount from your settings</p>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Your Commission %</label>
-                <input 
-                  type="number" 
-                  name="commissionPercent" 
-                  value={form.commissionPercent || ""} 
-                  onChange={handleChange} 
-                  step="0.1" 
-                  min="0" 
-                  max="100" 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
-                  placeholder={userProfile?.commissionPercent?.toString()}
-                />
-                <p className="text-xs text-gray-500 mt-1">Default: {userProfile?.commissionPercent}%</p>
-              </div>
-            )}
+              ) : (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Your Commission %</label>
+                  <input 
+                    type="number" 
+                    name="commissionPercent" 
+                    value={form.commissionPercent || ""} 
+                    onChange={handleChange} 
+                    step="0.1" 
+                    min="0" 
+                    max="100" 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                    placeholder="Enter commission percentage"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Commission schedule: Split {commissionSchedule.companySplitPercent}% / Cap ${commissionSchedule.companySplitCap}, Royalty {commissionSchedule.royaltyPercent}% / Cap ${commissionSchedule.royaltyCap}, Tax {commissionSchedule.estimatedTaxPercent}%</p>
+                  <p className="text-xs text-blue-600 mt-1">Schedule: {commissionSchedule.yearStart?.toDate ? commissionSchedule.yearStart.toDate().toLocaleDateString() : ''}</p>
+                </div>
+              );
+            })()}
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Referral Fee (optional)</label>

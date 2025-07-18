@@ -14,7 +14,6 @@ interface UserProfile {
   companySplitCap: number | string; // Company split cap
   royaltyPercent: number | string; // Royalty percentage
   royaltyCap: number | string; // Royalty cap
-  estimatedTaxPercent: number | string;
   fixedCommissionAmount?: number | string;
   // Personal/Business Information
   firstName?: string;
@@ -69,7 +68,6 @@ export default function SettingsPage() {
     companySplitCap: 5000, // Company cap at $5,000
     royaltyPercent: 6, // 6% royalty
     royaltyCap: 3000, // $3,000 royalty cap
-    estimatedTaxPercent: 25,
     fixedCommissionAmount: 0,
     // Personal/Business Information
     firstName: "",
@@ -143,7 +141,6 @@ export default function SettingsPage() {
           companySplitCap: 5000,
           royaltyPercent: 6,
           royaltyCap: 3000,
-          estimatedTaxPercent: 25,
           fixedCommissionAmount: 0,
           // Personal/Business Information
           firstName: "",
@@ -247,7 +244,6 @@ export default function SettingsPage() {
         companySplitCap: typeof profile.companySplitCap === 'string' ? parseFloat(profile.companySplitCap) || 0 : profile.companySplitCap,
         royaltyPercent: typeof profile.royaltyPercent === 'string' ? parseFloat(profile.royaltyPercent) || 0 : profile.royaltyPercent,
         royaltyCap: typeof profile.royaltyCap === 'string' ? parseFloat(profile.royaltyCap) || 0 : profile.royaltyCap,
-        estimatedTaxPercent: typeof profile.estimatedTaxPercent === 'string' ? parseFloat(profile.estimatedTaxPercent) || 0 : profile.estimatedTaxPercent,
         fixedCommissionAmount: typeof profile.fixedCommissionAmount === 'string' ? parseFloat(profile.fixedCommissionAmount) || 0 : (profile.fixedCommissionAmount ?? 0),
         monthlyGoal: typeof profile.monthlyGoal === 'string' ? parseFloat(profile.monthlyGoal) || 0 : (profile.monthlyGoal ?? 0),
         annualGoal: typeof profile.annualGoal === 'string' ? parseFloat(profile.annualGoal) || 0 : (profile.annualGoal ?? 0),
@@ -291,9 +287,14 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const userId = (user as { uid: string }).uid;
+      
+      // Fix date conversion to avoid timezone offset issues
+      const [year, month, day] = newSchedule.yearStart.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day); // month is 0-indexed
+      
       await addDoc(collection(db, "commissionSchedules"), {
         userId,
-        yearStart: FirestoreTimestamp.fromDate(new Date(newSchedule.yearStart)),
+        yearStart: FirestoreTimestamp.fromDate(localDate),
         commissionType: newSchedule.commissionType,
         companySplitPercent: newSchedule.companySplitPercent,
         companySplitCap: newSchedule.companySplitCap,
@@ -466,41 +467,30 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Tax Estimator Settings */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">🧾</span>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Tax Estimator Settings</h2>
-                <p className="text-gray-500 text-sm">Configure tax estimates for take-home income calculations</p>
-              </div>
+        {/* How It Works Section - moved below Commission Schedules */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-8 mb-8 text-white">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <span className="text-xl">💡</span>
             </div>
-            
+            <h3 className="text-xl font-bold">How It Works</h3>
+          </div>
+          <p className="text-blue-100 mb-4">
+            When you enter a deal, the system automatically calculates your earnings based on these settings:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Estimated Tax Rate %
-              </label>
-              <input
-                type="number"
-                name="estimatedTaxPercent"
-                value={profile.estimatedTaxPercent === '' ? '' : profile.estimatedTaxPercent}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                step="0.1"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                required
-                placeholder="25"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Used for take-home income estimates. Consult with a tax professional for actual tax planning.
-              </p>
+              <h4 className="font-semibold mb-2">Commission Flow</h4>
+              <p className="text-blue-100">Total Deal → Your Commission → Company Split → Royalty → Gross → Taxes → Net</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Cap Tracking</h4>
+              <p className="text-blue-100">Both company split and royalty have annual caps tracked on your dashboard.</p>
             </div>
           </div>
+        </div>
 
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Personal & Business Information */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -945,29 +935,6 @@ export default function SettingsPage() {
             </div>
           )}
         </form>
-
-        {/* Help Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-8 mt-8 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-xl">💡</span>
-            </div>
-            <h3 className="text-xl font-bold">How It Works</h3>
-          </div>
-          <p className="text-blue-100 mb-4">
-            When you enter a deal, the system automatically calculates your earnings based on these settings:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h4 className="font-semibold mb-2">Commission Flow</h4>
-              <p className="text-blue-100">Total Deal → Your Commission → Company Split → Royalty → Gross → Taxes → Net</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Cap Tracking</h4>
-              <p className="text-blue-100">Both company split and royalty have annual caps tracked on your dashboard.</p>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   );
