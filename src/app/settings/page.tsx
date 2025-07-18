@@ -936,6 +936,9 @@ export default function SettingsPage() {
           )}
         </form>
       </div>
+      <div className="mt-12 text-center text-sm text-gray-500">
+        Need help? Email <a href="mailto:support@agentmoneytracker.com" className="underline hover:text-blue-600">support@agentmoneytracker.com</a>
+      </div>
     </main>
   );
 } 

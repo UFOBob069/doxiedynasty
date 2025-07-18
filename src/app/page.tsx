@@ -42,9 +42,9 @@ const features = [
     description: "Instant profit & loss reports with visual charts and tax projections"
   },
   {
-    icon: "🔒",
-    title: "Bank-Level Security",
-    description: "SOC 2 compliant with end-to-end encryption. Your data is always safe"
+    icon: "🧾",
+    title: "Expense & Mileage Tracking",
+    description: "Track every business expense and trip. Maximize deductions and simplify tax time."
   },
   {
     icon: "☁️",
@@ -92,6 +92,12 @@ export default function Home() {
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
             Trusted by 1,000+ real estate agents
+          </div>
+          {/* Add For Agents button */}
+          <div className="mb-6">
+            <Link href="/for-agents" className="inline-block bg-white border-2 border-blue-600 text-blue-700 px-6 py-2 rounded-full font-semibold shadow hover:bg-blue-50 transition-all duration-200 text-base">
+              Why Agents Love This →
+            </Link>
           </div>
           
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
@@ -269,6 +275,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <footer className="mt-16 text-center text-sm text-gray-500">
+        Need help? Email <a href="mailto:support@agentmoneytracker.com" className="underline hover:text-blue-600">support@agentmoneytracker.com</a>
+      </footer>
     </main>
   );
 }
