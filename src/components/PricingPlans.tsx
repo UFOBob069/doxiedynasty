@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 
 interface PricingPlansProps {
-  onPlanSelect: (planType: 'monthly' | 'yearly', couponCode?: string) => void;
+  onPlanSelect: (planType: 'monthly' | 'yearly') => void;
   loading?: boolean;
 }
 
 export default function PricingPlans({ onPlanSelect, loading = false }: PricingPlansProps) {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
-  const [couponCode, setCouponCode] = useState('');
-  const [showCouponInput, setShowCouponInput] = useState(false);
 
   const handlePlanSelect = (planType: 'monthly' | 'yearly') => {
-    onPlanSelect(planType, couponCode || undefined);
+    onPlanSelect(planType);
   };
 
   return (
@@ -161,29 +159,6 @@ export default function PricingPlans({ onPlanSelect, loading = false }: PricingP
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Coupon Code */}
-      <div className="text-center mb-8">
-        <button
-          type="button"
-          onClick={() => setShowCouponInput(!showCouponInput)}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-        >
-          {showCouponInput ? 'Hide' : 'Have a coupon code?'}
-        </button>
-        
-        {showCouponInput && (
-          <div className="mt-4 max-w-md mx-auto">
-            <input
-              type="text"
-              placeholder="Enter coupon code"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-        )}
       </div>
 
       {/* Testimonial */}

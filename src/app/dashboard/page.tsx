@@ -63,10 +63,7 @@ interface CommissionSchedule {
 }
 
 // Helper function to calculate YTD royalty usage
-function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
-  const startDate = startOfCommissionYear.toDate();
-  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-  
+function calculateYtdRoyaltyUsage(deals: Deal[], startDate: Date, endDate: Date): number {
   return deals
     .filter(deal => {
       let dealDate: Date | null = null;
@@ -86,10 +83,7 @@ function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestam
 }
 
 // Helper function to calculate YTD company split usage
-function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
-  const startDate = startOfCommissionYear.toDate();
-  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-  
+function calculateYtdCompanySplitUsage(deals: Deal[], startDate: Date, endDate: Date): number {
   return deals
     .filter(deal => {
       let dealDate: Date | null = null;
@@ -264,8 +258,9 @@ export default function DashboardPage() {
   }) : deals;
 
   // Use selected schedule for all calculations
-  const ytdRoyaltyUsage = selectedSchedule ? calculateYtdRoyaltyUsage(filteredDeals, selectedSchedule.yearStart) : 0;
-  const ytdCompanySplitUsage = selectedSchedule ? calculateYtdCompanySplitUsage(filteredDeals, selectedSchedule.yearStart) : 0;
+  const scheduleRange = selectedSchedule ? getScheduleRange(selectedSchedule, commissionSchedules[commissionSchedules.findIndex(s => s.id === selectedScheduleId) + 1]) : null;
+  const ytdRoyaltyUsage = selectedSchedule && scheduleRange?.start && scheduleRange?.end ? calculateYtdRoyaltyUsage(filteredDeals, scheduleRange.start, scheduleRange.end) : 0;
+  const ytdCompanySplitUsage = selectedSchedule && scheduleRange?.start && scheduleRange?.end ? calculateYtdCompanySplitUsage(filteredDeals, scheduleRange.start, scheduleRange.end) : 0;
   const remainingRoyaltyCap = selectedSchedule ? safeNumber(selectedSchedule.royaltyCap) - ytdRoyaltyUsage : 0;
   const remainingCompanyCap = selectedSchedule ? safeNumber(selectedSchedule.companySplitCap) - ytdCompanySplitUsage : 0;
   const royaltyCapPercentage = selectedSchedule ? (ytdRoyaltyUsage / safeNumber(selectedSchedule.royaltyCap)) * 100 : 0;
@@ -550,7 +545,7 @@ export default function DashboardPage() {
                 {remainingRoyaltyCap <= 0 ? 'Cap reached!' : `$${remainingRoyaltyCap.toLocaleString()} remaining`}
               </span>
               <span className="text-gray-500">
-                {selectedSchedule?.yearStart?.toDate().toLocaleDateString() || 'Not set'} - {new Date().toLocaleDateString()}
+                {scheduleRange?.start?.toLocaleDateString() || 'Not set'} - {scheduleRange?.end?.toLocaleDateString() || 'Not set'}
               </span>
             </div>
           </div>
@@ -597,7 +592,7 @@ export default function DashboardPage() {
                 {remainingCompanyCap <= 0 ? 'Cap reached!' : `$${remainingCompanyCap.toLocaleString()} remaining`}
               </span>
               <span className="text-gray-500">
-                {selectedSchedule?.yearStart?.toDate().toLocaleDateString() || 'Not set'} - {new Date().toLocaleDateString()}
+                {scheduleRange?.start?.toLocaleDateString() || 'Not set'} - {scheduleRange?.end?.toLocaleDateString() || 'Not set'}
               </span>
             </div>
           </div>

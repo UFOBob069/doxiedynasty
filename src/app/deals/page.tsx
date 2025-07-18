@@ -7,18 +7,6 @@ import { onAuthStateChanged } from "firebase/auth";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-interface UserProfile {
-  userId: string;
-  startOfCommissionYear: Timestamp;
-  commissionType?: 'percentage' | 'fixed';
-  commissionPercent: number | string; // Agent's commission percentage on total deal
-  companySplitPercent: number | string; // Company's percentage
-  companySplitCap: number | string; // Company split cap
-  royaltyPercent: number | string; // Royalty percentage
-  royaltyCap: number | string; // Royalty cap
-  fixedCommissionAmount?: number | string;
-}
-
 interface CommissionSchedule {
   id: string;
   userId: string;
@@ -74,26 +62,40 @@ function round2(val: number): number {
 }
 
 // Helper function to calculate YTD royalty usage
-function calculateYtdRoyaltyUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
-  const startDate = startOfCommissionYear.toDate();
-  const endDate = new Date();
-  
+function calculateYtdRoyaltyUsage(deals: Deal[], startDate: Date, endDate: Date): number {
   return deals
     .filter(deal => {
-      const dealDate = new Date(deal.closeDate || "");
+      let dealDate: Date | null = null;
+      if (deal.closeDate) {
+        dealDate = new Date(deal.closeDate);
+        if (isNaN(dealDate.getTime())) dealDate = null;
+      }
+      if (!dealDate && deal.createdAt) {
+        if (typeof (deal.createdAt as Timestamp).toDate === "function") {
+          dealDate = (deal.createdAt as Timestamp).toDate();
+        }
+      }
+      if (!dealDate) return false;
       return dealDate >= startDate && dealDate <= endDate;
     })
     .reduce((sum, deal) => sum + (deal.royaltyUsed || 0), 0);
 }
 
 // Helper function to calculate YTD company split usage
-function calculateYtdCompanySplitUsage(deals: Deal[], startOfCommissionYear: Timestamp): number {
-  const startDate = startOfCommissionYear.toDate();
-  const endDate = new Date();
-  
+function calculateYtdCompanySplitUsage(deals: Deal[], startDate: Date, endDate: Date): number {
   return deals
     .filter(deal => {
-      const dealDate = new Date(deal.closeDate || "");
+      let dealDate: Date | null = null;
+      if (deal.closeDate) {
+        dealDate = new Date(deal.closeDate);
+        if (isNaN(dealDate.getTime())) dealDate = null;
+      }
+      if (!dealDate && deal.createdAt) {
+        if (typeof (deal.createdAt as Timestamp).toDate === "function") {
+          dealDate = (deal.createdAt as Timestamp).toDate();
+        }
+      }
+      if (!dealDate) return false;
       return dealDate >= startDate && dealDate <= endDate;
     })
     .reduce((sum, deal) => sum + (deal.companySplit || 0), 0);
@@ -260,7 +262,6 @@ export default function DealsPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<unknown>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [commissionSchedules, setCommissionSchedules] = useState<CommissionSchedule[]>([]);
   const [form, setForm] = useState({
     address: "",
@@ -296,6 +297,20 @@ export default function DealsPage() {
   const [editForm, setEditForm] = useState<Partial<Deal>>({});
   const [editLoading, setEditLoading] = useState(false);
 
+  // Helper function to get schedule range (same as dashboard)
+  const getScheduleRange = useCallback((schedule: CommissionSchedule, nextSchedule?: CommissionSchedule) => {
+    const start = schedule?.yearStart?.toDate ? schedule.yearStart.toDate() : null;
+    let end = null;
+    if (nextSchedule && nextSchedule.yearStart?.toDate) {
+      end = new Date(nextSchedule.yearStart.toDate().getTime() - 1);
+    } else if (start) {
+      end = new Date(start);
+      end.setFullYear(end.getFullYear() + 1);
+      end.setDate(end.getDate() - 1);
+    }
+    return { start, end };
+  }, []);
+
   // Helper function to get the appropriate commission schedule for a given date
   const getCommissionScheduleForDate = useCallback((date: Date): CommissionSchedule | null => {
     if (!commissionSchedules.length) return null;
@@ -310,25 +325,16 @@ export default function DealsPage() {
       const schedule = sortedSchedules[i];
       const nextSchedule = sortedSchedules[i + 1];
       
-      const startDate = schedule.yearStart?.toDate ? schedule.yearStart.toDate() : null;
-      let endDate = null;
+      const { start, end } = getScheduleRange(schedule, nextSchedule);
       
-      if (nextSchedule && nextSchedule.yearStart?.toDate) {
-        endDate = new Date(nextSchedule.yearStart.toDate().getTime() - 1);
-      } else if (startDate) {
-        endDate = new Date(startDate);
-        endDate.setFullYear(endDate.getFullYear() + 1);
-        endDate.setDate(endDate.getDate() - 1);
-      }
-      
-      if (startDate && endDate && date >= startDate && date <= endDate) {
+      if (start && end && date >= start && date <= end) {
         return schedule;
       }
     }
     
     // If no specific schedule found, return the most recent one
     return sortedSchedules[sortedSchedules.length - 1] || null;
-  }, [commissionSchedules]);
+  }, [commissionSchedules, getScheduleRange]);
 
   // Auth guard
   useEffect(() => {
@@ -339,23 +345,6 @@ export default function DealsPage() {
     });
     return () => unsub();
   }, [router]);
-
-  // Load user profile
-  useEffect(() => {
-    if (!user) return;
-    
-    const userId = (user as { uid: string }).uid;
-    const profileRef = doc(db, "userProfiles", userId);
-    
-    const unsub = onSnapshot(profileRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data() as UserProfile;
-        setUserProfile(data);
-      }
-    });
-
-    return () => unsub();
-  }, [user]);
 
   // Fetch deals for current user
   useEffect(() => {
@@ -397,8 +386,21 @@ export default function DealsPage() {
         return;
       }
       
-      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, commissionSchedule.yearStart);
-      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, commissionSchedule.yearStart);
+      // Get the schedule range for this commission schedule
+      const sortedSchedules = [...commissionSchedules].sort((a, b) => 
+        (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)
+      );
+      const scheduleIndex = sortedSchedules.findIndex(s => s.id === commissionSchedule.id);
+      const nextSchedule = sortedSchedules[scheduleIndex + 1];
+      const { start, end } = getScheduleRange(commissionSchedule, nextSchedule);
+      
+      if (!start || !end) {
+        setBreakdown(null);
+        return;
+      }
+      
+      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, start, end);
+      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, start, end);
       const commissionPercent = parseFloat(form.commissionPercent) || 0;
       const referralFee = parseFloat(form.referralFee) || 0;
       const transactionFee = parseFloat(form.transactionFee) || 0;
@@ -416,7 +418,7 @@ export default function DealsPage() {
     } else {
       setBreakdown(null);
     }
-  }, [commissionSchedules, form.totalDealAmount, form.closeDate, form.commissionPercent, form.referralFee, form.transactionFee, deals, getCommissionScheduleForDate]);
+  }, [commissionSchedules, form.totalDealAmount, form.closeDate, form.commissionPercent, form.referralFee, form.transactionFee, deals, getCommissionScheduleForDate, getScheduleRange]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -452,9 +454,21 @@ export default function DealsPage() {
         throw new Error("No commission schedule found for the selected close date. Please add a commission schedule in Settings.");
       }
       
+      // Get the schedule range for this commission schedule
+      const sortedSchedules = [...commissionSchedules].sort((a, b) => 
+        (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)
+      );
+      const scheduleIndex = sortedSchedules.findIndex(s => s.id === commissionSchedule.id);
+      const nextSchedule = sortedSchedules[scheduleIndex + 1];
+      const { start, end } = getScheduleRange(commissionSchedule, nextSchedule);
+      
+      if (!start || !end) {
+        throw new Error("Could not determine schedule range for the selected close date.");
+      }
+      
       // Calculate YTD usage for both caps
-      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, commissionSchedule.yearStart);
-      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, commissionSchedule.yearStart);
+      const ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, start, end);
+      const ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, start, end);
       
       // Calculate deal breakdown
       const breakdown = calculateDealBreakdown(
@@ -545,11 +559,32 @@ export default function DealsPage() {
   const totalAgentCommission = deals.reduce((sum, deal) => sum + (deal.agentCommission || 0), 0);
   const totalNetIncome = deals.reduce((sum, deal) => sum + (deal.netIncome || 0), 0);
   
-  const ytdRoyaltyUsage = userProfile ? calculateYtdRoyaltyUsage(deals, userProfile.startOfCommissionYear) : 0;
-  const ytdCompanySplitUsage = userProfile ? calculateYtdCompanySplitUsage(deals, userProfile.startOfCommissionYear) : 0;
+  // Get the most recent commission schedule for summary calculations
+  const mostRecentSchedule = commissionSchedules.length > 0 
+    ? [...commissionSchedules].sort((a, b) => (b.yearStart?.seconds || 0) - (a.yearStart?.seconds || 0))[0]
+    : null;
   
-  const remainingRoyaltyCap = userProfile ? safeNumber(userProfile.royaltyCap) - ytdRoyaltyUsage : 0;
-  const remainingCompanyCap = userProfile ? safeNumber(userProfile.companySplitCap) - ytdCompanySplitUsage : 0;
+  // Calculate caps based on most recent schedule
+  let ytdRoyaltyUsage = 0;
+  let ytdCompanySplitUsage = 0;
+  let remainingRoyaltyCap = 0;
+  let remainingCompanyCap = 0;
+  
+  if (mostRecentSchedule) {
+    const sortedSchedules = [...commissionSchedules].sort((a, b) => 
+      (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)
+    );
+    const scheduleIndex = sortedSchedules.findIndex(s => s.id === mostRecentSchedule.id);
+    const nextSchedule = sortedSchedules[scheduleIndex + 1];
+    const { start, end } = getScheduleRange(mostRecentSchedule, nextSchedule);
+    
+    if (start && end) {
+      ytdRoyaltyUsage = calculateYtdRoyaltyUsage(deals, start, end);
+      ytdCompanySplitUsage = calculateYtdCompanySplitUsage(deals, start, end);
+      remainingRoyaltyCap = safeNumber(mostRecentSchedule.royaltyCap) - ytdRoyaltyUsage;
+      remainingCompanyCap = safeNumber(mostRecentSchedule.companySplitCap) - ytdCompanySplitUsage;
+    }
+  }
 
   if (authLoading || loading) {
     return (
@@ -648,7 +683,7 @@ export default function DealsPage() {
             </div>
           </div>
           
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit} autoComplete="off">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-6" autoComplete="off">
             <div className="relative">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Property Address</label>
               <input 
@@ -780,20 +815,6 @@ export default function DealsPage() {
                 placeholder="0.00"
               />
             </div>
-            
-            <div className="md:col-span-2 flex flex-col items-end gap-3">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm w-full">
-                  {error}
-                </div>
-              )}
-              <button 
-                type="submit" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-              >
-                Add Deal
-              </button>
-            </div>
           </form>
           
           {/* Step-by-Step Breakdown */}
@@ -827,6 +848,22 @@ export default function DealsPage() {
                   </div>
                   <div className="text-2xl font-bold text-emerald-600">${round2(breakdown.netIncome).toLocaleString()}</div>
                 </div>
+              </div>
+
+              {/* Add Deal Button - Moved below breakdown */}
+              <div className="mt-8 flex flex-col items-center gap-3">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm w-full max-w-md">
+                    {error}
+                  </div>
+                )}
+                <button 
+                  type="button"
+                  onClick={handleSubmit}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  Add Deal
+                </button>
               </div>
             </div>
           ) : (

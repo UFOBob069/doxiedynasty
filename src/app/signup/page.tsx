@@ -75,7 +75,7 @@ export default function SignUpPage() {
   };
 
   // Handle plan selection and redirect to Stripe checkout
-  const handlePlanSelect = async (planType: 'monthly' | 'yearly', couponCode?: string) => {
+  const handlePlanSelect = async (planType: 'monthly' | 'yearly') => {
     if (!user) return;
 
     setLoading(true);
@@ -91,7 +91,6 @@ export default function SignUpPage() {
           userId: user.uid,
           email: user.email,
           planType,
-          couponCode,
         }),
       });
 
