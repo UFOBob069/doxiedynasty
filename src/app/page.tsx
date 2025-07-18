@@ -110,9 +110,6 @@ export default function Home() {
             <Link href="/signup" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
               Start Free 30-Day Trial
             </Link>
-            <Link href="/signup" className="bg-white border-2 border-blue-600 text-blue-700 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
-              View Pricing
-            </Link>
           </div>
           
           <div className="text-center mb-8">
@@ -256,9 +253,6 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link href="/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
               Start Free 30-Day Trial
-            </Link>
-            <Link href="/signup" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 text-lg">
-              View Pricing
             </Link>
           </div>
           
