@@ -103,11 +103,11 @@ function calculateYtdCompanySplitUsage(deals: Deal[], startDate: Date, endDate: 
 }
 
 // Helper function to calculate monthly net income
-function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: number = 6): Array<{ month: string; netIncome: number }> {
+function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: number = 12): Array<{ month: string; netIncome: number }> {
   const monthlyData: { [key: string]: number } = {};
   const now = new Date();
   
-  // Initialize last 6 months
+  // Initialize last 12 months (increased from 6 to show more data)
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -120,23 +120,43 @@ function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: n
       const dealDate = new Date(deal.closeDate);
       const monthKey = dealDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       if (monthlyData[monthKey] !== undefined) {
-        monthlyData[monthKey] += deal.netIncome || 0;
+        const dealIncome = safeNumber(deal.netIncome);
+        monthlyData[monthKey] += dealIncome;
       }
     }
   });
   
-  // Subtract expenses
+  // Subtract expenses (only regular expenses, not mileage)
   expenses.forEach(expense => {
-    if (expense.date) {
+    if (expense.date && expense.category !== 'Mileage') {
       const expenseDate = new Date(expense.date);
       const monthKey = expenseDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       if (monthlyData[monthKey] !== undefined) {
-        monthlyData[monthKey] -= expense.amount || 0;
+        const expenseAmount = safeNumber(expense.amount);
+        monthlyData[monthKey] -= expenseAmount;
       }
     }
   });
   
-  return Object.entries(monthlyData).map(([month, netIncome]) => ({ month, netIncome }));
+  // Filter out months with no activity and sort by date
+  const result = Object.entries(monthlyData)
+    .filter(([, netIncome]) => netIncome !== 0) // Only show months with activity
+    .map(([month, netIncome]) => ({ month, netIncome }))
+    .sort((a, b) => {
+      const dateA = new Date(a.month);
+      const dateB = new Date(b.month);
+      return dateA.getTime() - dateB.getTime();
+    });
+  
+  // If no months have activity, show the last 3 months
+  if (result.length === 0) {
+    const last3Months = Object.entries(monthlyData)
+      .slice(-3)
+      .map(([month, netIncome]) => ({ month, netIncome }));
+    return last3Months;
+  }
+  
+  return result;
 }
 
 function safeNumber(val: number | string | undefined): number {
@@ -267,7 +287,7 @@ export default function DashboardPage() {
   const companyCapPercentage = selectedSchedule ? (ytdCompanySplitUsage / safeNumber(selectedSchedule.companySplitCap)) * 100 : 0;
 
   // Calculate monthly net income for chart
-  const monthlyNetIncome = calculateMonthlyNetIncome(deals, expenses, 6);
+  const monthlyNetIncome = calculateMonthlyNetIncome(deals, expenses, 12);
   const averageMonthlyNet = monthlyNetIncome.length > 0 
     ? monthlyNetIncome.reduce((sum, month) => sum + month.netIncome, 0) / monthlyNetIncome.length 
     : 0;
