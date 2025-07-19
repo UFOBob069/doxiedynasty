@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       mode: 'subscription',
       success_url: `${request.nextUrl.origin}/dashboard?success=true`,
       cancel_url: `${request.nextUrl.origin}/signup?canceled=true`,
+      allow_promotion_codes: true,
       subscription_data: {
         trial_period_days: 30,
         metadata: {

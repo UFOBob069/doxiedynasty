@@ -17,15 +17,20 @@ export default function SignInPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        console.log('User signed in:', user.email);
         // Check if user has a subscription
         try {
           const userRef = doc(db, 'userSubscriptions', user.uid);
           const userDoc = await getDoc(userRef);
           
+          console.log('Subscription check - exists:', userDoc.exists());
+          
           if (userDoc.exists()) {
+            console.log('User has subscription, redirecting to dashboard');
             // If user has any subscription record (even incomplete), send to dashboard
             router.replace("/dashboard");
           } else {
+            console.log('User has no subscription, redirecting to signup');
             // User exists but no subscription - they need to complete signup
             router.replace("/signup");
           }
@@ -35,6 +40,7 @@ export default function SignInPage() {
           router.replace("/dashboard");
         }
       } else {
+        console.log('No user signed in');
         setAuthLoading(false);
       }
     });
