@@ -16,10 +16,12 @@ export default function SignInPage() {
   // Check if user is already signed in and redirect appropriately
   useEffect(() => {
     console.log('Signin page useEffect running');
+    console.log('Initial auth state:', auth.currentUser ? auth.currentUser.email : 'null');
     
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('onAuthStateChanged triggered, user:', user ? user.email : 'null');
       console.log('Current auth state:', auth.currentUser ? auth.currentUser.email : 'null');
+      console.log('User object details:', user ? { uid: user.uid, email: user.email, emailVerified: user.emailVerified } : 'null');
       
       if (user) {
         console.log('User signed in:', user.email);
@@ -46,6 +48,7 @@ export default function SignInPage() {
         }
       } else {
         console.log('No user signed in');
+        console.log('Auth persistence:', auth.currentUser ? 'User exists in auth' : 'No user in auth');
         setAuthLoading(false);
       }
     });
@@ -55,6 +58,7 @@ export default function SignInPage() {
   // Google sign in handler
   const handleGoogle = async () => {
     console.log('Google sign-in button clicked');
+    console.log('Auth state before sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
     setError("");
     setLoading(true);
     try {
@@ -62,6 +66,8 @@ export default function SignInPage() {
       console.log('About to call signInWithPopup');
       const result = await signInWithPopup(auth, provider);
       console.log('Sign-in successful:', result.user.email);
+      console.log('Auth state after sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
+      console.log('Result user details:', { uid: result.user.uid, email: result.user.email, emailVerified: result.user.emailVerified });
       // The useEffect above will handle the redirect
     } catch (err: unknown) {
       console.error('Google sign-in error:', err);

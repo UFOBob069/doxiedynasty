@@ -678,8 +678,8 @@ export default function DealsPage() {
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
               <span className="text-xl">➕</span>
-            </div>
-            <div>
+          </div>
+          <div>
               <h2 className="text-2xl font-bold text-gray-900">Add New Deal</h2>
               <p className="text-gray-500 text-sm">Enter deal details and see automatic breakdown</p>
             </div>
@@ -816,8 +816,8 @@ export default function DealsPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
                 placeholder="0.00"
               />
-            </div>
-          </form>
+          </div>
+        </form>
           
           {/* Step-by-Step Breakdown */}
           {breakdown ? (
@@ -888,11 +888,11 @@ export default function DealsPage() {
               <h2 className="text-2xl font-bold text-gray-900">Your Deals</h2>
               <p className="text-gray-500 text-sm">{deals.length} deal{deals.length !== 1 ? 's' : ''} tracked</p>
             </div>
-          </div>
+      </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Address</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Client</th>
@@ -904,10 +904,10 @@ export default function DealsPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Estimated Taxes</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Income</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deals.map((deal) => (
+              </tr>
+            </thead>
+            <tbody>
+              {deals.map((deal) => (
                   <tr key={deal.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 font-medium">{String(deal.address ?? "")}</td>
                     <td className="px-4 py-3">{String(deal.client ?? "")}</td>
@@ -944,10 +944,10 @@ export default function DealsPage() {
                         )}
                       </button>
                     </td>
-                  </tr>
-                ))}
-                {deals.length === 0 && (
-                  <tr>
+                </tr>
+              ))}
+              {deals.length === 0 && (
+                <tr>
                     <td colSpan={10} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">📋</span>
@@ -955,12 +955,12 @@ export default function DealsPage() {
                         <p className="text-sm">Add your first deal to get started!</p>
                       </div>
                     </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
       </div>
       {/* Edit Deal Modal */}
       {editModalOpen && editingDeal && (

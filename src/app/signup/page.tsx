@@ -40,6 +40,50 @@ export default function SignUpPage() {
     }
   };
 
+  // Function to create initial user profile record
+  const createUserProfileRecord = async (userId: string, email: string) => {
+    try {
+      const profileRef = doc(db, 'userProfiles', userId);
+      await setDoc(profileRef, {
+        userId,
+        email,
+        startOfCommissionYear: new Date(new Date().getFullYear(), 0, 1), // January 1st of current year
+        commissionType: 'percentage',
+        companySplitPercent: 30,
+        companySplitCap: 5000,
+        royaltyPercent: 6,
+        royaltyCap: 3000,
+        fixedCommissionAmount: 0,
+        // Personal/Business Information
+        firstName: "",
+        lastName: "",
+        phone: "",
+        company: "",
+        licenseNumber: "",
+        zipCode: "",
+        state: "",
+        // Financial Tracking
+        monthlyGoal: 0,
+        annualGoal: 0,
+        emergencyFund: 0,
+        retirementContribution: 0,
+        // Additional Settings
+        currency: "USD",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        notifications: {
+          email: false,
+          push: false,
+          capAlerts: true,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log('Created initial user profile record for user:', userId);
+    } catch (error) {
+      console.error('Error creating user profile record:', error);
+    }
+  };
+
   // Check if user is already signed in
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -62,6 +106,7 @@ export default function SignUpPage() {
       
       // Create subscription record immediately after user creation
       await createSubscriptionRecord(result.user.uid, result.user.email || '');
+      await createUserProfileRecord(result.user.uid, result.user.email || '');
       
       setStep('pricing');
     } catch (err: unknown) {
@@ -90,6 +135,7 @@ export default function SignUpPage() {
       
       // Create subscription record immediately after user creation
       await createSubscriptionRecord(result.user.uid, result.user.email || '');
+      await createUserProfileRecord(result.user.uid, result.user.email || '');
       
       setStep('pricing');
     } catch (err: unknown) {

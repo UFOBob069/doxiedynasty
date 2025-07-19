@@ -379,25 +379,25 @@ export default function DashboardPage() {
               <p className="text-gray-600 text-lg">Track your real estate income and expenses</p>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/deals')}
+        <button
+          onClick={() => router.push('/deals')}
                 className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
-              >
+        >
                 📋 Deals
-              </button>
-              <button
-                onClick={() => router.push('/expenses')}
+        </button>
+        <button
+          onClick={() => router.push('/expenses')}
                 className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
-              >
+        >
                 💰 Expenses
-              </button>
-              <button
+        </button>
+        <button
                 onClick={() => router.push('/settings')}
                 className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-white hover:shadow-md transition-all duration-200"
-              >
+        >
                 ⚙️ Settings
-              </button>
-            </div>
+        </button>
+      </div>
           </div>
         </div>
 
@@ -431,12 +431,12 @@ export default function DashboardPage() {
                     <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">Commission Year</span>
                   )}
                 </div>
-                <button
+            <button
                   onClick={() => router.push('/settings')}
                   className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                >
+            >
                   Complete Settings Now
-                </button>
+            </button>
               </div>
             </div>
           </div>
@@ -569,8 +569,8 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
                   <span className="text-xl">🏢</span>
-                </div>
-                <div>
+              </div>
+              <div>
                   <h3 className="text-lg font-bold text-gray-900">Company Split Cap</h3>
                   <p className="text-gray-500 text-sm">Annual company split tracking</p>
                 </div>
@@ -624,7 +624,7 @@ export default function DashboardPage() {
           </div>
           
           {monthlyNetIncome.length > 0 ? (
-            <div>
+              <div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-600">${averageMonthlyNet.toLocaleString()}</div>
