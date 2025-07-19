@@ -15,7 +15,12 @@ export default function SignInPage() {
 
   // Check if user is already signed in and redirect appropriately
   useEffect(() => {
+    console.log('Signin page useEffect running');
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('onAuthStateChanged triggered, user:', user ? user.email : 'null');
+      console.log('Current auth state:', auth.currentUser ? auth.currentUser.email : 'null');
+      
       if (user) {
         console.log('User signed in:', user.email);
         // Check if user has a subscription
@@ -49,13 +54,17 @@ export default function SignInPage() {
 
   // Google sign in handler
   const handleGoogle = async () => {
+    console.log('Google sign-in button clicked');
     setError("");
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      console.log('About to call signInWithPopup');
+      const result = await signInWithPopup(auth, provider);
+      console.log('Sign-in successful:', result.user.email);
       // The useEffect above will handle the redirect
     } catch (err: unknown) {
+      console.error('Google sign-in error:', err);
       const errorMessage = err instanceof Error ? err.message : "Google sign in failed";
       setError(errorMessage);
     } finally {

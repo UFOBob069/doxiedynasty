@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
 import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import SubscriptionGuard from "../../components/SubscriptionGuard";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -598,8 +599,9 @@ export default function DealsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <SubscriptionGuard>
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -1006,5 +1008,6 @@ export default function DealsPage() {
         </div>
       )}
     </main>
+    </SubscriptionGuard>
   );
 } 
