@@ -23,7 +23,6 @@ export default function SignInPage() {
           const userDoc = await getDoc(userRef);
           
           if (userDoc.exists()) {
-            const subscriptionData = userDoc.data();
             // If user has any subscription record (even incomplete), send to dashboard
             router.replace("/dashboard");
           } else {
