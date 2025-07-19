@@ -15,13 +15,29 @@ if (typeof window === 'undefined' && !process.env.STRIPE_SECRET_KEY) {
 // Client-side Stripe instance
 export const getStripe = async () => {
   if (typeof window !== 'undefined') {
-    const { loadStripe } = await import('@stripe/stripe-js');
-    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    if (!publishableKey) {
-      console.warn('Stripe publishable key not found in environment variables.');
+    try {
+      const { loadStripe } = await import('@stripe/stripe-js');
+      const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+      
+      console.log('Stripe publishable key check:', {
+        hasKey: !!publishableKey,
+        keyPrefix: publishableKey ? publishableKey.substring(0, 7) : 'none',
+        isLive: publishableKey?.startsWith('pk_live_'),
+        isTest: publishableKey?.startsWith('pk_test_')
+      });
+      
+      if (!publishableKey) {
+        console.warn('Stripe publishable key not found in environment variables.');
+        return null;
+      }
+      
+      const stripe = await loadStripe(publishableKey);
+      console.log('Stripe loaded successfully:', !!stripe);
+      return stripe;
+    } catch (error) {
+      console.error('Error loading Stripe:', error);
       return null;
     }
-    return loadStripe(publishableKey);
   }
   return null;
 };

@@ -106,8 +106,22 @@ export async function POST(request: NextRequest) {
     }, { merge: true });
 
     return NextResponse.json({ sessionId: session.id });
-  } catch {
-    console.error('Error creating checkout session');
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Check if it's a Stripe error
+    if (error && typeof error === 'object' && 'type' in error) {
+      console.error('Stripe error type:', (error as any).type);
+      console.error('Stripe error code:', (error as any).code);
+      console.error('Stripe error message:', (error as any).message);
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

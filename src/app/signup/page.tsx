@@ -82,6 +82,8 @@ export default function SignUpPage() {
     setError("");
 
     try {
+      console.log('Creating checkout session for plan:', planType);
+      
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -94,26 +96,42 @@ export default function SignUpPage() {
         }),
       });
 
-      const { sessionId, error } = await response.json();
+      const data = await response.json();
+      console.log('Checkout session response:', data);
 
-      if (error) {
-        setError(error);
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+
+      if (!data.sessionId) {
+        setError('No session ID received from server');
         return;
       }
 
       // Redirect to Stripe Checkout
+      console.log('Loading Stripe...');
       const stripe = await getStripe();
-      if (stripe) {
-        const { error } = await stripe.redirectToCheckout({ sessionId });
-        if (error) {
-          setError(error.message || 'Failed to redirect to checkout');
-        } else {
-          // Simulate setting the cookie after successful checkout (in production, set this after webhook)
-          setCookie('hasActiveSubscription', '1', { path: '/' });
-        }
+      
+      if (!stripe) {
+        setError('Failed to load Stripe. Please check your internet connection and try again.');
+        return;
       }
-    } catch {
-      setError('Failed to create checkout session');
+
+      console.log('Redirecting to Stripe checkout with session:', data.sessionId);
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      
+      if (error) {
+        console.error('Stripe redirect error:', error);
+        setError(error.message || 'Failed to redirect to checkout');
+      } else {
+        console.log('Stripe redirect successful');
+        // Simulate setting the cookie after successful checkout (in production, set this after webhook)
+        setCookie('hasActiveSubscription', '1', { path: '/' });
+      }
+    } catch (error) {
+      console.error('Error in handlePlanSelect:', error);
+      setError('Failed to create checkout session. Please try again.');
     } finally {
       setLoading(false);
     }
