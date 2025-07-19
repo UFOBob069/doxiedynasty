@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, fetchSignInMethodsForEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
@@ -11,6 +11,10 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
   const router = useRouter();
 
   // Function to check if user exists in Firebase Auth
@@ -136,8 +140,56 @@ export default function SignInPage() {
     }
   };
 
-  // Email sign in handler (optional, not wired up yet)
-  // ...
+  // Email sign in handler
+  const handleEmailSignin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Email sign-in button clicked');
+    console.log('Auth state before sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
+    setError("");
+    setLoading(true);
+    
+    try {
+      console.log('About to call signInWithEmailAndPassword');
+      const result = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      console.log('Email sign-in successful:', result.user.email);
+      console.log('Auth state after sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
+      console.log('Result user details:', { uid: result.user.uid, email: result.user.email, emailVerified: result.user.emailVerified });
+      
+      // Check if user exists in Firebase Auth
+      const userExists = await checkUserExists(result.user.email || '');
+      console.log('User exists in Firebase Auth:', userExists);
+      
+      // Check subscription status
+      const subscriptionStatus = await checkSubscriptionStatus(result.user.uid);
+      console.log('Subscription status:', subscriptionStatus);
+      
+      // Add a delay to see if auth state persists
+      setTimeout(() => {
+        console.log('Auth state 1 second after sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
+      }, 1000);
+      
+      // The useEffect above will handle the redirect
+    } catch (err: unknown) {
+      console.error('Email sign-in error:', err);
+      console.error('Error details:', {
+        code: (err as { code?: string })?.code,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : 'No stack trace'
+      });
+      const errorMessage = err instanceof Error ? err.message : "Email sign in failed";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Form input handler
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   // Show loading while checking auth state
   if (authLoading) {
@@ -179,12 +231,15 @@ export default function SignInPage() {
             Continue with Google
           </button>
           {error && <div className="text-red-600 text-sm mb-2 text-center">{error}</div>}
-          <form className="flex flex-col gap-4">
+          <form onSubmit={handleEmailSignin} className="flex flex-col gap-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 id="email"
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 autoComplete="email"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -195,6 +250,9 @@ export default function SignInPage() {
               <input
                 id="password"
                 type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 autoComplete="current-password"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -202,9 +260,10 @@ export default function SignInPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition disabled:opacity-60"
             >
-              Sign In
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
           <div className="text-center mt-4 text-sm text-gray-600">
