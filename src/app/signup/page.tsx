@@ -1,8 +1,9 @@
 "use client";
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import PricingPlans from '../../components/PricingPlans';
 import { getStripe } from '../../lib/stripe';
 import { setCookie } from 'cookies-next';
@@ -21,6 +22,23 @@ export default function SignUpPage() {
   });
   // Remove unused router
   // const router = useRouter();
+
+  // Function to create initial subscription record
+  const createSubscriptionRecord = async (userId: string, email: string) => {
+    try {
+      const userRef = doc(db, 'userSubscriptions', userId);
+      await setDoc(userRef, {
+        userId,
+        email,
+        status: 'incomplete',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log('Created initial subscription record for user:', userId);
+    } catch (error) {
+      console.error('Error creating subscription record:', error);
+    }
+  };
 
   // Check if user is already signed in
   useEffect(() => {
@@ -41,6 +59,10 @@ export default function SignUpPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
+      
+      // Create subscription record immediately after user creation
+      await createSubscriptionRecord(result.user.uid, result.user.email || '');
+      
       setStep('pricing');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Google sign in failed";
@@ -65,6 +87,10 @@ export default function SignUpPage() {
     try {
       const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       setUser(result.user);
+      
+      // Create subscription record immediately after user creation
+      await createSubscriptionRecord(result.user.uid, result.user.email || '');
+      
       setStep('pricing');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Email sign up failed";
