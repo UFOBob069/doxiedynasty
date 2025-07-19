@@ -1,15 +1,46 @@
 "use client";
 import Link from 'next/link';
-import { useState } from 'react';
-import { auth } from '../../firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useState, useEffect } from 'react';
+import { auth, db } from '../../firebase';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 
 export default function SignInPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
+
+  // Check if user is already signed in and redirect appropriately
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Check if user has a subscription
+        try {
+          const userRef = doc(db, 'userSubscriptions', user.uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const subscriptionData = userDoc.data();
+            // If user has any subscription record (even incomplete), send to dashboard
+            router.replace("/dashboard");
+          } else {
+            // User exists but no subscription - they need to complete signup
+            router.replace("/signup");
+          }
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+          // If there's an error, send to dashboard and let it handle the subscription check
+          router.replace("/dashboard");
+        }
+      } else {
+        setAuthLoading(false);
+      }
+    });
+    return unsubscribe;
+  }, [router]);
 
   // Google sign in handler
   const handleGoogle = async () => {
@@ -18,7 +49,7 @@ export default function SignInPage() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      router.replace("/dashboard");
+      // The useEffect above will handle the redirect
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Google sign in failed";
       setError(errorMessage);
@@ -29,6 +60,18 @@ export default function SignInPage() {
 
   // Email sign in handler (optional, not wired up yet)
   // ...
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-gray-600 text-lg font-medium">Checking your account...</div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <>
