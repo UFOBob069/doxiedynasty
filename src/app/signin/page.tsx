@@ -35,9 +35,9 @@ export default function SignInPage() {
             // If user has any subscription record (even incomplete), send to dashboard
             router.replace("/dashboard");
           } else {
-            console.log('User has no subscription, redirecting to signup');
-            // User exists but no subscription - they need to complete signup
-            router.replace("/signup");
+            console.log('User has no subscription, redirecting to dashboard to show subscription required');
+            // User exists but no subscription - send to dashboard which will show subscription required
+            router.replace("/dashboard");
           }
         } catch (error) {
           console.error('Error checking subscription:', error);
