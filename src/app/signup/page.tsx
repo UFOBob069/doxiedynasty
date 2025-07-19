@@ -43,8 +43,9 @@ export default function SignUpPage() {
   // Function to create initial user profile record
   const createUserProfileRecord = async (userId: string, email: string) => {
     try {
+      console.log('Creating user profile record for:', userId, email);
       const profileRef = doc(db, 'userProfiles', userId);
-      await setDoc(profileRef, {
+      const profileData = {
         userId,
         email,
         startOfCommissionYear: new Date(new Date().getFullYear(), 0, 1), // January 1st of current year
@@ -77,10 +78,23 @@ export default function SignUpPage() {
         },
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
-      console.log('Created initial user profile record for user:', userId);
+      };
+      
+      console.log('Profile data to save:', profileData);
+      await setDoc(profileRef, profileData);
+      console.log('Successfully created user profile record for user:', userId);
+      
+      // Add a small delay to ensure the write completes
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Delay completed after profile creation');
+      
     } catch (error) {
       console.error('Error creating user profile record:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
+      // Don't throw the error, just log it so it doesn't break the signup flow
     }
   };
 
@@ -100,16 +114,36 @@ export default function SignUpPage() {
     setError("");
     setLoading(true);
     try {
+      console.log('Starting Google signup...');
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+      console.log('Google signup successful:', result.user.email);
+      console.log('Auth state after Google signup:', auth.currentUser ? auth.currentUser.email : 'null');
+      
       setUser(result.user);
       
       // Create subscription record immediately after user creation
+      console.log('Creating subscription record...');
       await createSubscriptionRecord(result.user.uid, result.user.email || '');
+      
+      // Create user profile record
+      console.log('Creating user profile record...');
       await createUserProfileRecord(result.user.uid, result.user.email || '');
+      
+      console.log('Auth state after creating records:', auth.currentUser ? auth.currentUser.email : 'null');
+      console.log('Moving to pricing step...');
+      
+      // Add a final check to ensure user is still signed in
+      setTimeout(() => {
+        console.log('Final auth state check:', auth.currentUser ? auth.currentUser.email : 'null');
+        if (!auth.currentUser) {
+          console.error('User was signed out during the signup process!');
+        }
+      }, 2000);
       
       setStep('pricing');
     } catch (err: unknown) {
+      console.error('Google signup error:', err);
       const errorMessage = err instanceof Error ? err.message : "Google sign in failed";
       setError(errorMessage);
     } finally {
@@ -130,15 +164,35 @@ export default function SignUpPage() {
     }
 
     try {
+      console.log('Starting email signup...');
       const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      console.log('Email signup successful:', result.user.email);
+      console.log('Auth state after email signup:', auth.currentUser ? auth.currentUser.email : 'null');
+      
       setUser(result.user);
       
       // Create subscription record immediately after user creation
+      console.log('Creating subscription record...');
       await createSubscriptionRecord(result.user.uid, result.user.email || '');
+      
+      // Create user profile record
+      console.log('Creating user profile record...');
       await createUserProfileRecord(result.user.uid, result.user.email || '');
+      
+      console.log('Auth state after creating records:', auth.currentUser ? auth.currentUser.email : 'null');
+      console.log('Moving to pricing step...');
+      
+      // Add a final check to ensure user is still signed in
+      setTimeout(() => {
+        console.log('Final auth state check:', auth.currentUser ? auth.currentUser.email : 'null');
+        if (!auth.currentUser) {
+          console.error('User was signed out during the signup process!');
+        }
+      }, 2000);
       
       setStep('pricing');
     } catch (err: unknown) {
+      console.error('Email signup error:', err);
       const errorMessage = err instanceof Error ? err.message : "Email sign up failed";
       setError(errorMessage);
     } finally {
