@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
@@ -12,6 +12,45 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
+
+  // Function to check if user exists in Firebase Auth
+  const checkUserExists = async (email: string) => {
+    try {
+      console.log('Checking if user exists for email:', email);
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      console.log('Sign-in methods for email:', methods);
+      return methods.length > 0;
+    } catch (error) {
+      console.error('Error checking user existence:', error);
+      return false;
+    }
+  };
+
+  // Function to check subscription status
+  const checkSubscriptionStatus = async (userId: string) => {
+    try {
+      console.log('Checking subscription status for user:', userId);
+      const userRef = doc(db, 'userSubscriptions', userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        console.log('Subscription data:', data);
+        return {
+          exists: true,
+          status: data.status,
+          email: data.email,
+          createdAt: data.createdAt
+        };
+      } else {
+        console.log('No subscription record found for user:', userId);
+        return { exists: false };
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      return { exists: false, error };
+    }
+  };
 
   // Check if user is already signed in and redirect appropriately
   useEffect(() => {
@@ -68,9 +107,28 @@ export default function SignInPage() {
       console.log('Sign-in successful:', result.user.email);
       console.log('Auth state after sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
       console.log('Result user details:', { uid: result.user.uid, email: result.user.email, emailVerified: result.user.emailVerified });
+      
+      // Check if user exists in Firebase Auth
+      const userExists = await checkUserExists(result.user.email || '');
+      console.log('User exists in Firebase Auth:', userExists);
+      
+      // Check subscription status
+      const subscriptionStatus = await checkSubscriptionStatus(result.user.uid);
+      console.log('Subscription status:', subscriptionStatus);
+      
+      // Add a delay to see if auth state persists
+      setTimeout(() => {
+        console.log('Auth state 1 second after sign-in:', auth.currentUser ? auth.currentUser.email : 'null');
+      }, 1000);
+      
       // The useEffect above will handle the redirect
     } catch (err: unknown) {
       console.error('Google sign-in error:', err);
+      console.error('Error details:', {
+        code: (err as { code?: string })?.code,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : 'No stack trace'
+      });
       const errorMessage = err instanceof Error ? err.message : "Google sign in failed";
       setError(errorMessage);
     } finally {
