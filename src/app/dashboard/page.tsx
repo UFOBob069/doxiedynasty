@@ -104,23 +104,74 @@ function calculateYtdCompanySplitUsage(deals: Deal[], startDate: Date, endDate: 
 // Helper function to calculate monthly net income
 function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: number = 12): Array<{ month: string; netIncome: number }> {
   const monthlyData: { [key: string]: number } = {};
-  const now = new Date();
   
-  // Initialize last 12 months (increased from 6 to show more data)
-  for (let i = months - 1; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    monthlyData[monthKey] = 0;
+  // Helper function to parse date safely
+  function parseDateSafely(dateString: string): Date | null {
+    if (!dateString) return null;
+    
+    // Handle ISO date format (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      // month is 0-indexed in Date constructor
+      return new Date(year, month - 1, day);
+    }
+    
+    // Fallback to standard Date parsing
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+  // Get all unique months from deals and expenses
+  const allDates: Date[] = [];
+  
+  // Add deal dates
+  deals.forEach(deal => {
+    if (deal.closeDate) {
+      const dealDate = parseDateSafely(deal.closeDate);
+      if (dealDate) {
+        allDates.push(dealDate);
+      }
+    }
+  });
+  
+  // Add expense dates
+  expenses.forEach(expense => {
+    if (expense.date && expense.category !== 'Mileage') {
+      const expenseDate = parseDateSafely(expense.date);
+      if (expenseDate) {
+        allDates.push(expenseDate);
+      }
+    }
+  });
+  
+  // If no dates, fall back to last 12 months
+  if (allDates.length === 0) {
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      monthlyData[monthKey] = 0;
+    }
+  } else {
+    // Initialize months for all dates found
+    allDates.forEach(date => {
+      const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      if (!(monthKey in monthlyData)) {
+        monthlyData[monthKey] = 0;
+      }
+    });
   }
   
   // Add deal income
   deals.forEach(deal => {
     if (deal.closeDate) {
-      const dealDate = new Date(deal.closeDate);
-      const monthKey = dealDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      if (monthlyData[monthKey] !== undefined) {
-        const dealIncome = safeNumber(deal.netIncome);
-        monthlyData[monthKey] += dealIncome;
+      const dealDate = parseDateSafely(deal.closeDate);
+      if (dealDate) {
+        const monthKey = dealDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        if (monthlyData[monthKey] !== undefined) {
+          const dealIncome = safeNumber(deal.netIncome);
+          monthlyData[monthKey] += dealIncome;
+        }
       }
     }
   });
@@ -128,11 +179,13 @@ function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: n
   // Subtract expenses (only regular expenses, not mileage)
   expenses.forEach(expense => {
     if (expense.date && expense.category !== 'Mileage') {
-      const expenseDate = new Date(expense.date);
-      const monthKey = expenseDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      if (monthlyData[monthKey] !== undefined) {
-        const expenseAmount = safeNumber(expense.amount);
-        monthlyData[monthKey] -= expenseAmount;
+      const expenseDate = parseDateSafely(expense.date);
+      if (expenseDate) {
+        const monthKey = expenseDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        if (monthlyData[monthKey] !== undefined) {
+          const expenseAmount = safeNumber(expense.amount);
+          monthlyData[monthKey] -= expenseAmount;
+        }
       }
     }
   });
@@ -149,9 +202,13 @@ function calculateMonthlyNetIncome(deals: Deal[], expenses: Expense[], months: n
   
   // If no months have activity, show the last 3 months
   if (result.length === 0) {
-    const last3Months = Object.entries(monthlyData)
-      .slice(-3)
-      .map(([month, netIncome]) => ({ month, netIncome }));
+    const now = new Date();
+    const last3Months = [];
+    for (let i = 2; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      last3Months.push({ month: monthKey, netIncome: 0 });
+    }
     return last3Months;
   }
   

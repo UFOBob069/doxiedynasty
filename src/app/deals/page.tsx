@@ -258,6 +258,125 @@ function downloadCSV(data: Record<string, unknown>[], filename: string) {
   window.URL.revokeObjectURL(url);
 }
 
+/**
+ * Recalculate all deals for the commission year in close date order and update them in Firestore if needed.
+ * Call this after any deal is added or edited.
+ */
+async function recalculateAllDealsForYear(userId: string, commissionSchedules: CommissionSchedule[], db: any) {
+  for (const schedule of commissionSchedules) {
+    // Get the date range for this schedule
+    const sortedSchedules = [...commissionSchedules].sort((a, b) => (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0));
+    const scheduleIndex = sortedSchedules.findIndex(s => s.id === schedule.id);
+    const nextSchedule = sortedSchedules[scheduleIndex + 1];
+    // getScheduleRange is defined below in this file
+    const { start, end } = getScheduleRange(schedule, nextSchedule);
+    if (!start || !end) continue;
+
+    // Fetch all deals for this user in this schedule's date range
+    // (Firestore does not support range queries on two fields, so we filter in JS)
+    const q = query(
+      collection(db, "deals"),
+      where("userId", "==", userId)
+    );
+    const snapshot = await getDocs(q);
+    let deals: Deal[] = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Deal));
+    // Filter by closeDate in range
+    deals = deals.filter(deal => {
+      let dealDate: Date | null = null;
+      if (deal.closeDate) {
+        dealDate = new Date(deal.closeDate);
+        if (isNaN(dealDate.getTime())) dealDate = null;
+      }
+      if (!dealDate && deal.createdAt) {
+        if (typeof (deal.createdAt as Timestamp).toDate === "function") {
+          dealDate = (deal.createdAt as Timestamp).toDate();
+        }
+      }
+      if (!dealDate) return false;
+      return dealDate >= start && dealDate <= end;
+    });
+    // Sort deals by closeDate ascending
+    deals = deals.sort((a, b) => {
+      const dateA = a.closeDate ? new Date(a.closeDate).getTime() : 0;
+      const dateB = b.closeDate ? new Date(b.closeDate).getTime() : 0;
+      return dateA - dateB;
+    });
+    // Recalculate each deal in order
+    let ytdRoyaltyUsage = 0;
+    let ytdCompanySplitUsage = 0;
+    for (const deal of deals) {
+      const breakdown = calculateDealBreakdown(
+        deal.totalDealAmount || 0,
+        schedule,
+        ytdRoyaltyUsage,
+        ytdCompanySplitUsage,
+        deal.referralFee || 0,
+        deal.transactionFee || 0,
+        deal.commissionPercent || 0
+      );
+      // If values differ, update the deal in Firestore
+      if (
+        deal.agentCommission !== breakdown.agentCommission ||
+        deal.companySplit !== breakdown.companySplit ||
+        deal.royaltyUsed !== breakdown.royaltyUsed ||
+        deal.grossIncome !== breakdown.grossIncome ||
+        deal.estimatedTaxes !== breakdown.estimatedTaxes ||
+        deal.netIncome !== breakdown.netIncome
+      ) {
+        await updateDoc(doc(db, "deals", deal.id), {
+          agentCommission: breakdown.agentCommission,
+          companySplit: breakdown.companySplit,
+          royaltyUsed: breakdown.royaltyUsed,
+          grossIncome: breakdown.grossIncome,
+          estimatedTaxes: breakdown.estimatedTaxes,
+          netIncome: breakdown.netIncome,
+        });
+      }
+      ytdRoyaltyUsage += breakdown.royaltyUsed;
+      ytdCompanySplitUsage += breakdown.companySplit;
+    }
+  }
+}
+
+// Helper function to get schedule range (same as dashboard)
+function getScheduleRange(schedule: CommissionSchedule, nextSchedule?: CommissionSchedule) {
+  const start = schedule?.yearStart?.toDate ? schedule.yearStart.toDate() : null;
+  let end = null;
+  if (nextSchedule && nextSchedule.yearStart?.toDate) {
+    end = new Date(nextSchedule.yearStart.toDate().getTime() - 1);
+  } else if (start) {
+    end = new Date(start);
+    end.setFullYear(end.getFullYear() + 1);
+    end.setDate(end.getDate() - 1);
+  }
+  return { start, end };
+}
+
+// Helper function to get the appropriate commission schedule for a given date
+function getCommissionScheduleForDate(date: Date, commissionSchedules: CommissionSchedule[]): CommissionSchedule | null {
+  if (!commissionSchedules.length) return null;
+  
+  // Sort schedules by start date
+  const sortedSchedules = [...commissionSchedules].sort((a, b) => 
+    (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)
+  );
+  
+  // Find the schedule that applies to this date
+  for (let i = 0; i < sortedSchedules.length; i++) {
+    const schedule = sortedSchedules[i];
+    const nextSchedule = sortedSchedules[i + 1];
+    
+    const { start, end } = getScheduleRange(schedule, nextSchedule);
+    
+    if (start && end && date >= start && date <= end) {
+      return schedule;
+    }
+  }
+  
+  // If no specific schedule found, return the most recent one
+  return sortedSchedules[sortedSchedules.length - 1] || null;
+}
+
 export default function DealsPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -297,45 +416,6 @@ export default function DealsPage() {
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [editForm, setEditForm] = useState<Partial<Deal>>({});
   const [editLoading, setEditLoading] = useState(false);
-
-  // Helper function to get schedule range (same as dashboard)
-  const getScheduleRange = useCallback((schedule: CommissionSchedule, nextSchedule?: CommissionSchedule) => {
-    const start = schedule?.yearStart?.toDate ? schedule.yearStart.toDate() : null;
-    let end = null;
-    if (nextSchedule && nextSchedule.yearStart?.toDate) {
-      end = new Date(nextSchedule.yearStart.toDate().getTime() - 1);
-    } else if (start) {
-      end = new Date(start);
-      end.setFullYear(end.getFullYear() + 1);
-      end.setDate(end.getDate() - 1);
-    }
-    return { start, end };
-  }, []);
-
-  // Helper function to get the appropriate commission schedule for a given date
-  const getCommissionScheduleForDate = useCallback((date: Date): CommissionSchedule | null => {
-    if (!commissionSchedules.length) return null;
-    
-    // Sort schedules by start date
-    const sortedSchedules = [...commissionSchedules].sort((a, b) => 
-      (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0)
-    );
-    
-    // Find the schedule that applies to this date
-    for (let i = 0; i < sortedSchedules.length; i++) {
-      const schedule = sortedSchedules[i];
-      const nextSchedule = sortedSchedules[i + 1];
-      
-      const { start, end } = getScheduleRange(schedule, nextSchedule);
-      
-      if (start && end && date >= start && date <= end) {
-        return schedule;
-      }
-    }
-    
-    // If no specific schedule found, return the most recent one
-    return sortedSchedules[sortedSchedules.length - 1] || null;
-  }, [commissionSchedules, getScheduleRange]);
 
   // Auth guard
   useEffect(() => {
@@ -380,7 +460,7 @@ export default function DealsPage() {
     const totalDealAmount = parseFloat(form.totalDealAmount) || 0;
     if (totalDealAmount > 0) {
       const closeDate = new Date(form.closeDate);
-      const commissionSchedule = getCommissionScheduleForDate(closeDate);
+      const commissionSchedule = getCommissionScheduleForDate(closeDate, commissionSchedules);
       
       if (!commissionSchedule) {
         setBreakdown(null);
@@ -449,7 +529,7 @@ export default function DealsPage() {
       const transactionFee = parseFloat(form.transactionFee) || 0;
       
       const closeDate = new Date(form.closeDate);
-      const commissionSchedule = getCommissionScheduleForDate(closeDate);
+      const commissionSchedule = getCommissionScheduleForDate(closeDate, commissionSchedules);
       
       if (!commissionSchedule) {
         throw new Error("No commission schedule found for the selected close date. Please add a commission schedule in Settings.");
@@ -499,7 +579,10 @@ export default function DealsPage() {
         transactionFee,
         createdAt: Timestamp.now(),
       });
+      // Recalculate all deals for the year after add
+      await recalculateAllDealsForYear((user as { uid: string }).uid, commissionSchedules, db);
       setForm({ address: "", client: "", closeDate: "", totalDealAmount: "", commissionPercent: "", referralFee: "", transactionFee: "" });
+      setBreakdown(null); // Clear the breakdown display
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to add deal";
       setError(errorMessage);
@@ -547,6 +630,8 @@ export default function DealsPage() {
         transactionFee: toNumber(editForm.transactionFee),
         notes: editForm.notes || "",
       });
+      // Recalculate all deals for the year after edit
+      await recalculateAllDealsForYear((user as { uid: string }).uid, commissionSchedules, db);
       closeEditModal();
     } catch {
       alert("Failed to update deal");
@@ -749,7 +834,7 @@ export default function DealsPage() {
             
             {form.closeDate && (() => {
               const closeDate = new Date(form.closeDate);
-              const commissionSchedule = getCommissionScheduleForDate(closeDate);
+              const commissionSchedule = getCommissionScheduleForDate(closeDate, commissionSchedules);
               
               if (!commissionSchedule) {
                 return (

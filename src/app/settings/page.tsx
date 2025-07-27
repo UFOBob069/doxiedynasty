@@ -53,6 +53,27 @@ interface CommissionSchedule {
   createdAt?: Timestamp;
 }
 
+// Utility to update userProfile with the latest commission schedule
+async function updateUserProfileWithLatestSchedule(userId: string) {
+  const q = query(collection(db, "commissionSchedules"), where("userId", "==", userId));
+  const snapshot = await getDocs(q);
+  const schedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommissionSchedule[];
+  if (schedules.length === 0) return;
+  // Use the most recent schedule (latest yearStart)
+  const latest = schedules.sort((a, b) => (b.yearStart?.seconds || 0) - (a.yearStart?.seconds || 0))[0];
+  const profileRef = doc(db, "userProfiles", userId);
+  await setDoc(profileRef, {
+    companySplitPercent: latest.companySplitPercent,
+    companySplitCap: latest.companySplitCap,
+    royaltyPercent: latest.royaltyPercent,
+    royaltyCap: latest.royaltyCap,
+    estimatedTaxPercent: latest.estimatedTaxPercent,
+    commissionType: latest.commissionType,
+    fixedCommissionAmount: latest.fixedCommissionAmount ?? 0,
+    startOfCommissionYear: latest.yearStart,
+  }, { merge: true });
+}
+
 export default function SettingsPage() {
   const [user, setUser] = useState<unknown>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -304,6 +325,8 @@ export default function SettingsPage() {
         fixedCommissionAmount: newSchedule.fixedCommissionAmount,
         createdAt: Timestamp.now(),
       });
+      // Auto-update userProfile with latest schedule
+      await updateUserProfileWithLatestSchedule(userId);
       setShowScheduleForm(false);
       setSaved(true);
       setNewSchedule({
@@ -328,6 +351,11 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       await deleteDoc(firestoreDoc(db, "commissionSchedules", id));
+      // Auto-update userProfile with latest schedule (or clear fields if none left)
+      if (user) {
+        const userId = (user as { uid: string }).uid;
+        await updateUserProfileWithLatestSchedule(userId);
+      }
       setSaved(true);
     } catch {
       alert('Failed to delete commission schedule.');
