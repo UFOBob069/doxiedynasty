@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "./Header";
 import Script from "next/script";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -65,9 +66,9 @@ export default function RootLayout({
           }}
         />
         <noscript>
-          <img 
-            height="1" 
-            width="1" 
+          <Image 
+            height={1} 
+            width={1} 
             style={{ display: 'none' }}
             src="https://www.facebook.com/tr?id=263977355782414&ev=PageView&noscript=1"
             alt=""

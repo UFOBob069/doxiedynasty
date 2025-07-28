@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db, auth } from "../../firebase";
 import { collection, addDoc, query, where, onSnapshot, Timestamp, orderBy, QuerySnapshot, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDocs } from "firebase/firestore";
@@ -262,7 +262,7 @@ function downloadCSV(data: Record<string, unknown>[], filename: string) {
  * Recalculate all deals for the commission year in close date order and update them in Firestore if needed.
  * Call this after any deal is added or edited.
  */
-async function recalculateAllDealsForYear(userId: string, commissionSchedules: CommissionSchedule[], db: any) {
+async function recalculateAllDealsForYear(userId: string, commissionSchedules: CommissionSchedule[], db: typeof import("../../firebase").db) {
   for (const schedule of commissionSchedules) {
     // Get the date range for this schedule
     const sortedSchedules = [...commissionSchedules].sort((a, b) => (a.yearStart?.seconds || 0) - (b.yearStart?.seconds || 0));
@@ -279,7 +279,7 @@ async function recalculateAllDealsForYear(userId: string, commissionSchedules: C
       where("userId", "==", userId)
     );
     const snapshot = await getDocs(q);
-    let deals: Deal[] = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Deal));
+    let deals: Deal[] = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })) as Deal[];
     // Filter by closeDate in range
     deals = deals.filter(deal => {
       let dealDate: Date | null = null;
@@ -499,7 +499,7 @@ export default function DealsPage() {
     } else {
       setBreakdown(null);
     }
-  }, [commissionSchedules, form.totalDealAmount, form.closeDate, form.commissionPercent, form.referralFee, form.transactionFee, deals, getCommissionScheduleForDate, getScheduleRange]);
+  }, [commissionSchedules, form.totalDealAmount, form.closeDate, form.commissionPercent, form.referralFee, form.transactionFee, deals]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
