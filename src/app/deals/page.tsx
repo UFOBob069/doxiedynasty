@@ -594,6 +594,8 @@ export default function DealsPage() {
     setDeletingId(id);
     try {
       await deleteDoc(doc(db, "deals", id));
+      // Recalculate all deals for the year after delete
+      await recalculateAllDealsForYear((user as { uid: string }).uid, commissionSchedules, db);
     } finally {
       setDeletingId(null);
     }
@@ -986,6 +988,8 @@ export default function DealsPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Agent Commission</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Company Split</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Royalty</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Referral Fee</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Transaction Fee</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Estimated Taxes</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Net Income</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
@@ -1001,6 +1005,8 @@ export default function DealsPage() {
                     <td className="px-4 py-3 font-semibold text-blue-600">${round2(deal.agentCommission || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 font-semibold text-orange-600">${round2(deal.companySplit || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 font-semibold text-purple-600">${round2(deal.royaltyUsed || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-indigo-600">${round2(deal.referralFee || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-teal-600">${round2(deal.transactionFee || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 font-semibold text-red-500">${round2(deal.estimatedTaxes || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 font-semibold text-emerald-600">${round2(deal.netIncome || 0).toLocaleString()}</td>
                     <td className="px-4 py-3">
@@ -1033,7 +1039,7 @@ export default function DealsPage() {
               ))}
               {deals.length === 0 && (
                 <tr>
-                    <td colSpan={10} className="text-center text-gray-400 py-8">
+                    <td colSpan={12} className="text-center text-gray-400 py-8">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">📋</span>
                         <p className="text-lg font-medium">No deals yet</p>
