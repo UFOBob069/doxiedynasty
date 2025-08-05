@@ -42,42 +42,35 @@ export const getStripe = async () => {
   return null;
 };
 
-// Pricing configuration
-export const PRICING = {
-  MONTHLY: {
-    price: 497, // $4.97 in cents
-    interval: 'month',
-    trialDays: 30,
-  },
-  YEARLY: {
-    price: 4900, // $49.00 in cents
-    interval: 'year',
-    trialDays: 30,
-  },
+// Doxie Dynasty card game pricing configuration
+export const DOXIE_DYNASTY_PRICING = {
+  ORIGINAL_PRICE: 3499, // $34.99 in cents
+  CURRENT_PRICE: 2499, // $24.99 in cents
+  FREE_SHIPPING: true,
+  SHIPPING_DAYS: '5-7',
 };
 
-// Stripe product and price IDs (you'll need to create these in your Stripe dashboard)
+// Stripe product and price IDs for Doxie Dynasty card game
 export const STRIPE_CONFIG = {
-  PRODUCT_ID: process.env.STRIPE_PRODUCT_ID || 'prod_xxx', // Replace with your product ID
-  MONTHLY_PRICE_ID: process.env.STRIPE_MONTHLY_PRICE_ID || 'price_xxx', // Replace with your monthly price ID
-  YEARLY_PRICE_ID: process.env.STRIPE_YEARLY_PRICE_ID || 'price_xxx', // Replace with your yearly price ID
+  PRODUCT_ID: process.env.STRIPE_DOXIE_DYNASTY_PRODUCT_ID || 'prod_xxx', // Replace with your Doxie Dynasty product ID
+  PRICE_ID: process.env.STRIPE_DOXIE_DYNASTY_PRICE_ID || 'price_xxx', // Replace with your Doxie Dynasty price ID
 };
 
-// Subscription status types
-export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid';
-
-// User subscription interface
-export interface UserSubscription {
-  userId: string;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  status: SubscriptionStatus;
-  currentPeriodStart?: Date;
-  currentPeriodEnd?: Date;
-  trialStart?: Date;
-  trialEnd?: Date;
-  planType?: 'monthly' | 'yearly';
-  couponCode?: string;
+// Order interface for Doxie Dynasty
+export interface DoxieDynastyOrder {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  shippingAddress: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+  };
+  amount: number;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered';
   createdAt: Date;
   updatedAt: Date;
 } 

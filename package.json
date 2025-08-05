@@ -1,5 +1,5 @@
 {
-  "name": "agentmoneytracker",
+  "name": "doxie-dynasty",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,8 @@
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "stripe": "^18.3.0"
+    "stripe": "^18.3.0",
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

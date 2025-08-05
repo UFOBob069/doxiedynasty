@@ -1,299 +1,546 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import Head from 'next/head';
+'use client';
 
-const testimonials = [
-  {
-    name: "Sarah M.",
-    role: "Top Producer, Keller Williams",
-    quote: "AgentMoneyTracker makes tracking my deals and expenses effortless. I love how fast and simple it is!",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    rating: 5,
-  },
-  {
-    name: "James T.",
-    role: "Realtor, Compass",
-    quote: "The mileage tracker and receipt uploads save me hours every month. Highly recommend!",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    rating: 5,
-  },
-  {
-    name: "Linda C.",
-    role: "Broker Associate, eXp Realty",
-    quote: "Finally, a tool built for agents that just works. My accountant loves the reports!",
-    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-    rating: 5,
-  },
-];
+import { useState } from 'react';
+import { 
+  Heart, 
+  Star, 
+  Truck, 
+  Shield, 
+  CheckCircle, 
+  Gift,
+  Instagram,
+  Facebook,
+  Mail,
+  Play
+} from 'lucide-react';
+import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
 
-const features = [
-  {
-    icon: "💰",
-    title: "Smart Commission Tracking",
-    description: "Auto-calculate net commissions with royalty caps, splits, and tax estimates"
-  },
-  {
-    icon: "📱",
-    title: "30-Second Entry",
-    description: "Mobile-first forms designed for speed. Log deals and expenses in seconds"
-  },
-  {
-    icon: "📊",
-    title: "Real-Time Insights",
-    description: "Instant profit & loss reports with visual charts and tax projections"
-  },
-  {
-    icon: "🧾",
-    title: "Expense & Mileage Tracking",
-    description: "Track every business expense and trip. Maximize deductions and simplify tax time."
-  },
-  {
-    icon: "☁️",
-    title: "Always Accessible",
-    description: "Cloud-based platform works on any device, anywhere, anytime"
-  },
-  {
-    icon: "📈",
-    title: "Income Optimization",
-    description: "Track expenses, maximize deductions, and boost your bottom line"
-  }
-];
+export default function HomePage() {
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [giftNote, setGiftNote] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-const stats = [
-  { number: "1,000+", label: "Active Agents" },
-  { number: "50,000+", label: "Deals Tracked" },
-  { number: "99.9%", label: "Uptime" },
-  { number: "4.9/5", label: "Agent Rating" }
-];
+  const scrollToCheckout = () => {
+    document.getElementById('checkout-section')?.scrollIntoView({ 
+      behavior: 'smooth' 
+    });
+  };
 
-const howItWorks = [
-  {
-    step: "1",
-    title: "Start Free Trial",
-    description: "Create your account in 30 seconds. 30-day free trial included."
-  },
-  {
-    step: "2", 
-    title: "Configure Settings",
-    description: "Set your commission splits, royalty caps, and tax rates."
-  },
-  {
-    step: "3",
-    title: "Start Tracking",
-    description: "Log deals and expenses. Get instant financial insights."
-  }
-];
+  const handleCheckout = async () => {
+    if (!customerName || !customerEmail) {
+      alert('Please fill in your name and email');
+      return;
+    }
 
-export default function Home() {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerName,
+          customerEmail,
+          giftNote,
+        }),
+      });
+
+      const { sessionId } = await response.json();
+      
+      // Redirect to Stripe Checkout
+      const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) => 
+        loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+      );
+      
+      if (stripe) {
+        await stripe.redirectToCheckout({ sessionId });
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatPrice = (priceInCents: number) => {
+    return `$${(priceInCents / 100).toFixed(2)}`;
+  };
+
   return (
-    <>
-      <Head>
-        <title>AgentMoneyTracker: Real Estate Agent Commission, Expense & Cap Tracking</title>
-        <meta name="description" content="Track your real estate commissions, expenses, caps, and tax estimates in one place. Built for agents. Fast, easy, and mobile-friendly." />
-        <meta property="og:title" content="AgentMoneyTracker: Real Estate Agent Commission, Expense & Cap Tracking" />
-        <meta property="og:description" content="Track your real estate commissions, expenses, caps, and tax estimates in one place. Built for agents. Fast, easy, and mobile-friendly." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://agentmoneytracker.com/" />
-        <meta property="og:image" content="/public/og-image.png" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="AgentMoneyTracker: Real Estate Agent Commission, Expense & Cap Tracking" />
-        <meta name="twitter:description" content="Track your real estate commissions, expenses, caps, and tax estimates in one place. Built for agents. Fast, easy, and mobile-friendly." />
-        <meta name="twitter:image" content="/public/og-image.png" />
-      </Head>
-      <main className="min-h-screen">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20 px-4">
-          <div className="max-w-6xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-              Trusted by 1,000+ real estate agents
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-orange-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-orange-600">
+                🐕 Doxie Dynasty
+              </h1>
             </div>
-            {/* Add For Agents button */}
-            <div className="mb-6">
-              <Link href="/for-agents" className="inline-block bg-white border-2 border-blue-600 text-blue-700 px-6 py-2 rounded-full font-semibold shadow hover:bg-blue-50 transition-all duration-200 text-base">
-                Why Agents Love This →
-              </Link>
-            </div>
-            
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-              Track Your
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600"> Money</span>
-              <br />
-              Like a Pro
+            <button
+              onClick={scrollToCheckout}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full font-semibold transition-colors"
+            >
+              Get My Game
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              🏆 Build Your Ultimate Pack of Wiener Dogs in the Game Made for Doxie Lovers
             </h1>
-            
-            <p className="text-xl sm:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              The fastest, simplest way for real estate agents to track deals, commissions, and expenses. 
-              Stay organized, maximize your income, and get instant financial insights.
+            <p className="text-xl md:text-2xl text-gray-600 mb-8">
+              Fast-paced. Family-friendly. Infinitely Instagrammable.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link href="/signup" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
-                Start Free 30-Day Trial
-              </Link>
-            </div>
-            
-            <div className="text-center mb-8">
-              <p className="text-lg text-gray-700 font-medium mb-2">
-                Just $4.97/month or $49/year after trial
-              </p>
-              <p className="text-sm text-gray-500">Cancel anytime • No commitment</p>
-            </div>
-            
-            <div className="flex justify-center items-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                30-day free trial
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <div className="text-3xl font-bold text-orange-600">
+                {formatPrice(DOXIE_DYNASTY_PRICING.CURRENT_PRICE)}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Secure checkout
+              <div className="text-lg text-gray-500 line-through">
+                {formatPrice(DOXIE_DYNASTY_PRICING.ORIGINAL_PRICE)}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Built for real estate agents
+              <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                + Free Shipping
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* Statistics Section */}
-        <section className="py-16 bg-white">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{stat.number}</div>
-                  <div className="text-gray-600 font-medium">{stat.label}</div>
-                </div>
-              ))}
-            </div>
+            <button
+              onClick={scrollToCheckout}
+              className="bg-orange-500 hover:bg-orange-600 text-white text-xl px-8 py-4 rounded-full font-bold transition-colors shadow-lg hover:shadow-xl"
+            >
+              ✅ Yes, I Want My Deck!
+            </button>
           </div>
-        </section>
 
-        {/* Features Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything You Need to Succeed</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Built specifically for real estate agents, with features that actually matter to your business.
+          {/* Hero Image Placeholder */}
+          <div className="mt-12 animate-fade-in-delayed">
+            <div className="bg-gradient-to-r from-orange-200 to-yellow-200 rounded-2xl p-8 max-w-2xl mx-auto">
+              <div className="text-6xl mb-4">🃏</div>
+              <p className="text-gray-700 font-medium">
+                Eye-catching card layout featuring Sausage Supreme, Vet Visit, and more!
               </p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Why Doxie Lovers Are Losing Their Minds Over This Game
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: '🐶',
+                title: 'Match Traits to Build Your Dream Pack',
+                description: 'Collect and combine unique dachshund traits to create the ultimate pack.'
+              },
+              {
+                icon: '🎉',
+                title: 'Survive Chaos Cards Like "Vet Visit" & "Bark-Off"',
+                description: 'Navigate hilarious event cards that test your pack\'s resilience.'
+              },
+              {
+                icon: '👑',
+                title: 'Score Big to Be Crowned Ruler of the Doxie Dynasty',
+                description: 'Compete to become the ultimate dachshund dynasty ruler.'
+              }
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="text-center p-6 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 animate-fade-in"
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <button className="text-orange-600 hover:text-orange-700 font-semibold flex items-center justify-center mx-auto gap-2">
+              <Play className="w-4 h-4" />
+              Download How to Play PDF
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Section */}
+      <section className="py-20 bg-orange-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Loved by Families, Game Nights, and Real-Life Sausage Dogs
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                text: 'My 10-year-old and our dachshund Milo played this 3 nights in a row.',
+                author: 'Sarah M.',
+                rating: 5
+              },
+              {
+                text: 'Perfect gift for my doxie-obsessed sister. She absolutely loves it!',
+                author: 'Mike R.',
+                rating: 5
+              },
+              {
+                text: 'The chaos cards are hilarious! Our family game night has never been better.',
+                author: 'Jennifer L.',
+                rating: 5
+              }
+            ].map((testimonial, index) => (
+              <div
+                key={index}
+                className="bg-white p-6 rounded-xl shadow-lg animate-fade-in"
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
+                <div className="flex mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
                 </div>
-              ))}
+                <p className="text-gray-700 mb-4 italic">"{testimonial.text}"</p>
+                <p className="font-semibold text-gray-900">- {testimonial.author}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap justify-center items-center gap-8 mt-12">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Shield className="w-5 h-5" />
+              <span>SSL Secure</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <CheckCircle className="w-5 h-5" />
+              <span>Satisfaction Guaranteed</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Heart className="w-5 h-5" />
+              <span>Dachshund Rescue Support</span>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* How It Works Section */}
-        <section className="py-20 bg-white">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Get Started in Minutes</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Simple setup process that gets you tracking your money immediately.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {howItWorks.map((step, index) => (
-                <div key={index} className="text-center relative">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-6">
-                    {step.step}
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
-                  
-                  {index < howItWorks.length - 1 && (
-                    <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 transform translate-x-4"></div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">What Agents Are Saying</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Join thousands of agents who&apos;ve transformed their financial tracking.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {testimonials.map((testimonial, index) => (
-                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-xl">★</span>
-                    ))}
-                  </div>
-                  
-                  <p className="text-gray-700 italic mb-6 leading-relaxed">
-                    &ldquo;{testimonial.quote.replace(/'/g, '&apos;')}&rdquo;
-                  </p>
-                  
-                  <div className="flex items-center">
-                    <Image 
-                      src={testimonial.avatar} 
-                      alt={testimonial.name} 
-                      width={48} 
-                      height={48} 
-                      className="w-12 h-12 rounded-full mr-4 object-cover" 
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                      <div className="text-sm text-gray-500">{testimonial.role}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-          <div className="max-w-4xl mx-auto text-center px-4">
-            <h2 className="text-4xl font-bold text-white mb-4">Ready to Take Control of Your Money?</h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Start tracking your deals and expenses today. Join thousands of agents who&apos;ve already transformed their financial management.
+      {/* Give Back Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              10% of Profits Support Dachshund Rescue Organizations
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Every purchase helps rescue and care for dachshunds in need. 
+              We partner with local rescue organizations to provide medical care, 
+              food, and loving homes for these amazing dogs.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link href="/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
-                Start Free 30-Day Trial
-              </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                image: '🐕',
+                caption: 'Rescued dachshund finding their forever home'
+              },
+              {
+                image: '🏥',
+                caption: 'Medical care for injured dachshunds'
+              },
+              {
+                image: '🏠',
+                caption: 'Foster care and rehabilitation'
+              }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="text-center animate-fade-in"
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
+                <div className="text-6xl mb-4">{item.image}</div>
+                <p className="text-gray-700 font-medium">{item.caption}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What's Inside Section */}
+      <section className="py-20 bg-orange-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              What's Inside Your Doxie Dynasty Deck
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="animate-fade-in">
+              <div className="bg-white p-8 rounded-2xl shadow-lg">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Card Breakdown</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+                    <span className="font-semibold">Doxie Cards:</span>
+                    <span className="text-gray-600">Smooth, long, wire-haired with quirky traits</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                    <span className="font-semibold">Event Cards:</span>
+                    <span className="text-gray-600">Vet Visit, Bark-Off, and other chaos cards</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                    <span className="font-semibold">Special Cards:</span>
+                    <span className="text-gray-600">Rare and legendary dachshund cards</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <div className="text-center mb-8">
-              <p className="text-lg text-white font-medium mb-2">
-                Just $4.97/month or $49/year after trial
-              </p>
-              <p className="text-blue-100 text-sm">Cancel anytime • No commitment</p>
-            </div>
-            
-            <div className="mt-8 text-blue-100 text-sm">
-              <p>✓ 30-day free trial • ✓ Secure checkout • ✓ Built for real estate agents</p>
-              <p className="mt-2">SOC 2 & GDPR Compliant • Bank-level security</p>
+
+            <div className="text-center animate-fade-in-delayed">
+              <div className="bg-gradient-to-br from-orange-200 to-yellow-200 rounded-2xl p-8">
+                <div className="text-8xl mb-4">🃏</div>
+                <p className="text-xl font-semibold text-gray-800 mb-4">
+                  It's Like Pokémon, But Cuter
+                </p>
+                <button
+                  onClick={scrollToCheckout}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+                >
+                  Get My Deck
+                </button>
+              </div>
             </div>
           </div>
-        </section>
-        <footer className="mt-16 text-center text-sm text-gray-500">
-          Need help? Email <a href="mailto:support@agentmoneytracker.com" className="underline hover:text-blue-600">support@agentmoneytracker.com</a>
-        </footer>
-      </main>
-    </>
+        </div>
+      </section>
+
+      {/* Pricing + Checkout Section */}
+      <section id="checkout-section" className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Limited First Print Run – 500 Decks Only!
+            </h2>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <div className="text-4xl font-bold text-orange-600">
+                {formatPrice(DOXIE_DYNASTY_PRICING.CURRENT_PRICE)}
+              </div>
+              <div className="text-2xl text-gray-500 line-through">
+                {formatPrice(DOXIE_DYNASTY_PRICING.ORIGINAL_PRICE)}
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <Truck className="w-5 h-5 text-green-600" />
+              <span className="text-green-600 font-semibold">Free U.S. Shipping | 5–7 Days</span>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8 animate-fade-in-delayed">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gift Note (Optional)
+                </label>
+                <textarea
+                  value={giftNote}
+                  onChange={(e) => setGiftNote(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Add a personal message if this is a gift"
+                  rows={3}
+                />
+              </div>
+
+              <button
+                onClick={handleCheckout}
+                disabled={isLoading}
+                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white text-xl py-4 rounded-lg font-bold transition-colors shadow-lg hover:shadow-xl"
+              >
+                {isLoading ? 'Processing...' : 'Yes! Ship Me My Game'}
+              </button>
+
+              <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <span>Secure Checkout</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>30-Day Returns</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4" />
+                  <span>Perfect Gift</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 bg-orange-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="space-y-6">
+            {[
+              {
+                question: 'What if I don\'t own a dachshund?',
+                answer: 'You\'ll still love it! The game is designed to be fun for everyone, whether you own a dachshund or just appreciate their adorable nature.'
+              },
+              {
+                question: 'Is it fun for kids?',
+                answer: 'Yes! The game is family-friendly and suitable for ages 8+. Kids love the cute artwork and simple gameplay mechanics.'
+              },
+              {
+                question: 'How many people can play?',
+                answer: 'Doxie Dynasty is designed for 2 to 6 players, making it perfect for family game nights or small gatherings.'
+              },
+              {
+                question: 'Can I send it as a gift?',
+                answer: 'Absolutely! You can add a gift note during checkout, and we\'ll include it with the order. Perfect for dachshund lovers!'
+              }
+            ].map((faq, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-lg p-6 shadow-sm animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {faq.question}
+                </h3>
+                <p className="text-gray-600">
+                  {faq.answer}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <h3 className="text-2xl font-bold mb-4">🐕 Doxie Dynasty</h3>
+              <p className="text-gray-300 mb-4">
+                Cuteness. Chaos. Cards.
+              </p>
+              <p className="text-gray-400 text-sm">
+                The ultimate card game for dachshund lovers everywhere.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Get Updates</h4>
+              <p className="text-gray-400 text-sm mb-4">
+                Get updates on new booster packs and exclusive Doxie drops!
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm"
+                />
+                <button className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-sm font-semibold transition-colors">
+                  <Mail className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Follow Us</h4>
+              <div className="flex gap-4">
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="w-6 h-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="w-6 h-6" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 mt-12 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-gray-400 text-sm">
+                © 2024 Doxie Dynasty. All rights reserved.
+              </p>
+              <div className="flex gap-6 text-sm">
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  Terms
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  Privacy
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  Refund Policy
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  Contact
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

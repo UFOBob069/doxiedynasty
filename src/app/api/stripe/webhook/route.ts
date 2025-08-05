@@ -1,100 +1,85 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '../../../../lib/stripe';
-import { db } from '../../../../firebase';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { stripe } from '@/lib/stripe';
 import Stripe from 'stripe';
-
-type StripeSubscriptionWithPeriod = Stripe.Subscription & {
-  current_period_start: number;
-  current_period_end: number;
-};
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
-  
-  if (!signature) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
-  }
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
-  }
-  if (!stripe) {
-    return NextResponse.json({ error: 'Stripe is not initialized' }, { status: 500 });
+
+  if (!signature || !stripe) {
+    return NextResponse.json(
+      { error: 'Missing signature or Stripe not configured' },
+      { status: 400 }
+    );
   }
 
   let event: Stripe.Event;
+
   try {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid signature' },
+      { status: 400 }
+    );
   }
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
-        if (session.metadata?.userId && session.customer) {
-          const userId = session.metadata.userId;
-          const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id;
-          const subscriptionRef = doc(db, 'userSubscriptions', userId);
-          await setDoc(subscriptionRef, {
-            userId,
-            stripeCustomerId: customerId,
-            stripeSubscriptionId: session.subscription as string,
-            status: 'trialing',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+        
+        // Handle successful Doxie Dynasty card game purchase
+        if (session.mode === 'payment') {
+          console.log('Doxie Dynasty order completed:', {
+            sessionId: session.id,
+            customerEmail: session.customer_email,
+            amount: session.amount_total,
+            customerName: session.metadata?.customerName,
+            giftNote: session.metadata?.giftNote,
           });
-          console.log('Subscription record created for user:', userId);
+
+          // Here you would typically:
+          // 1. Save order to your database
+          // 2. Send confirmation email to customer
+          // 3. Send order details to fulfillment team
+          // 4. Update inventory
+          
+          // Example: Send confirmation email
+          // await sendOrderConfirmationEmail(session.customer_email!, {
+          //   orderId: session.id,
+          //   customerName: session.metadata?.customerName,
+          //   amount: session.amount_total,
+          //   shippingAddress: session.shipping_details,
+          // });
         }
         break;
-      }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as StripeSubscriptionWithPeriod;
-        if (subscription.metadata?.userId) {
-          const userId = subscription.metadata.userId;
-          const subscriptionRef = doc(db, 'userSubscriptions', userId);
-          await updateDoc(subscriptionRef, {
-            stripeSubscriptionId: subscription.id,
-            status: subscription.status,
-            currentPeriodStart: new Date(subscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
-            trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-            planType: subscription.items.data[0]?.price.recurring?.interval as 'monthly' | 'yearly',
-            updatedAt: new Date(),
-          });
-          console.log('Subscription record updated for user:', userId);
-        }
+
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        console.log('Payment succeeded:', paymentIntent.id);
         break;
-      }
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        if (subscription.metadata?.userId) {
-          const userId = subscription.metadata.userId;
-          const subscriptionRef = doc(db, 'userSubscriptions', userId);
-          await updateDoc(subscriptionRef, {
-            status: 'canceled',
-            updatedAt: new Date(),
-          });
-          console.log('Subscription marked as canceled for user:', userId);
-        }
+
+      case 'payment_intent.payment_failed':
+        const failedPayment = event.data.object as Stripe.PaymentIntent;
+        console.log('Payment failed:', failedPayment.id);
         break;
-      }
+
       default:
-        console.log('Unhandled event type:', event.type);
+        console.log(`Unhandled event type: ${event.type}`);
     }
+
+    return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ received: true });
 } 
