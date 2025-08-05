@@ -122,9 +122,72 @@ export default function HomePage() {
 
           {/* Hero Image Placeholder */}
           <div className="mt-12 animate-fade-in-delayed">
-            <div className="bg-gradient-to-r from-orange-200 to-yellow-200 rounded-2xl p-8 max-w-2xl mx-auto">
-              <div className="text-6xl mb-4">🃏</div>
-              <p className="text-gray-700 font-medium">
+            <div className="bg-gradient-to-r from-orange-200 to-yellow-200 rounded-2xl p-8 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                {/* Card 1 - Sausage Supreme */}
+                <div className="bg-white rounded-lg p-4 shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-300">
+                  <div className="aspect-[3/4] bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/sausage-supreme-card.png" 
+                      alt="Sausage Supreme Card" 
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
+                      }}
+                    />
+                    <div className="text-center hidden">
+                      <div className="text-3xl mb-2">🌭</div>
+                      <p className="text-sm font-semibold text-gray-800">Sausage Supreme</p>
+                      <p className="text-xs text-gray-600">Legendary Doxie</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2 - Vet Visit */}
+                <div className="bg-white rounded-lg p-4 shadow-lg transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+                  <div className="aspect-[3/4] bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/vet-visit-card.png" 
+                      alt="Vet Visit Card" 
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
+                      }}
+                    />
+                    <div className="text-center hidden">
+                      <div className="text-3xl mb-2">🏥</div>
+                      <p className="text-sm font-semibold text-gray-800">Vet Visit</p>
+                      <p className="text-xs text-gray-600">Event Card</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3 - Wire-Haired Wonder */}
+                <div className="bg-white rounded-lg p-4 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                  <div className="aspect-[3/4] bg-gradient-to-br from-green-100 to-teal-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/Spectrum_Star_with_correct_bleed.png" 
+                      alt="Spectrum_Star" 
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
+                      }}
+                    />
+                    <div className="text-center hidden">
+                      <div className="text-3xl mb-2">🐕</div>
+                      <p className="text-sm font-semibold text-gray-800">Wire-Haired Wonder</p>
+                      <p className="text-xs text-gray-600">Rare Doxie</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-700 font-medium text-center">
                 Eye-catching card layout featuring Sausage Supreme, Vet Visit, and more!
               </p>
             </div>
@@ -321,9 +384,31 @@ export default function HomePage() {
 
             <div className="text-center animate-fade-in-delayed">
               <div className="bg-gradient-to-br from-orange-200 to-yellow-200 rounded-2xl p-8">
-                <div className="text-8xl mb-4">🃏</div>
+                {/* Deck Image */}
+                <div className="bg-white rounded-lg p-6 mb-6 shadow-lg">
+                  <div className="aspect-[3/4] bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/deck.png" 
+                      alt="Doxie Dynasty Card Deck" 
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        // Fallback to placeholder if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
+                      }}
+                    />
+                    <div className="text-center hidden">
+                      <div className="text-4xl mb-2">🃏</div>
+                      <p className="text-sm text-gray-600">Deck Image</p>
+                      <p className="text-xs text-gray-500">Replace with actual photo</p>
+                    </div>
+                  </div>
+                </div>
                 <p className="text-xl font-semibold text-gray-800 mb-4">
-                  It&apos;s Like Pokémon, But Cuter
+                  The Ultimate Dachshund Card Collection
+                </p>
+                <p className="text-gray-700 mb-6">
+                  Build your dream pack with beautifully illustrated cards featuring every type of dachshund personality and adventure.
                 </p>
                 <button
                   onClick={scrollToCheckout}
