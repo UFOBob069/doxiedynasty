@@ -1,43 +1,33 @@
 import Link from 'next/link';
+import { Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center py-12">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
         <div className="animate-fade-in">
           <div className="text-8xl mb-6">🐕</div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Oops! This page got lost in the dog park
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            The page you're looking for seems to have wandered off. 
-            Don't worry, our dachshunds are great at finding things!
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+            Oops! This page doesn&apos;t exist
+          </h2>
+          <p className="text-gray-600 mb-8">
+            Looks like this dachshund wandered off! Let&apos;s get you back to the game.
           </p>
           
           <div className="space-y-4">
             <Link
               href="/"
-              className="inline-block bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors"
             >
-              🏠 Back to Home
+              <Home className="w-5 h-5" />
+              Back to Home
             </Link>
             
-            <div className="text-gray-500">
-              <p>Or maybe you were looking for:</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
-                <Link
-                  href="/#checkout-section"
-                  className="text-orange-600 hover:text-orange-700 font-semibold"
-                >
-                  🛒 Buy the Game
-                </Link>
-                <Link
-                  href="/#faq"
-                  className="text-orange-600 hover:text-orange-700 font-semibold"
-                >
-                  ❓ FAQ
-                </Link>
-              </div>
+            <div className="text-sm text-gray-500">
+              <Link href="/#checkout-section" className="text-orange-600 hover:text-orange-700 underline">
+                Or go to checkout
+              </Link>
             </div>
           </div>
         </div>

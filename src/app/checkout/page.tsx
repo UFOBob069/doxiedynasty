@@ -94,7 +94,7 @@ export default function CheckoutPage() {
               Complete Your Order
             </h1>
             <p className="text-xl text-gray-600">
-              You're just a few steps away from your Doxie Dynasty card game!
+              You&apos;re just a few steps away from your Doxie Dynasty card game!
             </p>
           </div>
 
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
                     required
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    We'll send your order confirmation and tracking info here
+                    We&apos;ll send your order confirmation and tracking info here
                   </p>
                 </div>
 

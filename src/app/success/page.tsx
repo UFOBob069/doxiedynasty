@@ -1,111 +1,88 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { CheckCircle, Truck, Heart, Mail } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { CheckCircle, Home, Package } from 'lucide-react';
 
 interface OrderDetails {
-  sessionId: string;
-  estimatedDelivery: string;
+  orderId?: string;
+  customerName?: string;
+  customerEmail?: string;
 }
 
 export default function SuccessPage() {
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails>({});
 
   useEffect(() => {
-    // Get session ID from URL params
+    // Get order details from URL parameters or localStorage
     const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-    
-    if (sessionId) {
-      // In a real app, you might want to fetch order details from your backend
+    const orderId = urlParams.get('orderId');
+    const customerName = urlParams.get('customerName');
+    const customerEmail = urlParams.get('customerEmail');
+
+    if (orderId || customerName || customerEmail) {
       setOrderDetails({
-        sessionId,
-        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        orderId: orderId || undefined,
+        customerName: customerName || undefined,
+        customerEmail: customerEmail || undefined,
       });
     }
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center py-12">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center animate-fade-in">
-          <div className="mb-8">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-scale-in">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center">
+          <div className="animate-fade-in">
+            <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              🎉 Thank You for Your Order!
+            
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Order Confirmed! 🎉
             </h1>
-            <p className="text-gray-600">
-              Your Doxie Dynasty card game is on its way!
+            
+            <p className="text-xl text-gray-600 mb-8">
+              Thank you for your order! You&apos;re now part of the Doxie Dynasty family.
             </p>
-          </div>
 
-          <div className="bg-orange-50 rounded-xl p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              What's Next?
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-orange-600" />
-                <span className="text-gray-700">
-                  Check your email for order confirmation and tracking details
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Truck className="w-5 h-5 text-orange-600" />
-                <span className="text-gray-700">
-                  Estimated delivery: {orderDetails?.estimatedDelivery || '5-7 business days'}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Heart className="w-5 h-5 text-orange-600" />
-                <span className="text-gray-700">
-                  10% of your purchase supports dachshund rescue organizations
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              While You Wait...
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">📖 Read the Rules</h4>
-                <p className="text-sm text-gray-600 mb-3">
-                  Download the complete rulebook to get ready for game night
-                </p>
-                <button className="text-orange-600 hover:text-orange-700 text-sm font-semibold">
-                  Download PDF →
-                </button>
-              </div>
-              <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">📸 Share the Love</h4>
-                <p className="text-sm text-gray-600 mb-3">
-                  Follow us on social media for dachshund content and game tips
-                </p>
-                <div className="flex gap-2">
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-semibold">
-                    Instagram
-                  </button>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-semibold">
-                    Facebook
-                  </button>
+            {orderDetails.orderId && (
+              <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Details</h2>
+                <div className="space-y-2 text-left">
+                  <p><span className="font-medium">Order ID:</span> {orderDetails.orderId}</p>
+                  {orderDetails.customerName && (
+                    <p><span className="font-medium">Name:</span> {orderDetails.customerName}</p>
+                  )}
+                  {orderDetails.customerEmail && (
+                    <p><span className="font-medium">Email:</span> {orderDetails.customerEmail}</p>
+                  )}
                 </div>
               </div>
-            </div>
-          </div>
+            )}
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold"
-            >
-              ← Back to Home
-            </Link>
+            <div className="bg-orange-50 rounded-lg p-6 mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Package className="w-6 h-6 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">What&apos;s Next?</h3>
+              </div>
+              <div className="text-left space-y-2 text-gray-700">
+                <p>📧 You&apos;ll receive an order confirmation email shortly</p>
+                <p>📦 Your game will ship within 1-2 business days</p>
+                <p>🚚 Free shipping takes 5-7 days to arrive</p>
+                <p>📱 We&apos;ll send tracking info when it ships</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+              >
+                <Home className="w-5 h-5" />
+                Back to Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>

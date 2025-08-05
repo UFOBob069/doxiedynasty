@@ -134,7 +134,7 @@ export default function HomePage() {
               },
               {
                 icon: '🎉',
-                title: 'Survive Chaos Cards Like "Vet Visit" & "Bark-Off"',
+                title: 'Survive Chaos Cards Like &quot;Vet Visit&quot; &amp; &quot;Bark-Off&quot;',
                 description: 'Navigate hilarious event cards that test your pack\'s resilience.'
               },
               {
@@ -205,7 +205,7 @@ export default function HomePage() {
                     <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-4 italic">"{testimonial.text}"</p>
+                <p className="text-gray-700 mb-4 italic">&quot;{testimonial.text}&quot;</p>
                 <p className="font-semibold text-gray-900">- {testimonial.author}</p>
               </div>
             ))}
@@ -275,7 +275,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              What's Inside Your Doxie Dynasty Deck
+              What&apos;s Inside Your Doxie Dynasty Deck
             </h2>
           </div>
 
@@ -307,7 +307,7 @@ export default function HomePage() {
               <div className="bg-gradient-to-br from-orange-200 to-yellow-200 rounded-2xl p-8">
                 <div className="text-8xl mb-4">🃏</div>
                 <p className="text-xl font-semibold text-gray-800 mb-4">
-                  It's Like Pokémon, But Cuter
+                  It&apos;s Like Pokémon, But Cuter
                 </p>
                 <button
                   onClick={scrollToCheckout}
