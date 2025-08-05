@@ -16,10 +16,9 @@ import {
 import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
 
 export default function HomePage() {
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [giftNote, setGiftNote] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const scrollToCheckout = () => {
     document.getElementById('checkout-section')?.scrollIntoView({ 
@@ -27,42 +26,26 @@ export default function HomePage() {
     });
   };
 
-  const handleCheckout = async () => {
-    if (!customerName || !customerEmail) {
-      alert('Please fill in your name and email');
-      return;
-    }
+  const handleEmailSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
 
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerName,
-          customerEmail,
-          giftNote,
-        }),
-      });
+    setIsSubmitting(true);
+    
+    // Simulate email signup (in real app, you'd send to your email service)
+    setTimeout(() => {
+      setIsSuccess(true);
+      setIsSubmitting(false);
+      // Redirect to Stripe checkout after a brief delay
+      setTimeout(() => {
+        window.location.href = '/checkout';
+      }, 2000);
+    }, 1000);
+  };
 
-      const { sessionId } = await response.json();
-      
-      // Redirect to Stripe Checkout
-      const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) => 
-        loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-      );
-      
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId });
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDirectCheckout = () => {
+    // Redirect directly to Stripe checkout
+    window.location.href = '/checkout';
   };
 
   const formatPrice = (priceInCents: number) => {
@@ -338,7 +321,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing + Checkout Section */}
+      {/* Lead Capture + Checkout Section */}
       <section id="checkout-section" className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in">
@@ -360,71 +343,82 @@ export default function HomePage() {
           </div>
 
           <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8 animate-fade-in-delayed">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Your full name"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gift Note (Optional)
-                </label>
-                <textarea
-                  value={giftNote}
-                  onChange={(e) => setGiftNote(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Add a personal message if this is a gift"
-                  rows={3}
-                />
-              </div>
-
-              <button
-                onClick={handleCheckout}
-                disabled={isLoading}
-                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white text-xl py-4 rounded-lg font-bold transition-colors shadow-lg hover:shadow-xl"
-              >
-                {isLoading ? 'Processing...' : 'Yes! Ship Me My Game'}
-              </button>
-
-              <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  <span>Secure Checkout</span>
+            {!isSuccess ? (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Get Updates & Special Offers!
+                  </h3>
+                  <p className="text-gray-600">
+                    Join our email list for exclusive dachshund content, game tips, and early access to new expansions.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>30-Day Returns</span>
+
+                <form onSubmit={handleEmailSignup} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="your@email.com"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white text-xl py-4 rounded-lg font-bold transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    {isSubmitting ? 'Joining...' : 'Join the Pack & Get My Game!'}
+                  </button>
+                </form>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-4">Or skip the email and go straight to checkout:</p>
+                  <button
+                    onClick={handleDirectCheckout}
+                    className="text-orange-600 hover:text-orange-700 font-semibold underline"
+                  >
+                    Buy Now Without Email Signup
+                  </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Gift className="w-4 h-4" />
-                  <span>Perfect Gift</span>
+
+                <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span>Secure Checkout</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>30-Day Returns</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4" />
+                    <span>Perfect Gift</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center">
+                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Welcome to the Pack! 🐕
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Redirecting you to secure checkout...
+                </p>
+                <div className="animate-pulse">
+                  <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
