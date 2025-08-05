@@ -166,12 +166,12 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Card 3 - Wire-Haired Wonder */}
+                {/* Card 3 - Spectrum Star */}
                 <div className="bg-white rounded-lg p-4 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300">
                   <div className="aspect-[3/4] bg-gradient-to-br from-green-100 to-teal-100 rounded-lg flex items-center justify-center overflow-hidden">
                     <img 
-                      src="/wire-haired-wonder-card.png" 
-                      alt="Wire-Haired Wonder Card" 
+                      src="/Spectrum_Star_with_correct_bleed.png" 
+                      alt="Spectrum_Star" 
                       className="w-full h-full object-cover rounded-lg"
                       onError={(e) => {
                         // Fallback to emoji if image fails to load
@@ -181,7 +181,7 @@ export default function HomePage() {
                     />
                     <div className="text-center hidden">
                       <div className="text-3xl mb-2">🐕</div>
-                      <p className="text-sm font-semibold text-gray-800">Wire-Haired Wonder</p>
+                      <p className="text-sm font-semibold text-gray-800">Spectrum Star</p>
                       <p className="text-xs text-gray-600">Rare Doxie</p>
                     </div>
                   </div>
