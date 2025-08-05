@@ -170,8 +170,8 @@ export default function HomePage() {
                 <div className="bg-white rounded-lg p-4 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300">
                   <div className="aspect-[3/4] bg-gradient-to-br from-green-100 to-teal-100 rounded-lg flex items-center justify-center overflow-hidden">
                     <img 
-                      src="/Spectrum_Star_with_correct_bleed.png" 
-                      alt="Spectrum_Star" 
+                      src="/wire-haired-wonder-card.png" 
+                      alt="Wire-Haired Wonder Card" 
                       className="w-full h-full object-cover rounded-lg"
                       onError={(e) => {
                         // Fallback to emoji if image fails to load
@@ -213,7 +213,7 @@ export default function HomePage() {
               },
               {
                 icon: '🎉',
-                title: 'Survive Chaos Cards Like &quot;Vet Visit&quot; &amp; &quot;Bark-Off&quot;',
+                title: 'Survive Chaos Cards Like "Vet Visit" & "Bark-Off"',
                 description: 'Navigate hilarious event cards that test your pack\'s resilience.'
               },
               {
@@ -284,7 +284,7 @@ export default function HomePage() {
                     <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-4 italic">&quot;{testimonial.text}&quot;</p>
+                <p className="text-gray-700 mb-4 italic">&ldquo;{testimonial.text}&rdquo;</p>
                 <p className="font-semibold text-gray-900">- {testimonial.author}</p>
               </div>
             ))}
