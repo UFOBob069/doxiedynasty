@@ -3,7 +3,7 @@ import { stripe, STRIPE_CONFIG } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
-    const { customerName, customerEmail, giftNote } = await request.json();
+    const { customerName, customerEmail, giftNote, firebaseCustomerId } = await request.json();
 
     if (!stripe) {
       return NextResponse.json(
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
         customerName,
         giftNote: giftNote || '',
         product: 'Doxie Dynasty Card Game',
+        firebaseCustomerId: firebaseCustomerId || '', // Link to Firebase customer record
       },
       shipping_address_collection: {
         allowed_countries: ['US', 'CA'], // Add more countries as needed
@@ -66,7 +67,6 @@ export async function POST(request: NextRequest) {
         enabled: true,
       },
     });
-
     return NextResponse.json({ sessionId: session.id });
   } catch (error) {
     console.error('Error creating checkout session:', error);

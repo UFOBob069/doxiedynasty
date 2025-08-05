@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
+import { db } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function CheckoutPage() {
   const [customerName, setCustomerName] = useState('');
@@ -27,6 +29,16 @@ export default function CheckoutPage() {
 
     setIsLoading(true);
     try {
+      // Save customer info to Firebase before creating Stripe session
+      const customerDoc = await addDoc(collection(db, 'customers'), {
+        name: customerName.trim(),
+        email: customerEmail.toLowerCase().trim(),
+        giftNote: giftNote.trim() || null,
+        source: 'checkout_page',
+        createdAt: serverTimestamp(),
+        status: 'pending_payment'
+      });
+
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -36,6 +48,7 @@ export default function CheckoutPage() {
           customerName,
           customerEmail,
           giftNote,
+          firebaseCustomerId: customerDoc.id // Pass Firebase ID to link with Stripe
         }),
       });
 

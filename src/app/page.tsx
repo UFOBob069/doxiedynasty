@@ -14,11 +14,14 @@ import {
   Play
 } from 'lucide-react';
 import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
+import { db } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function HomePage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   const scrollToCheckout = () => {
     document.getElementById('checkout-section')?.scrollIntoView({ 
@@ -31,16 +34,29 @@ export default function HomePage() {
     if (!email) return;
 
     setIsSubmitting(true);
+    setError('');
     
-    // Simulate email signup (in real app, you'd send to your email service)
-    setTimeout(() => {
+    try {
+      // Save email to Firebase
+      await addDoc(collection(db, 'emailSubscribers'), {
+        email: email.toLowerCase().trim(),
+        source: 'homepage_signup',
+        createdAt: serverTimestamp(),
+        status: 'active'
+      });
+
       setIsSuccess(true);
       setIsSubmitting(false);
+      
       // Redirect to Stripe checkout after a brief delay
       setTimeout(() => {
         window.location.href = '/checkout';
       }, 2000);
-    }, 1000);
+    } catch (error) {
+      console.error('Error saving email:', error);
+      setError('Something went wrong. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleDirectCheckout = () => {
@@ -368,6 +384,12 @@ export default function HomePage() {
                       required
                     />
                   </div>
+
+                  {error && (
+                    <div className="text-red-600 text-sm text-center">
+                      {error}
+                    </div>
+                  )}
 
                   <button
                     type="submit"
