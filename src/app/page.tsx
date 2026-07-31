@@ -126,31 +126,14 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="product-stage" aria-label="Doxie Dynasty game box and cards">
-          <div className="box-mockup">
-            <div className="box-top">
-              <Image src="/cards/box-top.webp" alt="" fill sizes="440px" />
-            </div>
-            <div className="box-side">
-              <Image src="/cards/box-side.webp" alt="" fill sizes="120px" />
-            </div>
-            <div className="box-front">
-              <Image
-                src="/cards/box-front.webp"
-                alt="Doxie Dynasty card game box"
-                fill
-                sizes="(max-width: 700px) 68vw, 420px"
-              />
-            </div>
-          </div>
-          <div className="product-card product-card-one">
-            <Image src="/cards/andre.webp" alt="Andre card" fill sizes="180px" />
-          </div>
-          <div className="product-card product-card-two">
-            <Image src="/cards/royal-heir.webp" alt="Royal Heir card" fill sizes="180px" />
-          </div>
-          <div className="product-card product-card-three">
-            <Image src="/cards/wild-dash.webp" alt="Dash wild card" fill sizes="180px" />
+        <div className="product-stage" aria-label="Doxie Dynasty full card game box">
+          <div className="box-photo-mockup">
+            <Image
+              src="/box-product-mockup.webp"
+              alt="Complete Doxie Dynasty card game box standing on a wooden table"
+              fill
+              sizes="(max-width: 700px) 92vw, 620px"
+            />
           </div>
         </div>
       </section>
@@ -255,7 +238,7 @@ export default function Home() {
 
       <section className="buy-section" id="buy">
         <div className="buy-box">
-          <Image src="/cards/box-front.webp" alt="Doxie Dynasty card game" fill sizes="(max-width: 700px) 58vw, 360px" />
+          <Image src="/box-product-mockup.webp" alt="Complete Doxie Dynasty card game box" fill sizes="(max-width: 700px) 82vw, 460px" />
         </div>
         <div className="buy-copy">
           <p className="eyebrow">MAKE SETS. BUILD YOUR DYNASTY.</p>
