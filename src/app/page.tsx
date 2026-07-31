@@ -79,7 +79,7 @@ export default function Home() {
           <a href="#cards">Meet the doxies</a>
           <a href="#how-to-play">How to play</a>
         </nav>
-        <a className="nav-cta" href="#buy">
+        <a className="nav-cta" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
           Shop on Amazon <span aria-hidden="true">↗</span>
         </a>
       </header>
@@ -264,10 +264,10 @@ export default function Home() {
             A fast, joyful card game for families, friends, dachshund people,
             and anyone ready to become the top dog at game night.
           </p>
-          <a className="button button-gold" href="#buy" aria-label="Amazon purchase link coming soon">
+          <a className="button button-gold" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
             Shop on Amazon <span aria-hidden="true">↗</span>
           </a>
-          <small>Amazon purchase link coming soon.</small>
+          <small>Available now on Amazon.</small>
         </div>
       </section>
 
@@ -277,7 +277,7 @@ export default function Home() {
         <div className="footer-links">
           <a href="#game">The game</a>
           <a href="#how-to-play">How to play</a>
-          <a href="#buy">Amazon</a>
+          <a href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">Amazon</a>
         </div>
         <small>© 2026 Doxie Dynasty. All rights reserved.</small>
       </footer>
