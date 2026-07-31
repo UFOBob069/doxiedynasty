@@ -1,27 +1,54 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { Bitter, Montserrat } from "next/font/google";
+import "./globals.css";
 
-export const metadata: Metadata = {
-  title: 'Doxie Dynasty - The Ultimate Dachshund Card Game',
-  description: 'Build your ultimate pack of wiener dogs in this fast-paced, family-friendly card game. 10% of profits support dachshund rescue organizations.',
-  keywords: 'dachshund, card game, doxie, wiener dog, family game, rescue',
-  openGraph: {
-    title: 'Doxie Dynasty - The Ultimate Dachshund Card Game',
-    description: 'Build your ultimate pack of wiener dogs in this fast-paced, family-friendly card game.',
-    type: 'website',
-  },
-};
+const display = Bitter({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+});
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const body = Montserrat({
+  variable: "--font-body",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  const incoming = await headers();
+  const host = incoming.get("x-forwarded-host") ?? incoming.get("host") ?? "localhost:3000";
+  const protocol = incoming.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const origin = `${protocol}://${host}`;
+
+  return {
+    metadataBase: new URL(origin),
+    title: "Doxie Dynasty | Make Sets. Be the Top Dog.",
+    description:
+      "Build sets, unleash quirks, and rule game night in Doxie Dynasty—the fast, joyful card game for dachshund lovers.",
+    icons: {
+      icon: "/cards/card-back.webp",
+      shortcut: "/cards/card-back.webp",
+    },
+    openGraph: {
+      title: "Doxie Dynasty Card Game",
+      description: "Make sets. Build your dynasty. Be the top dog.",
+      images: [{ url: `${origin}/og.png`, width: 1677, height: 943, alt: "Friends playing Doxie Dynasty" }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Doxie Dynasty Card Game",
+      description: "Make sets. Build your dynasty. Be the top dog.",
+      images: [`${origin}/og.png`],
+    },
+  };
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
-        {children}
-      </body>
+      <body className={`${display.variable} ${body.variable}`}>{children}</body>
     </html>
   );
 }

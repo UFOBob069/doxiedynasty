@@ -1,647 +1,286 @@
-'use client';
+import Image from "next/image";
 
-import { useState } from 'react';
-import { 
-  Heart, 
-  Star, 
-  Truck, 
-  Shield, 
-  CheckCircle, 
-  Gift,
-  Instagram,
-  Facebook,
-  Mail,
-  Play
-} from 'lucide-react';
-import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
-import { db } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+const dynastyCards = [
+  { src: "/cards/andre.webp", alt: "Andre doxie card" },
+  { src: "/cards/stella.webp", alt: "Stella doxie card" },
+  { src: "/cards/teddy.webp", alt: "Teddy doxie card" },
+  { src: "/cards/olive.webp", alt: "Olive doxie card" },
+  { src: "/cards/bear.webp", alt: "Bear doxie card" },
+  { src: "/cards/layla.webp", alt: "Layla doxie card" },
+];
 
-export default function HomePage() {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState('');
+const quirkCards = [
+  {
+    src: "/cards/puppy-surprise.webp",
+    alt: "Puppy Surprise quirk card",
+    title: "Puppy Surprise",
+    copy: "Draw two extra cards and give your dynasty a sudden growth spurt.",
+  },
+  {
+    src: "/cards/royal-heir.webp",
+    alt: "Royal Heir quirk card",
+    title: "Royal Heir",
+    copy: "A crown-worthy power play that can turn a clever round into a landslide.",
+  },
+  {
+    src: "/cards/burrower.webp",
+    alt: "Burrower quirk card",
+    title: "Burrower",
+    copy: "Dig into the competition and hunt for the perfect card to complete your set.",
+  },
+];
 
-  const scrollToCheckout = () => {
-    document.getElementById('checkout-section')?.scrollIntoView({ 
-      behavior: 'smooth' 
-    });
-  };
+const steps = [
+  {
+    number: "01",
+    title: "Draw",
+    copy: "Take one card from the deck or the discard pile. Every pick can reshape your pack.",
+  },
+  {
+    number: "02",
+    title: "Build",
+    copy: "Match doxies by coat, color, pattern, size, and personality to grow scoring sets.",
+  },
+  {
+    number: "03",
+    title: "Unleash",
+    copy: "Play quirks and wild cards at just the right moment to outsmart the table.",
+  },
+  {
+    number: "04",
+    title: "Rule",
+    copy: "Complete the strongest dynasty, count your bonuses, and claim the crown.",
+  },
+];
 
-  const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setIsSubmitting(true);
-    setError('');
-    
-    try {
-      // Save email to Firebase
-      await addDoc(collection(db, 'emailSubscribers'), {
-        email: email.toLowerCase().trim(),
-        source: 'homepage_signup',
-        createdAt: serverTimestamp(),
-        status: 'active'
-      });
-
-      setIsSuccess(true);
-      setIsSubmitting(false);
-      
-      // Redirect to Stripe checkout after a brief delay
-      setTimeout(() => {
-        window.location.href = '/checkout';
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving email:', error);
-      setError('Something went wrong. Please try again.');
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDirectCheckout = () => {
-    // Redirect directly to Stripe checkout
-    window.location.href = '/checkout';
-  };
-
-  const formatPrice = (priceInCents: number) => {
-    return `$${(priceInCents / 100).toFixed(2)}`;
-  };
-
+function Brand() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-orange-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-orange-600">
-                🐕 Doxie Dynasty
-              </h1>
-            </div>
-            <button
-              onClick={scrollToCheckout}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full font-semibold transition-colors"
-            >
-              Get My Game
-            </button>
-          </div>
-        </div>
+    <span className="brand-lockup">
+      <Image
+        src="/cards/box-side.webp"
+        alt="Doxie Dynasty Card Game"
+        width={420}
+        height={190}
+        priority
+      />
+    </span>
+  );
+}
+
+export default function Home() {
+  return (
+    <main>
+      <header className="site-header">
+        <a className="brand" href="#top" aria-label="Doxie Dynasty home">
+          <Brand />
+        </a>
+        <nav aria-label="Main navigation">
+          <a href="#game">The game</a>
+          <a href="#cards">Meet the doxies</a>
+          <a href="#how-to-play">How to play</a>
+        </nav>
+        <a className="nav-cta" href="#buy">
+          Shop on Amazon <span aria-hidden="true">↗</span>
+        </a>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="animate-fade-in">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              🏆 Build Your Ultimate Pack of Wiener Dogs in the Game Made for Doxie Lovers
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8">
-              Fast-paced. Family-friendly. Infinitely Instagrammable.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <div className="text-3xl font-bold text-orange-600">
-                {formatPrice(DOXIE_DYNASTY_PRICING.CURRENT_PRICE)}
-              </div>
-              <div className="text-lg text-gray-500 line-through">
-                {formatPrice(DOXIE_DYNASTY_PRICING.ORIGINAL_PRICE)}
-              </div>
-              <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                + Free Shipping
-              </div>
-            </div>
+      <section className="hero" id="top" aria-labelledby="hero-title">
+        <h1 className="sr-only" id="hero-title">Doxie Dynasty Card Game</h1>
+        <div className="hero-art">
+          <Image
+            src="/hero-game-night.webp"
+            alt="Four friends laughing over a game of Doxie Dynasty with a dachshund at the table"
+            fill
+            priority
+            sizes="100vw"
+          />
+        </div>
+        <div className="hero-ribbon">
+          <p>
+            <span>Fast to learn.</span> Full of clever combinations, chaotic quirks,
+            and dogs you will immediately want in your dynasty.
+          </p>
+          <a className="button button-gold" href="#game">Meet the game</a>
+          <dl className="hero-facts">
+            <div><dt>84</dt><dd>Cards</dd></div>
+            <div><dt>2–6</dt><dd>Players</dd></div>
+            <div><dt>20–30</dt><dd>Minutes</dd></div>
+            <div><dt>∞</dt><dd>Good dogs</dd></div>
+          </dl>
+        </div>
+      </section>
 
-            <button
-              onClick={scrollToCheckout}
-              className="bg-orange-500 hover:bg-orange-600 text-white text-xl px-8 py-4 rounded-full font-bold transition-colors shadow-lg hover:shadow-xl"
-            >
-              ✅ Yes, I Want My Deck!
-            </button>
+      <section className="game-section" id="game">
+        <div className="section-copy">
+          <p className="eyebrow">THE ULTIMATE DOXIE COMPETITION</p>
+          <h2>The table has a new top dog.</h2>
+          <p className="lede">
+            Draw a hand, spot the traits that belong together, and build the
+            most glorious pack on the table. Doxie Dynasty mixes satisfying set
+            collection with mischievous powers and just enough chaos to keep
+            every round moving.
+          </p>
+          <div className="callout-line">
+            <span aria-hidden="true">★</span>
+            Easy enough for the first hand. Strategic enough for the fifth.
           </div>
+        </div>
 
-          {/* Hero Image Placeholder */}
-          <div className="mt-12 animate-fade-in-delayed">
-            <div className="bg-gradient-to-r from-orange-200 to-yellow-200 rounded-2xl p-8 max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                {/* Card 1 - Sausage Supreme */}
-                <div className="bg-white rounded-lg p-4 shadow-lg transform rotate-2 hover:rotate-0 transition-transform duration-300">
-                  <div className="aspect-[3/4] bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="/sausage-supreme-card.png" 
-                      alt="Sausage Supreme Card" 
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        // Fallback to emoji if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
-                      }}
-                    />
-                    <div className="text-center hidden">
-                      <div className="text-3xl mb-2">🌭</div>
-                      <p className="text-sm font-semibold text-gray-800">Sausage Supreme</p>
-                      <p className="text-xs text-gray-600">Legendary Doxie</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 2 - Vet Visit */}
-                <div className="bg-white rounded-lg p-4 shadow-lg transform -rotate-1 hover:rotate-0 transition-transform duration-300">
-                  <div className="aspect-[3/4] bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="/vet-visit-card.png" 
-                      alt="Vet Visit Card" 
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        // Fallback to emoji if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
-                      }}
-                    />
-                    <div className="text-center hidden">
-                      <div className="text-3xl mb-2">🏥</div>
-                      <p className="text-sm font-semibold text-gray-800">Vet Visit</p>
-                      <p className="text-xs text-gray-600">Event Card</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 3 - Spectrum Star */}
-                <div className="bg-white rounded-lg p-4 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300">
-                  <div className="aspect-[3/4] bg-gradient-to-br from-green-100 to-teal-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="/Spectrum_Star_with_correct_bleed.png" 
-                      alt="Spectrum_Star" 
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        // Fallback to emoji if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
-                      }}
-                    />
-                    <div className="text-center hidden">
-                      <div className="text-3xl mb-2">🐕</div>
-                      <p className="text-sm font-semibold text-gray-800">Spectrum Star</p>
-                      <p className="text-xs text-gray-600">Rare Doxie</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-700 font-medium text-center">
-                Eye-catching card layout featuring Sausage Supreme, Vet Visit, and more!
-              </p>
+        <div className="product-stage" aria-label="Doxie Dynasty game box and cards">
+          <div className="box-mockup">
+            <div className="box-top">
+              <Image src="/cards/box-top.webp" alt="" fill sizes="440px" />
             </div>
+            <div className="box-side">
+              <Image src="/cards/box-side.webp" alt="" fill sizes="120px" />
+            </div>
+            <div className="box-front">
+              <Image
+                src="/cards/box-front.webp"
+                alt="Doxie Dynasty card game box"
+                fill
+                sizes="(max-width: 700px) 68vw, 420px"
+              />
+            </div>
+          </div>
+          <div className="product-card product-card-one">
+            <Image src="/cards/andre.webp" alt="Andre card" fill sizes="180px" />
+          </div>
+          <div className="product-card product-card-two">
+            <Image src="/cards/royal-heir.webp" alt="Royal Heir card" fill sizes="180px" />
+          </div>
+          <div className="product-card product-card-three">
+            <Image src="/cards/wild-dash.webp" alt="Dash wild card" fill sizes="180px" />
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Why Doxie Lovers Are Losing Their Minds Over This Game
-            </h2>
+      <section className="cards-section" id="cards">
+        <div className="cards-heading">
+          <div>
+            <p className="eyebrow">SIX TRAITS. DOZENS OF GOOD DOGS.</p>
+            <h2>Every doxie brings something to the pack.</h2>
           </div>
+          <p>
+            Smooth, long-haired, wire-haired, mini, standard, dapple, red,
+            black and tan—every card is loaded with traits to match, mix, and
+            multiply.
+          </p>
+        </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: '🐶',
-                title: 'Match Traits to Build Your Dream Pack',
-                description: 'Collect and combine unique dachshund traits to create the ultimate pack.'
-              },
-              {
-                icon: '🎉',
-                title: 'Survive Chaos Cards Like "Vet Visit" & "Bark-Off"',
-                description: 'Navigate hilarious event cards that test your pack\'s resilience.'
-              },
-              {
-                icon: '👑',
-                title: 'Score Big to Be Crowned Ruler of the Doxie Dynasty',
-                description: 'Compete to become the ultimate dachshund dynasty ruler.'
-              }
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="text-center p-6 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 animate-fade-in"
-                style={{ animationDelay: `${index * 200}ms` }}
-              >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <button className="text-orange-600 hover:text-orange-700 font-semibold flex items-center justify-center mx-auto gap-2">
-              <Play className="w-4 h-4" />
-              Download How to Play PDF
-            </button>
-          </div>
+        <div className="card-gallery" aria-label="A selection of Doxie Dynasty cards">
+          {dynastyCards.map((card, index) => (
+            <article className={`gallery-card gallery-card-${index + 1}`} key={card.src}>
+              <Image src={card.src} alt={card.alt} fill sizes="(max-width: 700px) 55vw, 260px" />
+            </article>
+          ))}
+        </div>
+        <div className="trait-ticker" aria-hidden="true">
+          <span>FUR TYPE</span><i>•</i><span>COLOR</span><i>•</i><span>PATTERN</span><i>•</i>
+          <span>PERSONALITY</span><i>•</i><span>POSE</span><i>•</i><span>BACKGROUND</span>
         </div>
       </section>
 
-      {/* Social Proof Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Loved by Families, Game Nights, and Real-Life Sausage Dogs
-            </h2>
-          </div>
+      <section className="how-section" id="how-to-play">
+        <div className="how-intro">
+          <p className="eyebrow">ONE TURN. FOUR MOVES.</p>
+          <h2>Build a dynasty in minutes.</h2>
+          <p>
+            The rhythm is simple: draw, build, surprise the table, and discard.
+            The decisions get delightfully trickier as every pack grows.
+          </p>
+        </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                text: 'My 10-year-old and our dachshund Milo played this 3 nights in a row.',
-                author: 'Sarah M.',
-                rating: 5
-              },
-              {
-                text: 'Perfect gift for my doxie-obsessed sister. She absolutely loves it!',
-                author: 'Mike R.',
-                rating: 5
-              },
-              {
-                text: 'The chaos cards are hilarious! Our family game night has never been better.',
-                author: 'Jennifer L.',
-                rating: 5
-              }
-            ].map((testimonial, index) => (
-              <div
-                key={index}
-                className="bg-white p-6 rounded-xl shadow-lg animate-fade-in"
-                style={{ animationDelay: `${index * 200}ms` }}
-              >
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-4 italic">&ldquo;{testimonial.text}&rdquo;</p>
-                <p className="font-semibold text-gray-900">- {testimonial.author}</p>
-              </div>
-            ))}
-          </div>
+        <div className="steps-grid">
+          {steps.map((step) => (
+            <article key={step.number}>
+              <span>{step.number}</span>
+              <h3>{step.title}</h3>
+              <p>{step.copy}</p>
+            </article>
+          ))}
+        </div>
 
-          <div className="flex flex-wrap justify-center items-center gap-8 mt-12">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Shield className="w-5 h-5" />
-              <span>SSL Secure</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <CheckCircle className="w-5 h-5" />
-              <span>Satisfaction Guaranteed</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Heart className="w-5 h-5" />
-              <span>Dachshund Rescue Support</span>
-            </div>
-          </div>
+        <div className="tabletop-mockup">
+          <div className="table-card table-card-a"><Image src="/cards/stella.webp" alt="Stella card on the table" fill sizes="220px" /></div>
+          <div className="table-card table-card-b"><Image src="/cards/teddy.webp" alt="Teddy card on the table" fill sizes="220px" /></div>
+          <div className="table-card table-card-c"><Image src="/cards/olive.webp" alt="Olive card on the table" fill sizes="220px" /></div>
+          <div className="table-card table-card-d"><Image src="/cards/card-back.webp" alt="Doxie Dynasty draw pile" fill sizes="220px" /></div>
+          <span className="table-label label-set">MATCHING SET</span>
+          <span className="table-label label-draw">DRAW PILE</span>
         </div>
       </section>
 
-      {/* Give Back Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              10% of Profits Support Dachshund Rescue Organizations
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Every purchase helps rescue and care for dachshunds in need. 
-              We partner with local rescue organizations to provide medical care, 
-              food, and loving homes for these amazing dogs.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                image: '🐕',
-                caption: 'Rescued dachshund finding their forever home'
-              },
-              {
-                image: '🏥',
-                caption: 'Medical care for injured dachshunds'
-              },
-              {
-                image: '🏠',
-                caption: 'Foster care and rehabilitation'
-              }
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="text-center animate-fade-in"
-                style={{ animationDelay: `${index * 200}ms` }}
-              >
-                <div className="text-6xl mb-4">{item.image}</div>
-                <p className="text-gray-700 font-medium">{item.caption}</p>
+      <section className="quirks-section">
+        <div className="quirks-heading">
+          <p className="eyebrow">GOOD DOGS. WILD MOVES.</p>
+          <h2>Every dynasty needs a little mischief.</h2>
+          <p>
+            Quirk cards reward timing, nerve, and a willingness to cause a
+            tiny amount of trouble. Play them to accelerate your pack or put a
+            wrinkle in somebody else&apos;s perfect plan.
+          </p>
+        </div>
+        <div className="quirks-grid">
+          {quirkCards.map((card, index) => (
+            <article key={card.src}>
+              <div className={`quirk-card quirk-card-${index + 1}`}>
+                <Image src={card.src} alt={card.alt} fill sizes="(max-width: 700px) 72vw, 330px" />
               </div>
-            ))}
-          </div>
+              <span>0{index + 1}</span>
+              <h3>{card.title}</h3>
+              <p>{card.copy}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* What's Inside Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              What&apos;s Inside Your Doxie Dynasty Deck
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in">
-              <div className="bg-white p-8 rounded-2xl shadow-lg">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Card Breakdown</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-                    <span className="font-semibold">Doxie Cards:</span>
-                    <span className="text-gray-600">Smooth, long, wire-haired with quirky traits</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                    <span className="font-semibold">Event Cards:</span>
-                    <span className="text-gray-600">Vet Visit, Bark-Off, and other chaos cards</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                    <span className="font-semibold">Special Cards:</span>
-                    <span className="text-gray-600">Rare and legendary dachshund cards</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center animate-fade-in-delayed">
-              <div className="bg-gradient-to-br from-orange-200 to-yellow-200 rounded-2xl p-8">
-                {/* Deck Image */}
-                <div className="bg-white rounded-lg p-6 mb-6 shadow-lg">
-                  <div className="aspect-[3/4] bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="/deck.png" 
-                      alt="Doxie Dynasty Card Deck" 
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        // Fallback to placeholder if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex';
-                      }}
-                    />
-                    <div className="text-center hidden">
-                      <div className="text-4xl mb-2">🃏</div>
-                      <p className="text-sm text-gray-600">Deck Image</p>
-                      <p className="text-xs text-gray-500">Replace with actual photo</p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xl font-semibold text-gray-800 mb-4">
-                  The Ultimate Dachshund Card Collection
-                </p>
-                <p className="text-gray-700 mb-6">
-                  Build your dream pack with beautifully illustrated cards featuring every type of dachshund personality and adventure.
-                </p>
-                <button
-                  onClick={scrollToCheckout}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors"
-                >
-                  Get My Deck
-                </button>
-              </div>
-            </div>
-          </div>
+      <section className="wild-section">
+        <div className="wild-hand" aria-label="Doxie Dynasty wild cards">
+          <div className="wild-card wild-card-one"><Image src="/cards/wild-ziggy.webp" alt="Ziggy wild card" fill sizes="270px" /></div>
+          <div className="wild-card wild-card-two"><Image src="/cards/wild-dash.webp" alt="Dash wild card" fill sizes="270px" /></div>
+          <div className="wild-card wild-card-three"><Image src="/cards/joker.webp" alt="Doxie Dynasty joker card" fill sizes="270px" /></div>
+        </div>
+        <div className="wild-copy">
+          <p className="eyebrow">THE PACK&apos;S WILDEST MEMBERS</p>
+          <h2>Need one perfect trait? Call in a wild doxie.</h2>
+          <p>
+            Wild cards flex into the set you need, while the Joker keeps every
+            player guessing. Save them for the right moment—or make the table
+            nervous by playing one early.
+          </p>
+          <div className="crown-note"><span>♛</span> One card can change the whole round.</div>
         </div>
       </section>
 
-      {/* Lead Capture + Checkout Section */}
-      <section id="checkout-section" className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Limited First Print Run – 500 Decks Only!
-            </h2>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <div className="text-4xl font-bold text-orange-600">
-                {formatPrice(DOXIE_DYNASTY_PRICING.CURRENT_PRICE)}
-              </div>
-              <div className="text-2xl text-gray-500 line-through">
-                {formatPrice(DOXIE_DYNASTY_PRICING.ORIGINAL_PRICE)}
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <Truck className="w-5 h-5 text-green-600" />
-              <span className="text-green-600 font-semibold">Free U.S. Shipping | 5–7 Days</span>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8 animate-fade-in-delayed">
-            {!isSuccess ? (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    Get Updates & Special Offers!
-                  </h3>
-                  <p className="text-gray-600">
-                    Join our email list for exclusive dachshund content, game tips, and early access to new expansions.
-                  </p>
-                </div>
-
-                <form onSubmit={handleEmailSignup} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-
-                  {error && (
-                    <div className="text-red-600 text-sm text-center">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white text-xl py-4 rounded-lg font-bold transition-colors shadow-lg hover:shadow-xl"
-                  >
-                    {isSubmitting ? 'Joining...' : 'Join the Pack & Get My Game!'}
-                  </button>
-                </form>
-
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-4">Or skip the email and go straight to checkout:</p>
-                  <button
-                    onClick={handleDirectCheckout}
-                    className="text-orange-600 hover:text-orange-700 font-semibold underline"
-                  >
-                    Buy Now Without Email Signup
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    <span>Secure Checkout</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>30-Day Returns</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Gift className="w-4 h-4" />
-                    <span>Perfect Gift</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Welcome to the Pack! 🐕
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Redirecting you to secure checkout...
-                </p>
-                <div className="animate-pulse">
-                  <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                </div>
-              </div>
-            )}
-          </div>
+      <section className="buy-section" id="buy">
+        <div className="buy-box">
+          <Image src="/cards/box-front.webp" alt="Doxie Dynasty card game" fill sizes="(max-width: 700px) 58vw, 360px" />
+        </div>
+        <div className="buy-copy">
+          <p className="eyebrow">MAKE SETS. BUILD YOUR DYNASTY.</p>
+          <h2>Bring home the crown.</h2>
+          <p>
+            A fast, joyful card game for families, friends, dachshund people,
+            and anyone ready to become the top dog at game night.
+          </p>
+          <a className="button button-gold" href="#buy" aria-label="Amazon purchase link coming soon">
+            Shop on Amazon <span aria-hidden="true">↗</span>
+          </a>
+          <small>Amazon purchase link coming soon.</small>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-orange-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Frequently Asked Questions
-            </h2>
-          </div>
-
-          <div className="space-y-6">
-            {[
-              {
-                question: 'What if I don\'t own a dachshund?',
-                answer: 'You\'ll still love it! The game is designed to be fun for everyone, whether you own a dachshund or just appreciate their adorable nature.'
-              },
-              {
-                question: 'Is it fun for kids?',
-                answer: 'Yes! The game is family-friendly and suitable for ages 8+. Kids love the cute artwork and simple gameplay mechanics.'
-              },
-              {
-                question: 'How many people can play?',
-                answer: 'Doxie Dynasty is designed for 2 to 6 players, making it perfect for family game nights or small gatherings.'
-              },
-              {
-                question: 'Can I send it as a gift?',
-                answer: 'Absolutely! You can add a gift note during checkout, and we\'ll include it with the order. Perfect for dachshund lovers!'
-              }
-            ].map((faq, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-lg p-6 shadow-sm animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {faq.question}
-                </h3>
-                <p className="text-gray-600">
-                  {faq.answer}
-                </p>
-              </div>
-            ))}
-          </div>
+      <footer>
+        <Brand />
+        <p>Collect. Make sets. Win.</p>
+        <div className="footer-links">
+          <a href="#game">The game</a>
+          <a href="#how-to-play">How to play</a>
+          <a href="#buy">Amazon</a>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">🐕 Doxie Dynasty</h3>
-              <p className="text-gray-300 mb-4">
-                Cuteness. Chaos. Cards.
-              </p>
-              <p className="text-gray-400 text-sm">
-                The ultimate card game for dachshund lovers everywhere.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Get Updates</h4>
-              <p className="text-gray-400 text-sm mb-4">
-                Get updates on new booster packs and exclusive Doxie drops!
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm"
-                />
-                <button className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-sm font-semibold transition-colors">
-                  <Mail className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Follow Us</h4>
-              <div className="flex gap-4">
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Instagram className="w-6 h-6" />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  <Facebook className="w-6 h-6" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-12 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-gray-400 text-sm">
-                © 2024 Doxie Dynasty. All rights reserved.
-              </p>
-              <div className="flex gap-6 text-sm">
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Terms
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Privacy
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Refund Policy
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Contact
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
+        <small>© 2026 Doxie Dynasty. All rights reserved.</small>
       </footer>
-    </div>
+    </main>
   );
 }
