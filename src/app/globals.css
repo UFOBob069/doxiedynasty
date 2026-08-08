@@ -58,7 +58,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .hero-art { aspect-ratio: 1677 / 943; max-height: 830px; min-height: 420px; overflow: hidden; position: relative; }
 .hero-art::after { background: linear-gradient(180deg, transparent 62%, rgba(2,20,37,.58)); content: ""; inset: 0; position: absolute; z-index: 1; }
 .hero-art img { object-fit: cover; }
-.hero-purchase { background: rgba(2,20,37,.9); border: 1px solid rgba(255,217,120,.45); border-radius: 20px; bottom: clamp(1.5rem,3vw,3rem); box-shadow: 0 18px 45px rgba(0,0,0,.32); left: clamp(1.2rem,5vw,5.8rem); padding: 1rem; position: absolute; z-index: 3; }
+.hero-purchase { background: rgba(2,20,37,.9); border: 1px solid rgba(255,217,120,.45); border-radius: 20px; box-shadow: 0 18px 45px rgba(0,0,0,.32); left: clamp(1.2rem,5vw,5.8rem); padding: 1rem; position: absolute; top: clamp(1.5rem,3vw,3rem); z-index: 3; }
 .hero-purchase > span { color: var(--gold-light); display: block; font-size: .58rem; font-weight: 900; letter-spacing: .1em; margin: 0 0 .75rem .2rem; text-transform: uppercase; }
 .hero-purchase > div { display: grid; gap: .65rem; grid-template-columns: repeat(2,minmax(150px,1fr)); }
 .hero-purchase .button { padding: .9rem 1.1rem; }
@@ -125,6 +125,18 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .label-set { bottom: 8%; left: 32%; }
 .label-draw { right: 7%; top: 65%; }
 
+.seo-story-section { background: radial-gradient(circle at 85% 12%,rgba(239,174,37,.14),transparent 28%), var(--white); padding: clamp(6rem,10vw,10rem) clamp(1.2rem,7vw,8rem); }
+.seo-story-intro { align-items: end; display: grid; gap: clamp(2rem,6vw,6rem); grid-template-columns: minmax(0,1fr) minmax(320px,.55fr); margin: 0 auto 5rem; max-width: 1320px; }
+.seo-story-intro .eyebrow { grid-column: 1 / -1; margin-bottom: -1rem; }
+.seo-story-intro h2, .faq-heading h2 { font-family: var(--font-display), Georgia, serif; font-size: clamp(3.5rem,6vw,6.4rem); font-weight: 900; letter-spacing: -.055em; line-height: .92; margin: 0; }
+.seo-story-intro > p:last-child { color: #596268; font-size: .92rem; line-height: 1.8; margin: 0; }
+.seo-story-grid { border-bottom: 1px solid rgba(6,23,37,.16); border-top: 1px solid rgba(6,23,37,.16); display: grid; grid-template-columns: repeat(3,1fr); margin: 0 auto; max-width: 1320px; }
+.seo-story-grid article { min-height: 260px; padding: 2.2rem; }
+.seo-story-grid article + article { border-left: 1px solid rgba(6,23,37,.16); }
+.seo-story-grid article > span { color: #9b6514; font-size: .6rem; font-weight: 900; letter-spacing: .12em; }
+.seo-story-grid h3 { font-family: var(--font-display), Georgia, serif; font-size: clamp(1.7rem,2.8vw,2.7rem); letter-spacing: -.04em; line-height: 1; margin: 2rem 0 1rem; }
+.seo-story-grid p { color: #5c6669; font-size: .78rem; line-height: 1.72; margin: 0; }
+
 .quirks-section { background: radial-gradient(circle at 15% 15%,rgba(255,217,120,.12),transparent 24%), linear-gradient(145deg,#673679,#3d1e4d); color: var(--white); padding: clamp(6rem,10vw,10rem) clamp(1.2rem,6vw,7rem); }
 .quirks-heading { display: grid; gap: 2.5rem; grid-template-columns: minmax(0,1fr) minmax(300px,.5fr); margin: 0 auto 5rem; max-width: 1320px; }
 .quirks-heading .eyebrow { grid-column: 1 / -1; margin-bottom: -1rem; }
@@ -151,6 +163,17 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .wild-copy > p:not(.eyebrow) { color: #596268; line-height: 1.8; margin: 2rem 0; max-width: 620px; }
 .crown-note { align-items: center; border-bottom: 1px solid rgba(6,23,37,.18); border-top: 1px solid rgba(6,23,37,.18); display: flex; font-size: .75rem; font-weight: 800; gap: .8rem; padding: 1.2rem 0; }
 .crown-note span { color: #a56b13; font-size: 1.6rem; }
+
+.faq-section { background: linear-gradient(145deg,#f8ecd3,#ecd8b2); display: grid; gap: clamp(3rem,8vw,8rem); grid-template-columns: minmax(320px,.62fr) minmax(0,1fr); padding: clamp(6rem,9vw,9rem) clamp(1.2rem,9vw,10rem); }
+.faq-heading { max-width: 650px; }
+.faq-heading > p:last-child { color: #596268; line-height: 1.75; margin: 1.8rem 0 0; }
+.faq-list { border-top: 1px solid rgba(6,23,37,.18); }
+.faq-list details { border-bottom: 1px solid rgba(6,23,37,.18); }
+.faq-list summary { cursor: pointer; font-family: var(--font-display), Georgia, serif; font-size: clamp(1.25rem,2vw,1.75rem); font-weight: 800; list-style: none; padding: 1.6rem 3rem 1.6rem 0; position: relative; }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after { color: #9b6514; content: "+"; font-family: var(--font-body), Arial, sans-serif; font-size: 1.6rem; position: absolute; right: .2rem; top: 1.45rem; }
+.faq-list details[open] summary::after { content: "−"; }
+.faq-list details p { color: #596268; font-size: .82rem; line-height: 1.75; margin: -.5rem 0 1.6rem; max-width: 720px; padding-right: 2.5rem; }
 
 .buy-section { align-items: center; background: radial-gradient(circle at 20% 50%,rgba(239,174,37,.17),transparent 25%), linear-gradient(135deg,#021426,var(--navy-soft)); color: var(--white); display: grid; gap: clamp(4rem,10vw,10rem); grid-template-columns: minmax(330px,.6fr) minmax(0,1fr); min-height: 760px; overflow: hidden; padding: clamp(6rem,9vw,9rem) clamp(1.2rem,12vw,14rem); }
 .buy-box { aspect-ratio: 1; border-radius: 22px; box-shadow: 0 45px 80px rgba(0,0,0,.48); justify-self: center; max-width: 460px; overflow: hidden; position: relative; transform: rotate(-3deg); width: 100%; }
@@ -276,7 +299,6 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
   .nav-cta { font-size: .56rem; padding: .78rem 1rem; }
   .hero { padding-top: 0; }
   .hero-art { min-height: 0; }
-  .hero-purchase { display: none; }
   .hero-ribbon { grid-template-columns: 1fr auto; }
   .hero-facts { grid-column: 1 / -1; }
   .game-section { grid-template-columns: 1fr; }
@@ -297,6 +319,7 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
   .quirks-grid { gap: 1.2rem; }
   .wild-section { grid-template-columns: 1fr; }
   .wild-hand { order: 2; }
+  .seo-story-intro, .faq-section { grid-template-columns: 1fr; }
   .buy-section { grid-template-columns: 280px 1fr; padding-left: 3rem; padding-right: 3rem; }
   .checkout-layout { grid-template-columns: 1fr; }
   .checkout-summary-card { display: grid; gap: 0 2rem; grid-template-columns: minmax(220px,.65fr) minmax(0,1fr); }
@@ -312,13 +335,14 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
   .nav-cta { font-size: 0; height: 40px; padding: 0; width: 40px; }
   .nav-cta span { font-size: 1rem; }
   .hero-art { aspect-ratio: 1677 / 943; }
+  .hero-purchase { display: none; }
   .hero-ribbon { align-items: stretch; grid-template-columns: 1fr; padding: 1.3rem 1rem; }
   .hero-ribbon .button { width: 100%; }
-  .hero-actions { grid-template-columns: repeat(2,minmax(0,1fr)); min-width: 0; }
+  .hero-actions { grid-template-columns: repeat(2,minmax(0,1fr)); min-width: 0; order: -2; }
   .hero-facts div { padding: .2rem .35rem; }
   .hero-facts dt { font-size: 1.35rem; }
   .hero-facts dd { font-size: .45rem; }
-  .section-copy h2, .cards-heading h2, .how-intro h2, .quirks-heading h2, .wild-copy h2, .buy-copy h2 { font-size: clamp(3rem,14vw,4.3rem); }
+  .section-copy h2, .cards-heading h2, .how-intro h2, .quirks-heading h2, .wild-copy h2, .buy-copy h2, .seo-story-intro h2, .faq-heading h2 { font-size: clamp(3rem,14vw,4.3rem); }
   .game-section { padding-left: 1rem; padding-right: 1rem; }
   .product-stage { max-width: 430px; }
   .box-photo-mockup { border-radius: 24px; }
@@ -327,6 +351,11 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
   .gallery-card { min-width: 205px; }
   .trait-ticker { justify-content: flex-start; overflow: hidden; }
   .how-section { padding-left: 1rem; padding-right: 1rem; }
+  .seo-story-section, .faq-section { padding-left: 1rem; padding-right: 1rem; }
+  .seo-story-intro { grid-template-columns: 1fr; }
+  .seo-story-grid { grid-template-columns: 1fr; }
+  .seo-story-grid article { min-height: 220px; }
+  .seo-story-grid article + article { border-left: 0; border-top: 1px solid rgba(6,23,37,.16); }
   .steps-grid { grid-template-columns: 1fr; }
   .steps-grid article { min-height: 220px; }
   .steps-grid article + article { border-left: 0; border-top: 1px solid rgba(6,23,37,.17); }

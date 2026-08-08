@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { DOXIE_DYNASTY } from "@/lib/doxie-product";
+import { SITE_URL } from "@/lib/site";
 
 const dynastyCards = [
   { src: "/cards/andre.webp", alt: "Andre doxie card" },
@@ -55,6 +57,76 @@ const steps = [
 
 const directCheckoutUrl = "/checkout";
 
+const productJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "@id": `${SITE_URL}/#doxie-dynasty-card-game`,
+  name: DOXIE_DYNASTY.NAME,
+  image: [
+    `${SITE_URL}/box-product-mockup.webp`,
+    `${SITE_URL}/cards/box-front.webp`,
+    `${SITE_URL}/hero-game-night.webp`,
+  ],
+  description:
+    "An 84-card dachshund set-collection game for 2–6 players, with fast 20–30 minute rounds, clever quirks, and plenty of pack-building strategy.",
+  sku: "DOXIE-DYNASTY-84",
+  category: "Card Games",
+  brand: {
+    "@type": "Brand",
+    name: "Doxie Dynasty",
+  },
+  offers: {
+    "@type": "Offer",
+    url: `${SITE_URL}/checkout`,
+    priceCurrency: "USD",
+    price: (DOXIE_DYNASTY.CURRENT_PRICE / 100).toFixed(2),
+    availability: "https://schema.org/InStock",
+    itemCondition: "https://schema.org/NewCondition",
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      shippingRate: {
+        "@type": "MonetaryAmount",
+        value: 0,
+        currency: "USD",
+      },
+      shippingDestination: {
+        "@type": "DefinedRegion",
+        addressCountry: "US",
+      },
+    },
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "US",
+      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+      merchantReturnDays: DOXIE_DYNASTY.RETURN_DAYS,
+    },
+    seller: {
+      "@type": "Organization",
+      name: "Doxie Dynasty",
+      url: SITE_URL,
+    },
+  },
+};
+
+const faqItems = [
+  {
+    question: "How many people can play Doxie Dynasty?",
+    answer: "Doxie Dynasty is made for 2–6 players, so it works for couples, families, and a full game-night pack.",
+  },
+  {
+    question: "How long does a game take?",
+    answer: "Most games take about 20–30 minutes. The turn structure is quick to learn, while the card combinations keep repeat plays interesting.",
+  },
+  {
+    question: "What kind of card game is it?",
+    answer: "It is a set-collection card game. Players draw doxies, build matching or complementary packs, use quirk cards, and compete for the strongest dynasty.",
+  },
+  {
+    question: "Where can I buy the game?",
+    answer: "You can order directly from this site with free U.S. shipping or purchase Doxie Dynasty on Amazon.",
+  },
+];
+
 const contactUrl =
   "mailto:david.eagan@gmail.com?subject=Doxie%20Dynasty%20question";
 
@@ -75,6 +147,12 @@ function Brand() {
 export default function Home() {
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <header className="site-header">
         <a className="brand" href="#top" aria-label="Doxie Dynasty home">
           <Brand />
@@ -228,6 +306,47 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="seo-story-section" aria-labelledby="dachshund-card-game-title">
+        <div className="seo-story-intro">
+          <p className="eyebrow">A SMALL-DOG GAME WITH BIG PERSONALITY</p>
+          <h2 id="dachshund-card-game-title">
+            A dachshund card game made for game night.
+          </h2>
+          <p>
+            Doxie Dynasty is an 84-card set-collection game built for dachshund
+            lovers, families, friends, and anyone who enjoys a clever game that
+            gets to the fun quickly. Each 20–30 minute round gives 2–6 players a
+            fresh mix of dogs, traits, and mischievous moves to combine.
+          </p>
+        </div>
+        <div className="seo-story-grid">
+          <article>
+            <span>01</span>
+            <h3>Easy to bring to the table</h3>
+            <p>
+              Draw a card, build matching packs, play a quirk, and keep your
+              dynasty growing. New players can join quickly without slowing down game night.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Different every round</h3>
+            <p>
+              Fur types, colors, patterns, personalities, and wild cards create
+              new combinations every time the deck is shuffled.
+            </p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>A gift for doxie people</h3>
+            <p>
+              The illustrated dogs and compact deck make Doxie Dynasty a playful
+              gift for dachshund owners, dog lovers, and card-game fans.
+            </p>
+          </article>
+        </div>
+      </section>
+
       <section className="quirks-section">
         <div className="quirks-heading">
           <p className="eyebrow">GOOD DOGS. WILD MOVES.</p>
@@ -270,6 +389,22 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="faq-section" id="faq" aria-labelledby="faq-title">
+        <div className="faq-heading">
+          <p className="eyebrow">THE QUICK SNIFF</p>
+          <h2 id="faq-title">Doxie Dynasty questions.</h2>
+          <p>Everything your pack needs to know before the first deal.</p>
+        </div>
+        <div className="faq-list">
+          {faqItems.map((item) => (
+            <details key={item.question}>
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className="buy-section" id="buy">
         <div className="buy-box">
           <Image src="/box-product-mockup.webp" alt="Complete Doxie Dynasty card game box" fill sizes="(max-width: 700px) 82vw, 460px" />
@@ -309,6 +444,7 @@ export default function Home() {
         <div className="footer-links">
           <a href="#game">The game</a>
           <a href="#how-to-play">How to play</a>
+          <a href="#faq">FAQ</a>
           <a href={directCheckoutUrl}>Buy direct</a>
           <a href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">Amazon</a>
           <a href={contactUrl}>Contact</a>

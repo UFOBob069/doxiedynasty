@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { Bitter, Montserrat } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const display = Bitter({
@@ -15,35 +15,39 @@ const body = Montserrat({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const incoming = await headers();
-  const host = incoming.get("x-forwarded-host") ?? incoming.get("host") ?? "localhost:3000";
-  const protocol = incoming.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const origin = `${protocol}://${host}`;
-
-  return {
-    metadataBase: new URL(origin),
-    title: "Doxie Dynasty | Make Sets. Be the Top Dog.",
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: "Doxie Dynasty Card Game | A Dachshund Game for Game Night",
+  description:
+    "Meet Doxie Dynasty, a fast 84-card dachshund game for 2–6 players. Build matching packs, play clever quirks, and become the top dog in 20–30 minutes.",
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: "/cards/card-back.webp",
+    shortcut: "/cards/card-back.webp",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Doxie Dynasty Card Game",
     description:
-      "Build sets, unleash quirks, and rule game night in Doxie Dynasty—the fast, joyful card game for dachshund lovers.",
-    icons: {
-      icon: "/cards/card-back.webp",
-      shortcut: "/cards/card-back.webp",
-    },
-    openGraph: {
-      title: "Doxie Dynasty Card Game",
-      description: "Make sets. Build your dynasty. Be the top dog.",
-      images: [{ url: `${origin}/og.png`, width: 1677, height: 943, alt: "Friends playing Doxie Dynasty" }],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Doxie Dynasty Card Game",
-      description: "Make sets. Build your dynasty. Be the top dog.",
-      images: [`${origin}/og.png`],
-    },
-  };
-}
+      "A fast, joyful set-collection card game for dachshund lovers, families, and game-night packs.",
+    images: [{ url: "/og.png", width: 1677, height: 943, alt: "Friends playing Doxie Dynasty" }],
+    locale: "en_US",
+    siteName: "Doxie Dynasty",
+    type: "website",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Doxie Dynasty Card Game",
+    description: "Make sets. Build your dynasty. Be the top dog.",
+    images: ["/og.png"],
+  },
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
