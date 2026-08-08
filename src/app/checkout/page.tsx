@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { 
   Heart, 
   Truck, 
@@ -10,9 +10,11 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
-import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
+import { useSearchParams } from 'next/navigation';
+import { DOXIE_DYNASTY } from '@/lib/doxie-product';
 
-export default function CheckoutPage() {
+function CheckoutContent() {
+  const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [giftNote, setGiftNote] = useState('');
@@ -20,8 +22,17 @@ export default function CheckoutPage() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName || !customerEmail) {
+    const normalizedName = customerName.trim();
+    const normalizedEmail = customerEmail.trim();
+    const normalizedGiftNote = giftNote.trim();
+
+    if (!normalizedName || !normalizedEmail) {
       alert('Please fill in your name and email');
+      return;
+    }
+
+    if (normalizedGiftNote.length > DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH) {
+      alert(`Gift notes are limited to ${DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH} characters.`);
       return;
     }
 
@@ -33,9 +44,9 @@ export default function CheckoutPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customerName,
-          customerEmail,
-          giftNote,
+          customerName: normalizedName,
+          customerEmail: normalizedEmail,
+          giftNote: normalizedGiftNote,
         }),
       });
 
@@ -94,6 +105,12 @@ export default function CheckoutPage() {
             </p>
           </div>
 
+          {searchParams.get('canceled') === '1' && (
+            <div className="mb-8 rounded-lg border border-orange-200 bg-orange-50 p-4 text-center text-gray-700">
+              Checkout was canceled and you were not charged. Your order is still available below.
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Order Summary */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -107,10 +124,10 @@ export default function CheckoutPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-orange-600">
-                      {formatPrice(DOXIE_DYNASTY_PRICING.CURRENT_PRICE)}
+                      {formatPrice(DOXIE_DYNASTY.CURRENT_PRICE)}
                     </div>
                     <div className="text-sm text-gray-500 line-through">
-                      {formatPrice(DOXIE_DYNASTY_PRICING.ORIGINAL_PRICE)}
+                      {formatPrice(DOXIE_DYNASTY.ORIGINAL_PRICE)}
                     </div>
                   </div>
                 </div>
@@ -123,11 +140,14 @@ export default function CheckoutPage() {
 
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center text-xl font-bold">
-                  <span>Total</span>
+                  <span>Per deck</span>
                   <span className="text-orange-600">
-                    {formatPrice(DOXIE_DYNASTY_PRICING.CURRENT_PRICE)}
+                    {formatPrice(DOXIE_DYNASTY.CURRENT_PRICE)}
                   </span>
                 </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  Choose 1–10 decks in secure Stripe Checkout.
+                </p>
               </div>
 
               <div className="mt-6 p-4 bg-orange-50 rounded-lg">
@@ -164,6 +184,8 @@ export default function CheckoutPage() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Your full name"
+                    maxLength={DOXIE_DYNASTY.MAX_CUSTOMER_NAME_LENGTH}
+                    autoComplete="name"
                     required
                   />
                 </div>
@@ -178,10 +200,12 @@ export default function CheckoutPage() {
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="your@email.com"
+                    maxLength={DOXIE_DYNASTY.MAX_CUSTOMER_EMAIL_LENGTH}
+                    autoComplete="email"
                     required
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    We&apos;ll send your order confirmation and tracking info here
+                    We&apos;ll use this address for manual order updates.
                   </p>
                 </div>
 
@@ -195,9 +219,10 @@ export default function CheckoutPage() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Add a personal message if this is a gift"
                     rows={3}
+                    maxLength={DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH}
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    Perfect for birthdays, holidays, or just because!
+                    Up to {DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH} characters.
                   </p>
                 </div>
 
@@ -232,5 +257,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50" />}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

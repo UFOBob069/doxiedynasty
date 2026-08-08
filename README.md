@@ -1,109 +1,84 @@
-# Doxie Dynasty - The Ultimate Dachshund Card Game
+# Doxie Dynasty Card Game
 
-A conversion-optimized single-product eCommerce website for the Doxie Dynasty card game, featuring Stripe integration and a mission to support dachshund rescue organizations.
+The Doxie Dynasty storefront is a responsive Next.js site for a physical, dog-themed card game. Customers can buy directly through a custom Stripe-hosted Checkout Session or follow the separate Amazon link.
 
-## 🎯 About
+## Storefront behavior
 
-Doxie Dynasty is a fast-paced, family-friendly card game where players build their ultimate pack of wiener dogs while surviving chaos cards like "Vet Visit" and "Bark-Off". 10% of all profits support dachshund rescue organizations.
+- Direct price: $24.99 USD per deck
+- Adjustable Stripe Checkout quantity: 1–10 decks
+- Free U.S.-only shipping with a 5–7-business-day estimate
+- 30-day return policy
+- Optional promotion-code entry
+- Verified Checkout success page backed by the Stripe Session
+- Signed webhook signal for an initial manual Stripe Dashboard fulfillment workflow
 
-## 🚀 Features
+Payment Links are not used. All direct-purchase links lead to `/checkout`, which creates a hosted Checkout Session through the server-side API route.
 
-- **Conversion-Optimized Design**: Single-page layout with strategic CTA placement
-- **Stripe Integration**: Secure payment processing with embedded checkout
-- **Mobile-First**: Responsive design optimized for mobile users
-- **Social Proof**: Customer testimonials and trust signals
-- **Email Capture**: Newsletter signup for expansion packs
-- **Rescue Support**: Transparent donation tracking
+## Tech stack
 
-## 🛠️ Tech Stack
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Stripe Node SDK
+- Lucide React
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Payments**: Stripe
-- **Deployment**: Vercel (recommended)
+## Local development
 
-## 📦 Installation
+1. Install dependencies:
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd doxie-dynasty
-```
-
-2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
+2. Copy the environment template:
+
 ```bash
 cp .env.example .env.local
 ```
 
-4. Configure your environment variables:
-```env
-# Stripe Configuration
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
+3. Configure server-only sandbox values in `.env.local`:
 
-# Doxie Dynasty Product IDs (create these in your Stripe dashboard)
-STRIPE_DOXIE_DYNASTY_PRODUCT_ID=prod_...
-STRIPE_DOXIE_DYNASTY_PRICE_ID=price_...
+```env
+APP_URL=http://localhost:3000
+STRIPE_SECRET_KEY=
+STRIPE_DOXIE_DYNASTY_PRICE_ID=
+STRIPE_WEBHOOK_SECRET=
 ```
 
-5. Run the development server:
+4. Start the site:
+
 ```bash
 npm run dev
 ```
 
-## 🎮 Game Features
+5. In another terminal, forward signed Stripe sandbox events:
 
-- **Doxie Cards**: Collect smooth, long, and wire-haired dachshunds with unique traits
-- **Event Cards**: Navigate hilarious chaos cards like "Vet Visit" and "Bark-Off"
-- **Family-Friendly**: Suitable for ages 8+ and 2-6 players
-- **Instagrammable**: Beautiful artwork perfect for social media sharing
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
 
-## 💳 Stripe Setup
+Use the signing secret from that CLI session only in `.env.local`. Never commit secret keys or webhook signing secrets.
 
-1. Create a Stripe account and get your API keys
-2. Create a product in Stripe Dashboard for "Doxie Dynasty Card Game"
-3. Set the price to $24.99 USD
-4. Configure webhooks for order processing
-5. Update environment variables with your Stripe keys
+## Stripe flow
 
-## 🎨 Design Principles
+1. The customer enters a name, email, and optional bounded gift note on `/checkout`.
+2. The server validates the request and creates a Stripe-hosted Checkout Session using the configured Price ID.
+3. Stripe collects payment, the final quantity, and a U.S. shipping address.
+4. A signed `checkout.session.completed` event reaches the webhook.
+5. The success page retrieves the Session server-side and confirms that it is paid, contains the configured Price, and has a U.S. shipping address.
+6. The team reviews the paid Session in Stripe Dashboard and fulfills it manually.
 
-- **F-Pattern Layout**: Optimized for natural eye movement
-- **Thumb-Friendly CTAs**: Mobile-optimized button placement
-- **Social Proof**: Customer testimonials and trust badges
-- **Urgency**: Limited first print run messaging
-- **Emotional Connection**: Dachshund rescue mission integration
+See [STRIPE_SETUP.md](./STRIPE_SETUP.md) for the complete sandbox, webhook, test, and fulfillment checklist.
 
-## 📱 Pages
+## Commands
 
-- **Homepage**: Single-page scroll layout with all major sections
-- **Success Page**: Order confirmation with next steps
-- **404 Page**: Custom error handling
+```bash
+npm run lint
+npm run build
+npm audit
+```
 
-## 🚀 Deployment
+## Deployment
 
-The site is optimized for deployment on Vercel:
-
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-## 🤝 Contributing
-
-This is a commercial project for the Doxie Dynasty card game. For support or questions, please contact the development team.
-
-## 📄 License
-
-This project is proprietary software for the Doxie Dynasty card game.
-
----
-
-**Made with ❤️ for dachshund lovers everywhere**
+Vercel is the recommended host. Add the environment variables through Vercel’s secret/environment settings and set `APP_URL` to the canonical origin for that deployment. Sandbox and live Stripe objects are separate; this repository does not contain live credentials or live resource IDs.

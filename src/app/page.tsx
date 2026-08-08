@@ -53,8 +53,7 @@ const steps = [
   },
 ];
 
-const directCheckoutUrl =
-  process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK?.trim() || "/checkout";
+const directCheckoutUrl = "/checkout";
 
 const contactUrl =
   "mailto:david.eagan@gmail.com?subject=Doxie%20Dynasty%20question";

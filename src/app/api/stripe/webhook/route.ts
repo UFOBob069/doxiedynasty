@@ -25,12 +25,16 @@ export async function POST(request: NextRequest) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
-    console.info('Doxie Dynasty order completed', {
+
+    // Stripe Dashboard is the source of truth for the initial manual
+    // fulfillment workflow. This verified webhook provides an auditable signal,
+    // but intentionally does not create an external order or trigger shipping.
+    console.info('Doxie Dynasty Checkout Session received for manual review', {
       sessionId: session.id,
-      customerEmail: session.customer_details?.email,
+      paymentStatus: session.payment_status,
       amount: session.amount_total,
-      customerName: session.metadata?.customerName,
-      giftNote: session.metadata?.giftNote,
+      currency: session.currency,
+      livemode: session.livemode,
     });
   }
 
