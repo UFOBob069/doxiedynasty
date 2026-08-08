@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle, Home, Package } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, Home, Package } from 'lucide-react';
 import { DOXIE_DYNASTY } from '@/lib/doxie-product';
 import { stripe, STRIPE_CONFIG } from '@/lib/stripe';
 
@@ -17,6 +18,26 @@ type OrderConfirmation = {
   reference: string;
   total: string;
 };
+
+function CommerceHeader() {
+  return (
+    <header className="commerce-header">
+      <Link href="/" className="commerce-brand" aria-label="Doxie Dynasty home">
+        <Image
+          src="/cards/box-side.webp"
+          alt="Doxie Dynasty Card Game"
+          width={420}
+          height={190}
+          priority
+        />
+      </Link>
+      <Link href="/" className="commerce-back">
+        <ArrowLeft aria-hidden="true" />
+        Back to the game
+      </Link>
+    </header>
+  );
+}
 
 function formatTotal(amount: number, currency: string) {
   return new Intl.NumberFormat('en-US', {
@@ -71,40 +92,36 @@ async function getOrderConfirmation(sessionId: string): Promise<OrderConfirmatio
       total: formatTotal(session.amount_total, session.currency),
     };
   } catch (error) {
-    console.error('Unable to verify Stripe Checkout Session:', error);
+    console.error('Unable to verify Checkout Session:', error);
     return null;
   }
 }
 
 function VerificationError() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
-      <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-orange-100">
-            <AlertCircle className="h-10 w-10 text-orange-600" />
+    <div className="commerce-shell">
+      <CommerceHeader />
+      <main className="confirmation-main">
+        <section className="confirmation-card confirmation-error">
+          <div className="confirmation-icon confirmation-icon-error">
+            <AlertCircle aria-hidden="true" />
           </div>
-          <h1 className="mb-4 text-3xl font-bold text-gray-900">We couldn&apos;t verify this order</h1>
-          <p className="mb-8 text-gray-600">
-            This page only confirms completed Stripe payments. If you believe your payment succeeded,
-            contact us and include the Checkout reference from Stripe.
+          <p className="eyebrow">ORDER CHECK</p>
+          <h1>We could not verify this order.</h1>
+          <p className="confirmation-lede">
+            This page only confirms completed payments. If you believe your order went through,
+            contact us and include the checkout reference from your receipt.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/checkout"
-              className="rounded-full bg-orange-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
-            >
+          <div className="confirmation-actions">
+            <Link href="/checkout" className="commerce-primary-link">
               Return to checkout
             </Link>
-            <Link
-              href="/"
-              className="rounded-full border border-orange-300 px-6 py-3 font-semibold text-orange-700 transition-colors hover:bg-orange-50"
-            >
-              Back to home
+            <Link href="/" className="commerce-secondary-link">
+              Back to the game
             </Link>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
@@ -119,63 +136,73 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
-      <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-10 w-10 text-green-600" />
+    <div className="commerce-shell">
+      <CommerceHeader />
+      <main className="confirmation-main">
+        <section className="confirmation-card">
+          <div className="confirmation-celebration">
+            <div className="confirmation-icon">
+              <CheckCircle aria-hidden="true" />
+            </div>
+            <span className="confirmation-crown" aria-hidden="true">♛</span>
+            <p className="eyebrow">PAYMENT CONFIRMED</p>
+            <h1>You are officially top dog.</h1>
+            <p className="confirmation-lede">
+              Thank you, {order.name}. Your Doxie Dynasty order is in the pack.
+            </p>
           </div>
 
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">Payment confirmed!</h1>
-          <p className="mb-8 text-xl text-gray-600">
-            Thank you, {order.name}. Stripe has confirmed your Doxie Dynasty order.
-          </p>
+          <div className="confirmation-grid">
+            <div className="confirmation-product">
+              <div className="confirmation-product-image">
+                <Image
+                  src="/box-product-mockup.webp"
+                  alt="Doxie Dynasty card game box"
+                  fill
+                  priority
+                  sizes="(max-width: 700px) 82vw, 340px"
+                />
+              </div>
+              <div>
+                <span>Doxie Dynasty</span>
+                <strong>{order.quantity} {order.quantity === 1 ? 'deck' : 'decks'}</strong>
+              </div>
+            </div>
 
-          <dl className="mb-8 grid gap-4 rounded-lg bg-orange-50 p-6 text-left sm:grid-cols-2">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Quantity</dt>
-              <dd className="font-semibold text-gray-900">
-                {order.quantity} {order.quantity === 1 ? 'deck' : 'decks'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Paid</dt>
-              <dd className="font-semibold text-gray-900">{order.total}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Email</dt>
-              <dd className="break-all font-semibold text-gray-900">{order.email}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Ship to</dt>
-              <dd className="font-semibold text-gray-900">{order.location || 'U.S. address'}</dd>
-            </div>
-          </dl>
+            <dl className="confirmation-details">
+              <div>
+                <dt>Paid</dt>
+                <dd>{order.total}</dd>
+              </div>
+              <div>
+                <dt>Ship to</dt>
+                <dd>{order.location || 'U.S. address'}</dd>
+              </div>
+              <div>
+                <dt>Order updates</dt>
+                <dd>{order.email}</dd>
+              </div>
+            </dl>
+          </div>
 
-          <div className="mb-8 rounded-lg border border-orange-100 p-6 text-left">
-            <div className="mb-4 flex items-center gap-3">
-              <Package className="h-6 w-6 text-orange-600" />
-              <h2 className="text-lg font-semibold text-gray-900">What happens next?</h2>
-            </div>
-            <div className="space-y-2 text-gray-700">
-              <p>The Doxie Dynasty team will review the paid order in Stripe and prepare it manually.</p>
+          <div className="confirmation-next">
+            <Package aria-hidden="true" />
+            <div>
+              <h2>What happens next?</h2>
+              <p>We will review your paid order and prepare it for shipment.</p>
               <p>Free U.S. shipping is estimated at {DOXIE_DYNASTY.SHIPPING_DAYS} business days.</p>
               <p>Returns are accepted within {DOXIE_DYNASTY.RETURN_DAYS} days of delivery.</p>
-              <p>Order updates will be sent to {order.email}.</p>
             </div>
           </div>
 
-          <p className="mb-8 break-all text-xs text-gray-500">Stripe reference: {order.reference}</p>
+          <p className="confirmation-reference">Checkout reference: {order.reference}</p>
 
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
-          >
-            <Home className="h-5 w-5" />
-            Back to home
+          <Link href="/" className="commerce-primary-link confirmation-home-link">
+            <Home aria-hidden="true" />
+            Back to the game
           </Link>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

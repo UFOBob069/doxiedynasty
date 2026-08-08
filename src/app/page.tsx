@@ -85,8 +85,8 @@ export default function Home() {
           <a href="#how-to-play">How to play</a>
           <a href={contactUrl}>Contact</a>
         </nav>
-        <a className="nav-cta" href={directCheckoutUrl}>
-          Buy direct <span aria-hidden="true">→</span>
+        <a className="nav-cta" href="#buy">
+          Buy the game <span aria-hidden="true">↓</span>
         </a>
       </header>
 
@@ -100,13 +100,41 @@ export default function Home() {
             priority
             sizes="100vw"
           />
+          <div className="hero-purchase" aria-label="Purchase Doxie Dynasty">
+            <span>$24.99 · Free U.S. shipping</span>
+            <div>
+              <a className="button button-gold" href={directCheckoutUrl}>
+                Buy direct <span aria-hidden="true">→</span>
+              </a>
+              <a
+                className="button button-cream"
+                href="https://www.amazon.com/dp/B0H1NL53PX"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Buy on Amazon <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </div>
         </div>
         <div className="hero-ribbon">
           <p>
             <span>Fast to learn.</span> Full of clever combinations, chaotic quirks,
             and dogs you will immediately want in your dynasty.
           </p>
-          <a className="button button-gold" href="#game">Meet the game</a>
+          <div className="hero-actions" aria-label="Purchase options">
+            <a className="button button-gold" href={directCheckoutUrl}>
+              Buy direct <span aria-hidden="true">→</span>
+            </a>
+            <a
+              className="button button-cream"
+              href="https://www.amazon.com/dp/B0H1NL53PX"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buy on Amazon <span aria-hidden="true">↗</span>
+            </a>
+          </div>
           <dl className="hero-facts">
             <div><dt>84</dt><dd>Cards</dd></div>
             <div><dt>2–6</dt><dd>Players</dd></div>
@@ -255,13 +283,13 @@ export default function Home() {
           </p>
           <div className="buy-actions">
             <a className="button button-gold" href={directCheckoutUrl}>
-              Buy direct with Stripe <span aria-hidden="true">→</span>
+              Buy direct <span aria-hidden="true">→</span>
             </a>
-            <a className="button button-outline" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
-              Shop on Amazon <span aria-hidden="true">↗</span>
+            <a className="button button-cream" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
+              Buy on Amazon <span aria-hidden="true">↗</span>
             </a>
           </div>
-          <small>Secure direct checkout, with Amazon also available.</small>
+          <small>Choose the way you like to shop.</small>
         </div>
       </section>
 
@@ -270,8 +298,8 @@ export default function Home() {
           <p className="eyebrow">QUESTIONS, SUPPORT OR WHOLESALE</p>
           <h2>Talk to the top dog.</h2>
         </div>
-        <a className="contact-email" href={contactUrl}>
-          david.eagan@gmail.com <span aria-hidden="true">↗</span>
+        <a className="contact-button" href={contactUrl}>
+          Send a message <span aria-hidden="true">↗</span>
         </a>
       </section>
 
