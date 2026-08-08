@@ -3,12 +3,12 @@ import { stripe, STRIPE_CONFIG } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
-    const { customerName, customerEmail, giftNote, firebaseCustomerId } = await request.json();
+    const { customerName, customerEmail, giftNote } = await request.json();
 
-    if (!stripe) {
+    if (!stripe || !STRIPE_CONFIG.PRICE_ID) {
       return NextResponse.json(
-        { error: 'Stripe is not configured' },
-        { status: 500 }
+        { error: 'Direct checkout is not connected yet. Please contact david.eagan@gmail.com.' },
+        { status: 503 }
       );
     }
 
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
         customerName,
         giftNote: giftNote || '',
         product: 'Doxie Dynasty Card Game',
-        firebaseCustomerId: firebaseCustomerId || '', // Link to Firebase customer record
       },
       shipping_address_collection: {
         allowed_countries: ['US', 'CA'], // Add more countries as needed
@@ -67,7 +66,7 @@ export async function POST(request: NextRequest) {
         enabled: true,
       },
     });
-    return NextResponse.json({ sessionId: session.id });
+    return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(
@@ -75,4 +74,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

@@ -50,6 +50,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .nav-cta { background: linear-gradient(180deg,var(--gold-light),var(--gold)); box-shadow: 0 8px 24px rgba(239,174,37,.22); color: var(--navy); }
 .nav-cta:hover, .button:hover { transform: translateY(-2px); }
 .button-gold { background: linear-gradient(180deg,var(--gold-light),var(--gold)); box-shadow: 0 12px 28px rgba(112,68,2,.2); color: var(--navy); }
+.button-outline { border: 1px solid rgba(255,255,255,.28); color: var(--white); }
+.button-outline:hover { background: rgba(255,255,255,.08); }
 
 .hero { background: var(--navy); padding-top: 86px; }
 .hero-art { aspect-ratio: 1677 / 943; max-height: 830px; min-height: 420px; overflow: hidden; position: relative; }
@@ -148,6 +150,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .buy-box img { object-fit: cover; }
 .buy-copy > p:not(.eyebrow) { color: rgba(255,255,255,.63); line-height: 1.75; margin: 2rem 0 2.3rem; max-width: 650px; }
 .buy-copy small { color: rgba(255,255,255,.43); display: block; font-size: .6rem; margin-top: 1rem; }
+.buy-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .8rem; }
+
+.contact-section { align-items: center; background: var(--gold); display: grid; gap: 3rem; grid-template-columns: minmax(0,1fr) auto; padding: clamp(4rem,7vw,7rem) clamp(1.2rem,9vw,10rem); }
+.contact-section .eyebrow { color: rgba(6,23,37,.62); }
+.contact-section h2 { font-family: var(--font-display), Georgia, serif; font-size: clamp(2.8rem,6vw,6rem); line-height: .94; margin: .6rem 0 0; max-width: 820px; }
+.contact-email { align-items: center; border-bottom: 2px solid var(--navy); display: inline-flex; font-size: clamp(1rem,1.7vw,1.4rem); font-weight: 800; gap: .8rem; padding: .8rem 0; }
 
 footer { align-items: center; background: #010d18; color: var(--white); display: grid; gap: 2rem; grid-template-columns: auto 1fr auto; padding: 3.5rem clamp(1.2rem,6vw,7rem); }
 footer .brand-lockup { height: 58px; width: 220px; }
@@ -238,7 +246,9 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
   .wild-card { width: 210px; }
   .buy-section { grid-template-columns: 1fr; padding-left: 1rem; padding-right: 1rem; text-align: center; }
   .buy-box { max-width: 360px; }
+  .buy-actions { justify-content: center; }
   .buy-copy > p:not(.eyebrow) { margin-left: auto; margin-right: auto; }
+  .contact-section { grid-template-columns: 1fr; }
   footer { grid-template-columns: 1fr; padding-left: 1rem; padding-right: 1rem; }
   footer .brand-lockup { width: 200px; }
   .footer-links { flex-direction: column; }

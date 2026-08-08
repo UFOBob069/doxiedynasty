@@ -1,34 +1,7 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CheckCircle, Home, Package } from 'lucide-react';
 
-interface OrderDetails {
-  orderId?: string;
-  customerName?: string;
-  customerEmail?: string;
-}
-
 export default function SuccessPage() {
-  const [orderDetails, setOrderDetails] = useState<OrderDetails>({});
-
-  useEffect(() => {
-    // Get order details from URL parameters or localStorage
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('orderId');
-    const customerName = urlParams.get('customerName');
-    const customerEmail = urlParams.get('customerEmail');
-
-    if (orderId || customerName || customerEmail) {
-      setOrderDetails({
-        orderId: orderId || undefined,
-        customerName: customerName || undefined,
-        customerEmail: customerEmail || undefined,
-      });
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -45,21 +18,6 @@ export default function SuccessPage() {
             <p className="text-xl text-gray-600 mb-8">
               Thank you for your order! You&apos;re now part of the Doxie Dynasty family.
             </p>
-
-            {orderDetails.orderId && (
-              <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Details</h2>
-                <div className="space-y-2 text-left">
-                  <p><span className="font-medium">Order ID:</span> {orderDetails.orderId}</p>
-                  {orderDetails.customerName && (
-                    <p><span className="font-medium">Name:</span> {orderDetails.customerName}</p>
-                  )}
-                  {orderDetails.customerEmail && (
-                    <p><span className="font-medium">Email:</span> {orderDetails.customerEmail}</p>
-                  )}
-                </div>
-              </div>
-            )}
 
             <div className="bg-orange-50 rounded-lg p-6 mb-8">
               <div className="flex items-center gap-3 mb-4">
@@ -88,4 +46,4 @@ export default function SuccessPage() {
       </div>
     </div>
   );
-} 
+}

@@ -53,6 +53,12 @@ const steps = [
   },
 ];
 
+const directCheckoutUrl =
+  process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK?.trim() || "/checkout";
+
+const contactUrl =
+  "mailto:david.eagan@gmail.com?subject=Doxie%20Dynasty%20question";
+
 function Brand() {
   return (
     <span className="brand-lockup">
@@ -78,9 +84,10 @@ export default function Home() {
           <a href="#game">The game</a>
           <a href="#cards">Meet the doxies</a>
           <a href="#how-to-play">How to play</a>
+          <a href={contactUrl}>Contact</a>
         </nav>
-        <a className="nav-cta" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
-          Shop on Amazon <span aria-hidden="true">↗</span>
+        <a className="nav-cta" href={directCheckoutUrl}>
+          Buy direct <span aria-hidden="true">→</span>
         </a>
       </header>
 
@@ -247,11 +254,26 @@ export default function Home() {
             A fast, joyful card game for families, friends, dachshund people,
             and anyone ready to become the top dog at game night.
           </p>
-          <a className="button button-gold" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
-            Shop on Amazon <span aria-hidden="true">↗</span>
-          </a>
-          <small>Available now on Amazon.</small>
+          <div className="buy-actions">
+            <a className="button button-gold" href={directCheckoutUrl}>
+              Buy direct with Stripe <span aria-hidden="true">→</span>
+            </a>
+            <a className="button button-outline" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
+              Shop on Amazon <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <small>Secure direct checkout, with Amazon also available.</small>
         </div>
+      </section>
+
+      <section className="contact-section" id="contact">
+        <div>
+          <p className="eyebrow">QUESTIONS, SUPPORT OR WHOLESALE</p>
+          <h2>Talk to the top dog.</h2>
+        </div>
+        <a className="contact-email" href={contactUrl}>
+          david.eagan@gmail.com <span aria-hidden="true">↗</span>
+        </a>
       </section>
 
       <footer>
@@ -260,7 +282,9 @@ export default function Home() {
         <div className="footer-links">
           <a href="#game">The game</a>
           <a href="#how-to-play">How to play</a>
+          <a href={directCheckoutUrl}>Buy direct</a>
           <a href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">Amazon</a>
+          <a href={contactUrl}>Contact</a>
         </div>
         <small>© 2026 Doxie Dynasty. All rights reserved.</small>
       </footer>

@@ -11,8 +11,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { DOXIE_DYNASTY_PRICING } from '@/lib/stripe';
-import { db } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function CheckoutPage() {
   const [customerName, setCustomerName] = useState('');
@@ -29,16 +27,6 @@ export default function CheckoutPage() {
 
     setIsLoading(true);
     try {
-      // Save customer info to Firebase before creating Stripe session
-      const customerDoc = await addDoc(collection(db, 'customers'), {
-        name: customerName.trim(),
-        email: customerEmail.toLowerCase().trim(),
-        giftNote: giftNote.trim() || null,
-        source: 'checkout_page',
-        createdAt: serverTimestamp(),
-        status: 'pending_payment'
-      });
-
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -48,27 +36,22 @@ export default function CheckoutPage() {
           customerName,
           customerEmail,
           giftNote,
-          firebaseCustomerId: customerDoc.id // Pass Firebase ID to link with Stripe
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || 'Failed to create checkout session');
       }
 
-      const { sessionId } = await response.json();
-      
-      // Redirect to Stripe Checkout
-      const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) => 
-        loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-      );
-      
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId });
+      const { url } = await response.json();
+      if (!url) {
+        throw new Error('Stripe did not return a checkout URL');
       }
+      window.location.assign(url);
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert('Something went wrong. Please try again.');
+      alert(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -250,4 +233,4 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
-} 
+}
