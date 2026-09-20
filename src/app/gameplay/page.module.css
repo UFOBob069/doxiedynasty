@@ -63,6 +63,9 @@
 .tableWrap thead { background: var(--navy); color: var(--gold-light); }
 .tableWrap tbody tr:nth-child(even) { background: rgba(239,174,37,.07); }
 .checklistGroups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.nameDirectory { column-count: 4; column-gap: 28px; list-style: none; margin: 16px 0 28px; padding: 16px 0; border-block: 1px solid #d9caaa; }
+.nameDirectory li { break-inside: avoid; padding: 5px 0; font-size: 1rem; }
+.wildDirectory { font-weight: 650; color: #875408; }
 .checklistGroups fieldset { border: 0; border-top: 2px solid var(--gold); padding: 12px 0 0; margin: 0; min-width: 0; }
 .checklistGroups legend { font: 800 1.0625rem/1.5 var(--font-display), Georgia, serif; padding-right: 10px; }
 .checklistGroups label { display: flex; gap: 9px; align-items: flex-start; font-size: .875rem; padding: 5px 0; cursor: pointer; }
@@ -95,6 +98,7 @@
   .buyLink { grid-column: 2; grid-row: 1; }
 }
 @media (max-width: 600px) {
+  .nameDirectory { column-count: 2; }
   .width { width: calc(100% - 32px); }
   .page .header { padding-inline: 16px; }
   .page .header nav { gap: 6px 18px; }

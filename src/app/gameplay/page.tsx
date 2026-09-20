@@ -102,8 +102,14 @@ export default function Gameplay() {
               </div>)}
             </section>
             <section className={styles.section} id="checklist" aria-labelledby="checklist-title">
-              <h2 id="checklist-title">Meet the deck</h2>
+              <h2 id="checklist-title">Is your doxie in the deck?</h2>
               <p>{rules.checklistIntro}</p>
+              <h3>All 66 regular Doxies, A-Z</h3>
+              <ul className={styles.nameDirectory} aria-label="All regular Doxie card names">
+                {rules.regularNames.map(name => <li key={name}>{name}</li>)}
+              </ul>
+              <h3>All 6 Wild Doxies</h3>
+              <p className={styles.wildDirectory}>{[...rules.wildNames].sort().join(" / ")}</p>
               <h3>Regular Doxies: 6 examples from the 66</h3>
               <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Example Doxie card traits">
                 <table><caption>Examples from the 90-card master list. Use your card&apos;s printed labels during play.</caption>

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { BookOpen, Download, ListChecks, ArrowUpRight } from "lucide-react";
 import { DOXIE_DYNASTY } from "@/lib/doxie-product";
 import { SITE_URL } from "@/lib/site";
 
@@ -56,6 +57,8 @@ const steps = [
 ];
 
 const directCheckoutUrl = "/checkout";
+const amazonUrl = "https://www.amazon.com/dp/B0H1NL53PX";
+const rulesPdfUrl = "/downloads/doxie-dynasty-full-rules.pdf";
 
 const productJsonLd = {
   "@context": "https://schema.org",
@@ -153,7 +156,7 @@ export default function Home() {
           __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <header className="site-header">
+      <header className="site-header home-header">
         <a className="brand" href="#top" aria-label="Doxie Dynasty home">
           <Brand />
         </a>
@@ -163,12 +166,17 @@ export default function Home() {
           <a href="/gameplay">How to play</a>
           <a href={contactUrl}>Contact</a>
         </nav>
-        <a className="nav-cta" href="#buy">
-          Buy the game <span aria-hidden="true">↓</span>
+        <a className="nav-cta" href={amazonUrl} target="_blank" rel="noopener noreferrer">
+          Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
         </a>
       </header>
+      <nav className="home-resources" aria-label="Rules and card list">
+        <a href="/gameplay"><BookOpen size={18} aria-hidden="true" /> How to play</a>
+        <a href={rulesPdfUrl} download><Download size={18} aria-hidden="true" /> Download rules PDF</a>
+        <a href="/gameplay#checklist"><ListChecks size={18} aria-hidden="true" /> All card names</a>
+      </nav>
 
-      <section className="hero" id="top" aria-labelledby="hero-title">
+      <section className="hero home-hero" id="top" aria-labelledby="hero-title">
         <h1 className="sr-only" id="hero-title">Doxie Dynasty Card Game</h1>
         <div className="hero-art">
           <Image
@@ -179,20 +187,19 @@ export default function Home() {
             sizes="100vw"
           />
           <div className="hero-purchase" aria-label="Purchase Doxie Dynasty">
-            <span>$24.99 · Free U.S. shipping</span>
+            <span>Bring home Doxie Dynasty</span>
             <div>
-              <a className="button button-gold" href={directCheckoutUrl}>
-                Buy direct <span aria-hidden="true">→</span>
-              </a>
               <a
-                className="button button-cream"
-                href="https://www.amazon.com/dp/B0H1NL53PX"
+                className="button button-gold"
+                href={amazonUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Buy on Amazon <span aria-hidden="true">↗</span>
+                Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
               </a>
+              <a className="button button-outline" href="/gameplay"><BookOpen size={17} aria-hidden="true" /> How to play</a>
             </div>
+            <a className="hero-pdf-link" href={rulesPdfUrl} download><Download size={16} aria-hidden="true" /> Download full rules PDF</a>
           </div>
         </div>
         <div className="hero-ribbon">
@@ -201,17 +208,16 @@ export default function Home() {
             and dogs you will immediately want in your dynasty.
           </p>
           <div className="hero-actions" aria-label="Purchase options">
-            <a className="button button-gold" href={directCheckoutUrl}>
-              Buy direct <span aria-hidden="true">→</span>
-            </a>
             <a
-              className="button button-cream"
-              href="https://www.amazon.com/dp/B0H1NL53PX"
+              className="button button-gold"
+              href={amazonUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
-              Buy on Amazon <span aria-hidden="true">↗</span>
+              Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
             </a>
+            <a className="button button-outline" href="/gameplay"><BookOpen size={17} aria-hidden="true" /> How to play</a>
+            <a className="hero-pdf-link" href={rulesPdfUrl} download><Download size={16} aria-hidden="true" /> Download rules PDF</a>
           </div>
           <dl className="hero-facts">
             <div><dt>90</dt><dd>Cards</dd></div>
@@ -269,6 +275,7 @@ export default function Home() {
             </article>
           ))}
         </div>
+        <div className="card-name-link"><a href="/gameplay#checklist"><ListChecks size={20} aria-hidden="true" /> Is your doxie&apos;s name in the deck? See all card names.</a></div>
         <div className="trait-ticker" aria-hidden="true">
           <span>FUR TYPE</span><i>•</i><span>COLOR</span><i>•</i><span>PATTERN</span><i>•</i>
           <span>MAKE SETS</span><i>•</i><span>BUILD YOUR DYNASTY</span>
@@ -283,7 +290,10 @@ export default function Home() {
             Deal 7 cards to each player. Draw 1, play Doxies face up and use
             special cards, then discard 1. Only cards played to the table score.
           </p>
-          <a className="button button-gold" href="/gameplay">Read the full rules and download the PDF</a>
+          <div className="rules-actions">
+            <a className="button rules-read-link" href="/gameplay"><BookOpen size={18} aria-hidden="true" /> Read the full rules</a>
+            <a className="rules-pdf-link" href={rulesPdfUrl} download><Download size={18} aria-hidden="true" /> Download rules PDF</a>
+          </div>
         </div>
 
         <div className="steps-grid">
@@ -417,12 +427,10 @@ export default function Home() {
             and anyone ready to become the top dog at game night.
           </p>
           <div className="buy-actions">
-            <a className="button button-gold" href={directCheckoutUrl}>
-              Buy direct <span aria-hidden="true">→</span>
+            <a className="button button-gold" href={amazonUrl} target="_blank" rel="noopener noreferrer">
+              Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
             </a>
-            <a className="button button-cream" href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">
-              Buy on Amazon <span aria-hidden="true">↗</span>
-            </a>
+            <a className="button button-outline" href={directCheckoutUrl}>Buy direct <span aria-hidden="true">→</span></a>
           </div>
           <small>Choose the way you like to shop.</small>
         </div>
@@ -444,6 +452,8 @@ export default function Home() {
         <div className="footer-links">
           <a href="#game">The game</a>
           <a href="/gameplay">How to play</a>
+          <a href={rulesPdfUrl} download>Rules PDF</a>
+          <a href="/gameplay#checklist">All card names</a>
           <a href="#faq">FAQ</a>
           <a href={directCheckoutUrl}>Buy direct</a>
           <a href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">Amazon</a>
