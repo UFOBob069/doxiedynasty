@@ -35,13 +35,17 @@ export default function Gameplay() {
   return (
     <div className={styles.page}>
       <a className={styles.skip} href="#rules">Skip to rules</a>
-      <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="Doxie Dynasty home">Doxie <span>Dynasty</span></Link>
+      <header className={`site-header ${styles.header}`}>
+        <Link className="brand" href="/" aria-label="Doxie Dynasty home">
+          <span className="brand-lockup"><Image src="/cards/box-side.webp" alt="Doxie Dynasty Card Game" width={420} height={190} priority /></span>
+        </Link>
         <nav aria-label="Main navigation">
-          <Link href="/">The game</Link>
+          <Link href="/#game">The game</Link>
+          <Link href="/#cards">Meet the doxies</Link>
           <Link href="/gameplay" aria-current="page">How to play</Link>
-          <Link href="/#buy">Buy the game <ArrowRight size={16} aria-hidden="true" /></Link>
+          <a href="mailto:david.eagan@gmail.com?subject=Doxie%20Dynasty%20question">Contact</a>
         </nav>
+        <Link className={styles.buyLink} href="/#buy">Buy the game <ArrowRight size={16} aria-hidden="true" /></Link>
       </header>
       <main id="rules">
         <section className={styles.intro} aria-labelledby="gameplay-title">
@@ -56,7 +60,7 @@ export default function Gameplay() {
               <div><dt>Draw. Play. Discard.</dt><dd>every turn</dd></div>
             </dl>
             <div className={styles.actions}>
-              <a className={styles.download} href="/downloads/doxie-dynasty-full-rules.pdf" download><Download size={19} aria-hidden="true" /> Download full rules (PDF)</a>
+              <a className={`button button-gold ${styles.download}`} href="/downloads/doxie-dynasty-full-rules.pdf" download><Download size={19} aria-hidden="true" /> Download full rules (PDF)</a>
               <a href="#setup">Start with setup <ArrowRight size={18} aria-hidden="true" /></a>
             </div>
             <p className={styles.version}>{rules.version}</p>
@@ -123,11 +127,15 @@ export default function Gameplay() {
           </div>
         </div>
       </main>
-      <div className={styles.footer}>
-        <Link href="/"><ArrowLeft size={18} aria-hidden="true" /> Back to Doxie Dynasty</Link>
-        <a href="/downloads/doxie-dynasty-full-rules.pdf" download><Download size={18} aria-hidden="true" /> Full rules PDF</a>
-        <span>{rules.version}</span>
-      </div>
+      <footer className={styles.footer}>
+        <Link href="/" aria-label="Doxie Dynasty home"><span className="brand-lockup"><Image src="/cards/box-side.webp" alt="Doxie Dynasty Card Game" width={420} height={190} /></span></Link>
+        <p>Collect. Make sets. Win.</p>
+        <div className={styles.footerLinks}>
+          <Link href="/"><ArrowLeft size={16} aria-hidden="true" /> The game</Link>
+          <a href="/downloads/doxie-dynasty-full-rules.pdf" download><Download size={16} aria-hidden="true" /> Full rules PDF</a>
+        </div>
+        <small>{rules.version}</small>
+      </footer>
     </div>
   );
 }
