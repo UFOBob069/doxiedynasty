@@ -119,7 +119,7 @@ function CheckoutContent() {
             <div className="checkout-product-line">
               <div>
                 <h2 id="order-summary-title">Doxie Dynasty</h2>
-                <p>Card game · 84 cards</p>
+                <p>Card game · 90 cards</p>
               </div>
               <div className="checkout-product-price">
                 <strong>{formatPrice(DOXIE_DYNASTY.CURRENT_PRICE)}</strong>

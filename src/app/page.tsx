@@ -14,7 +14,7 @@ const dynastyCards = [
 const quirkCards = [
   {
     src: "/cards/puppy-surprise.webp",
-    alt: "Puppy Surprise quirk card",
+    alt: "Puppy Surprise action card",
     title: "Puppy Surprise",
     copy: "Draw two extra cards and give your dynasty a sudden growth spurt.",
   },
@@ -41,17 +41,17 @@ const steps = [
   {
     number: "02",
     title: "Build",
-    copy: "Match doxies by coat, color, pattern, size, and personality to grow scoring sets.",
+    copy: "Play Doxies face up. Group exactly three sharing fur type, color, or pattern for a set bonus.",
   },
   {
     number: "03",
     title: "Unleash",
-    copy: "Play quirks and wild cards at just the right moment to outsmart the table.",
+    copy: "Play Quirks and Actions one at a time, or use a Wild to complete a matching set.",
   },
   {
     number: "04",
-    title: "Rule",
-    copy: "Complete the strongest dynasty, count your bonuses, and claim the crown.",
+    title: "Discard",
+    copy: "Discard one card to end your turn. Finish the turn that empties the draw deck, then score.",
   },
 ];
 
@@ -68,7 +68,7 @@ const productJsonLd = {
     `${SITE_URL}/hero-game-night.webp`,
   ],
   description:
-    "An 84-card dachshund set-collection game for 2–6 players, with fast 20–30 minute rounds, clever quirks, and plenty of pack-building strategy.",
+    "A 90-card dachshund set-collection game for 2–6 players, with fast 20–30 minute rounds, clever quirks, and plenty of pack-building strategy.",
   sku: "DOXIE-DYNASTY-84",
   category: "Card Games",
   brand: {
@@ -160,7 +160,7 @@ export default function Home() {
         <nav aria-label="Main navigation">
           <a href="#game">The game</a>
           <a href="#cards">Meet the doxies</a>
-          <a href="#how-to-play">How to play</a>
+          <a href="/gameplay">How to play</a>
           <a href={contactUrl}>Contact</a>
         </nav>
         <a className="nav-cta" href="#buy">
@@ -214,7 +214,7 @@ export default function Home() {
             </a>
           </div>
           <dl className="hero-facts">
-            <div><dt>84</dt><dd>Cards</dd></div>
+            <div><dt>90</dt><dd>Cards</dd></div>
             <div><dt>2–6</dt><dd>Players</dd></div>
             <div><dt>20–30</dt><dd>Minutes</dd></div>
             <div><dt>∞</dt><dd>Good dogs</dd></div>
@@ -253,13 +253,12 @@ export default function Home() {
       <section className="cards-section" id="cards">
         <div className="cards-heading">
           <div>
-            <p className="eyebrow">SIX TRAITS. DOZENS OF GOOD DOGS.</p>
+            <p className="eyebrow">THREE WAYS TO MATCH. DOZENS OF GOOD DOGS.</p>
             <h2>Every doxie brings something to the pack.</h2>
           </div>
           <p>
-            Smooth, long-haired, wire-haired, mini, standard, dapple, red,
-            black and tan—every card is loaded with traits to match, mix, and
-            multiply.
+            Match fur type, color, or pattern. Mini and Standard determine base
+            points; personality, pose, and background give each dog its character.
           </p>
         </div>
 
@@ -272,7 +271,7 @@ export default function Home() {
         </div>
         <div className="trait-ticker" aria-hidden="true">
           <span>FUR TYPE</span><i>•</i><span>COLOR</span><i>•</i><span>PATTERN</span><i>•</i>
-          <span>PERSONALITY</span><i>•</i><span>POSE</span><i>•</i><span>BACKGROUND</span>
+          <span>MAKE SETS</span><i>•</i><span>BUILD YOUR DYNASTY</span>
         </div>
       </section>
 
@@ -281,9 +280,10 @@ export default function Home() {
           <p className="eyebrow">ONE TURN. FOUR MOVES.</p>
           <h2>Build a dynasty in minutes.</h2>
           <p>
-            The rhythm is simple: draw, build, surprise the table, and discard.
-            The decisions get delightfully trickier as every pack grows.
+            Deal 7 cards to each player. Draw 1, play Doxies face up and use
+            special cards, then discard 1. Only cards played to the table score.
           </p>
+          <a className="button button-gold" href="/gameplay">Read the full rules and download the PDF</a>
         </div>
 
         <div className="steps-grid">
@@ -298,10 +298,10 @@ export default function Home() {
 
         <div className="tabletop-mockup">
           <div className="table-card table-card-a"><Image src="/cards/stella.webp" alt="Stella card on the table" fill sizes="220px" /></div>
-          <div className="table-card table-card-b"><Image src="/cards/teddy.webp" alt="Teddy card on the table" fill sizes="220px" /></div>
+          <div className="table-card table-card-b"><Image src="/cards/bear.webp" alt="Bear card on the table" fill sizes="220px" /></div>
           <div className="table-card table-card-c"><Image src="/cards/olive.webp" alt="Olive card on the table" fill sizes="220px" /></div>
           <div className="table-card table-card-d"><Image src="/cards/card-back.webp" alt="Doxie Dynasty draw pile" fill sizes="220px" /></div>
-          <span className="table-label label-set">MATCHING SET</span>
+          <span className="table-label label-set">BRINDLE SET: 11 POINTS</span>
           <span className="table-label label-draw">DRAW PILE</span>
         </div>
       </section>
@@ -313,7 +313,7 @@ export default function Home() {
             A dachshund card game made for game night.
           </h2>
           <p>
-            Doxie Dynasty is an 84-card set-collection game built for dachshund
+            Doxie Dynasty is a 90-card set-collection game built for dachshund
             lovers, families, friends, and anyone who enjoys a clever game that
             gets to the fun quickly. Each 20–30 minute round gives 2–6 players a
             fresh mix of dogs, traits, and mischievous moves to combine.
@@ -332,7 +332,7 @@ export default function Home() {
             <span>02</span>
             <h3>Different every round</h3>
             <p>
-              Fur types, colors, patterns, personalities, and wild cards create
+              Fur types, colors, patterns, and Wild Doxies create
               new combinations every time the deck is shuffled.
             </p>
           </article>
@@ -352,7 +352,7 @@ export default function Home() {
           <p className="eyebrow">GOOD DOGS. WILD MOVES.</p>
           <h2>Every dynasty needs a little mischief.</h2>
           <p>
-            Quirk cards reward timing, nerve, and a willingness to cause a
+            Quirk and Action cards reward timing, nerve, and a willingness to cause a
             tiny amount of trouble. Play them to accelerate your pack or put a
             wrinkle in somebody else&apos;s perfect plan.
           </p>
@@ -375,15 +375,15 @@ export default function Home() {
         <div className="wild-hand" aria-label="Doxie Dynasty wild cards">
           <div className="wild-card wild-card-one"><Image src="/cards/wild-ziggy.webp" alt="Ziggy wild card" fill sizes="270px" /></div>
           <div className="wild-card wild-card-two"><Image src="/cards/wild-dash.webp" alt="Dash wild card" fill sizes="270px" /></div>
-          <div className="wild-card wild-card-three"><Image src="/cards/joker.webp" alt="Doxie Dynasty joker card" fill sizes="270px" /></div>
+          <div className="wild-card wild-card-three"><Image src="/cards/wild-ace.png" alt="Ace Wild Doxie card" fill sizes="270px" /></div>
         </div>
         <div className="wild-copy">
           <p className="eyebrow">THE PACK&apos;S WILDEST MEMBERS</p>
           <h2>Need one perfect trait? Call in a wild doxie.</h2>
           <p>
-            Wild cards flex into the set you need, while the Joker keeps every
-            player guessing. Save them for the right moment—or make the table
-            nervous by playing one early.
+            The six Wild Doxies can supply one matching trait to complete a set
+            with two regular Doxies. Save one for the right moment and turn a
+            promising pair into a scoring trio.
           </p>
           <div className="crown-note"><span>♛</span> One card can change the whole round.</div>
         </div>
@@ -443,7 +443,7 @@ export default function Home() {
         <p>Collect. Make sets. Win.</p>
         <div className="footer-links">
           <a href="#game">The game</a>
-          <a href="#how-to-play">How to play</a>
+          <a href="/gameplay">How to play</a>
           <a href="#faq">FAQ</a>
           <a href={directCheckoutUrl}>Buy direct</a>
           <a href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">Amazon</a>

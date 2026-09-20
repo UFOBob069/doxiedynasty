@@ -4,6 +4,12 @@ import { SITE_URL } from '@/lib/site';
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
+      url: `${SITE_URL}/gameplay`,
+      lastModified: new Date('2026-09-19'),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: SITE_URL,
       lastModified: new Date(),
       changeFrequency: 'monthly',

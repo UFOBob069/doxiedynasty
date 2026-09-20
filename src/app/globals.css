@@ -106,7 +106,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .how-section { background: linear-gradient(180deg,#f9efd9,var(--paper)); padding: clamp(6rem,10vw,10rem) clamp(1.2rem,7vw,8rem); }
 .how-intro { max-width: 860px; }
-.how-intro > p:last-child { color: #596268; line-height: 1.75; margin: 2rem 0 0; max-width: 650px; }
+.how-intro > p:not(.eyebrow) { color: #596268; line-height: 1.75; margin: 2rem 0 0; max-width: 650px; }
+.how-intro > .button { margin-top: 1.5rem; }
 .steps-grid { border-bottom: 1px solid rgba(6,23,37,.17); border-top: 1px solid rgba(6,23,37,.17); display: grid; grid-template-columns: repeat(4,1fr); margin: 5rem 0; }
 .steps-grid article { min-height: 290px; padding: 2.2rem; }
 .steps-grid article + article { border-left: 1px solid rgba(6,23,37,.17); }

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Doxie Dynasty Card Game | A Dachshund Game for Game Night",
   description:
-    "Meet Doxie Dynasty, a fast 84-card dachshund game for 2–6 players. Build matching packs, play clever quirks, and become the top dog in 20–30 minutes.",
+    "Meet Doxie Dynasty, a fast 90-card dachshund game for 2–6 players. Build matching packs, play clever quirks, and become the top dog in 20–30 minutes.",
   alternates: {
     canonical: "/",
   },

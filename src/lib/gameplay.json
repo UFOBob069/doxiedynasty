@@ -1,0 +1,115 @@
+{
+  "version": "Full rules v1.1 | September 19, 2026",
+  "intro": "Build the highest-scoring face-up collection of Doxies. Play for base points, group matching Doxies into sets, and use special cards to change the game.",
+  "edition": "These complete rules cover the 90-card deck, including six Wild Doxies. They replace the abbreviated rules insert where it differs. Have an 84-card deck without Wilds? Use the same rules and skip the Wild section. Set aside any Joker, rules, or reference cards; they are not part of the playing deck.",
+  "sections": [
+    {
+      "id": "setup", "title": "1. Set up the table", "pdfPage": 1,
+      "items": [
+        { "title": "Choose a dealer", "text": "Play with 2-6 players. Choose a dealer at random. The player to their left starts; play continues clockwise." },
+        { "title": "Deal 7 cards each", "text": "Shuffle all 90 playing cards together: 66 regular Doxies, 6 Wild Doxies, 12 Quirks, and 6 Actions. Deal 7 cards face down to each player. Keep your hand hidden." },
+        { "title": "Make the piles", "text": "Place the remaining cards face down as the draw deck. Turn its top card face up to start the discard pile. Revealing a special card does not activate it." },
+        { "title": "Leave room for your Dynasty", "text": "Each player needs space for their face-up Doxies and scoring cards. Leave a separate shared space for used special cards, away from the discard pile. Have paper handy for the final score." }
+      ]
+    },
+    {
+      "id": "your-turn", "title": "2. Take your turn", "pdfPage": 1,
+      "items": [
+        { "title": "Draw 1", "text": "Take either the top card of the face-down deck or the top card of the discard pile into your hand. Choose one source, not both. If the discard pile is empty, draw from the deck." },
+        { "title": "Play and build", "text": "Play any number of regular Doxies face up in front of you, individually or in complete sets. You may form sets from your ungrouped face-up Doxies and cards in your hand. Play Wilds only into a valid set. You may also play any number of Quirk or Action cards, one at a time, before or after playing Doxies. Newly drawn cards can be played this turn. Playing nothing is allowed." },
+        { "title": "Discard 1", "text": "Place 1 card from your hand face up on the discard pile to end your turn. A discard never activates an ability. If your hand is empty, skip this discard. There is no hand-size limit and no automatic refill to 7 cards." },
+        { "title": "Let each effect finish", "text": "Announce a special card and its target, then pause for Stubborn before resolving it. Complete one effect before starting another. Only Stubborn and Treat Magnet may be played outside your own turn; their timing is explained below." }
+      ]
+    },
+    {
+      "id": "table", "title": "3. What stays on the table", "pdfPage": 2,
+      "items": [
+        { "title": "Only played cards score", "text": "Your Dynasty is everything you have played face up in front of you. Cards left in your hand score 0. A regular Doxie can be played alone and still earns its printed base points. It does not need a set to score." },
+        { "title": "Complete sets stay together", "text": "Place each completed set in its own group and announce the shared trait. You cannot voluntarily split it, swap a member, move its Wild, or return its cards to your hand. You may keep forming new sets from ungrouped cards on your own turn. You cannot add a fourth card to a completed set." },
+        { "title": "Sets can be attacked", "text": "Vet Visit can remove a Doxie or Wild from an opponent's completed set. Discard the removed card. Any remaining regular Doxies become ungrouped face-up cards, keeping their base points but losing the set bonus. Any remaining Wild returns to its owner's hand. The owner may form new sets on their next turn." },
+        { "title": "Special cards are used once", "text": "After resolving a Quirk or Action, put it in the separate used-special-card area, not the draw or discard pile. Keep scoring cards face up beside their owner's Dynasty instead. Either way, a played special cannot be picked up or played again this game. An unplayed special discarded from a hand can still be picked up and played later." }
+      ]
+    },
+    {
+      "id": "sets", "title": "4. Make matching sets", "pdfPage": 2,
+      "items": [
+        { "title": "Exactly 3 Doxies, one shared trait", "text": "All three must share the same fur type, color, or pattern. Fur types: Long Hair, Smooth, Wire. Colors: Black & Tan, Red, Cream. Patterns: Solid, Brindle, Dapple. Read the printed labels, not the illustration. Matching size or personality does not make a set; pose, background, and sayings do not affect scoring." },
+        { "title": "+2 per card in a complete set", "text": "Each three-card set adds 6 points to its cards' base values. A card belongs to only one set. Sharing two or three traits does not give extra set bonuses. For six matching Doxies, make two separate three-card sets." }
+      ]
+    },
+    {
+      "id": "wilds", "title": "5. Use a Wild Doxie", "pdfPage": 2,
+      "items": [
+        { "title": "A substitute for one matching trait", "text": "Ace, Nova, Ziggy, Mocha, Dash, and Loki are the six Wilds. Use at most 1 Wild per set, alongside 2 regular Doxies that already share a trait. Announce that trait when you play the Wild. For example, two Dapple Doxies plus Ace make a Dapple set." },
+        { "title": "0 base points, +2 set points", "text": "Wilds have no printed size or base value, so their base value is 0. They earn the same +2 set bonus as other set members. Wilds cannot be played alone or count toward the three-fur-type Dynasty bonus. Their illustrated coat does not give them extra traits." }
+      ]
+    },
+    {
+      "id": "scoring", "title": "6. Count your score", "pdfPage": 3,
+      "items": [
+        { "title": "Base points", "text": "Add the printed values of all your face-up regular Doxies: Mini = 1 point; Standard = 2 points. Include ungrouped Doxies. Wilds = 0 base points." },
+        { "title": "Matching-set bonuses", "text": "Add 6 points for each complete three-card set still on your table. Incomplete or broken sets earn no set bonus." },
+        { "title": "One Dynasty bonus: +5", "text": "If your face-up regular Doxies include at least one Long Hair, one Smooth, and one Wire, add 5 points once per game. Those Doxies may also be in matching sets. Ungrouped Doxies count too. Having extra examples of each fur type does not earn another Dynasty bonus." },
+        { "title": "Add special bonuses, then double if applicable", "text": "Add Snuggle Power (+2), Treat Time (+2), Pack Leader (+1 for each complete set), and Tail Wag Boost (+3 if its chosen set is still complete). If you played Royal Heir successfully, double this entire total once. Score everything from the final table, not from sets you used to have." }
+      ]
+    },
+    {
+      "id": "example", "title": "A scoring example", "pdfPage": 3,
+      "items": [
+        { "title": "Bear + Stella + Olive = 11", "text": "Bear is a 1-point Mini; Stella and Olive are 2-point Standards. All three are Brindle, so they form one valid set: 1 + 2 + 2 base points + 6 set points = 11 points. Their different colors and fur types do not matter for this Brindle match." },
+        { "title": "Add a Long Hair Doxie", "text": "Play Layla, a 2-point Long Hair Standard, on her own. Bear supplies Smooth and Stella or Olive supplies Wire, so you now earn the one-time Dynasty bonus: 11 + 2 + 5 = 18 points. Snuggle Power brings that to 20. Royal Heir would double the final total to 40." },
+        { "title": "Example turn", "text": "You have Bear and Stella in your hand. Draw Olive, play those three as a Brindle set, optionally play a special card, then discard 1 remaining card. The set is worth 11 if it is still complete at the end. You can also play Bear and Stella separately now and complete the set on a later turn." }
+      ]
+    },
+    {
+      "id": "ending", "title": "7. End the game", "pdfPage": 3,
+      "items": [
+        { "title": "Finish the turn that empties the deck", "text": "When the last draw-deck card is taken, including by a special effect, finish the current player's play and discard steps, then score immediately. No other player gets a final turn, and Zoomies cannot start an extra turn after the deck is empty. If an effect asks for more cards than remain, draw only the available cards. Never reshuffle the discard pile." },
+        { "title": "Highest score wins", "text": "The highest total wins the title Doxie Dynasty Ruler. Tied players share the win. Emptying your hand does not end the game; on your next turn, draw 1 and continue normally." }
+      ]
+    }
+  ],
+  "specialIntro": "These explanations expand the short text on each card. Unless listed as a reaction, play a special during your own play step. All extra draws come from the draw deck unless the card specifically uses the discard pile. If a card requires a target and no legal target exists, you cannot play it. Carry out as much of an otherwise legal effect as possible.",
+  "quirks": [
+    { "name": "Burrower", "timing": "Your turn", "text": "Choose an opponent with cards in hand and look at that hand. Take 1 regular Doxie that shares a fur type, color, or pattern with a regular Doxie in your hand or on your table; reveal both matching cards, then add the stolen card to your hand. You cannot steal a Wild or special. If there is no match, take nothing and the Quirk is still used." },
+    { "name": "Zoomies", "timing": "Your turn", "text": "Finish your current turn, including its discard. Then take one full extra draw-play-discard turn before play moves clockwise. If the draw deck is empty, the game ends and the extra turn is lost." },
+    { "name": "Royal Heir", "timing": "Keep beside your Dynasty", "text": "Keep this card face up. At the end, double your entire score after all bonuses. Here, 'this round' means this whole game, not your current turn. It does not double individual effects as you play them." },
+    { "name": "Stubborn", "timing": "Reaction", "text": "Play from your hand immediately after any opponent announces a Quirk or Action, before it takes effect. Cancel that entire card, even if it affects several players. Both cards are used and set aside; no part of the canceled effect happens. You cannot undo an already resolved effect or block a normal draw, discard, Doxie, or set." },
+    { "name": "Snuggle Power", "timing": "Keep beside your Dynasty", "text": "Gain 2 points. Keep the card face up as a reminder and count those 2 points once in final scoring. It is not a Doxie and cannot join a set." },
+    { "name": "Dig Master", "timing": "Your turn", "text": "Draw 2 cards from the draw deck into your hand, in addition to your normal draw. You may play them this turn. This does not add another discard step." },
+    { "name": "Pack Leader", "timing": "Keep beside your Dynasty", "text": "Keep this card face up. At final scoring, add 1 point per complete set you have, including sets formed after you played it. That is +1 per set, not +1 per card." },
+    { "name": "Drama Queen", "timing": "Your turn", "text": "Choose an opponent with cards in hand. They choose and discard 2 cards from their hand, or their only card if they have just 1. They choose the order, determining which card is on top. Their face-up Dynasty is unaffected." },
+    { "name": "Nap Time", "timing": "Your turn", "text": "The next player clockwise skips their next scheduled turn once. Keep this card in front of them as a reminder, then move it to the used area after that turn is skipped. Any Zoomies extra turn happens before moving clockwise." },
+    { "name": "Treat Magnet", "timing": "Reaction or your turn", "text": "Once, take the top discard into your hand as an extra pickup. Play this card between fully resolved actions, even on another player's turn or just after a discard, before the next turn or final scoring begins. You cannot interrupt a draw or effect. It does not replace your normal draw or grant a turn. It is used once, not a permanent unlimited ability." },
+    { "name": "Tail Wag Boost", "timing": "Attach to one complete set", "text": "Choose one of your complete sets and place this card beside it. That set earns +1 per member, or +3 total, at final scoring. If Vet Visit breaks the set, this bonus is lost; move Tail Wag Boost to the used area. It cannot be moved to another set." },
+    { "name": "Chaos Pup", "timing": "Your turn", "text": "After taking Chaos Pup out of your hand, note how many cards each player holds. Combine only those hand cards, shuffle, and redeal each player the same number they contributed. Start left of the active player and deal clockwise, skipping players whose allotment is full. Face-up cards and all piles stay put. This does not use the draw deck." }
+  ],
+  "actions": [
+    { "name": "Dog Park", "timing": "Your turn", "text": "Every player draws 1 from the draw deck, starting with you and moving clockwise. If the deck runs out, later players receive no card. Finish your turn, then score." },
+    { "name": "Vet Visit", "timing": "Your turn", "text": "Choose a complete set belonging to an opponent and discard 1 Doxie or Wild from it. The set breaks: remaining regular Doxies stay face up as ungrouped cards and any remaining Wild returns to its owner's hand. Remove an attached Tail Wag Boost to the used area. You cannot target an ungrouped Doxie or a scoring special." },
+    { "name": "Puppy Surprise", "timing": "Your turn", "text": "Draw 2 extra cards from the draw deck into your hand. This works like Dig Master; you may play the new cards this turn and still have only the usual end-of-turn discard." },
+    { "name": "Training Day", "timing": "Your turn", "text": "Choose an opponent. Both of you must have at least 1 other card in hand. Choose 1 card from your own hand and take 1 random face-down card from theirs; give them your chosen card in exchange. Do not inspect their hand. Face-up Doxies, sets, and scoring cards cannot be swapped." },
+    { "name": "Fetch Frenzy", "timing": "Your turn", "text": "Starting with you and moving clockwise, each player with cards in hand chooses and discards 1. After everyone has discarded, each player who discarded draws 1 from the deck in the same order, while cards remain. Empty-handed players do neither. Finish the whole effect before any Treat Magnet pickup. You still discard normally to end your turn." },
+    { "name": "Treat Time", "timing": "Keep beside your Dynasty", "text": "Gain 2 points. Keep this card face up as a reminder and count it once at final scoring, just like Snuggle Power. Although it is an Action, its printed bonus does score points." }
+  ],
+  "checklistIntro": "A representative checklist, not a list of every regular Doxie. The full deck has 66 regular Doxies, 6 Wilds, 12 Quirks, and 6 Actions: 90 playing cards. Each named special and Wild appears once in the master list. The rules insert and any bonus Joker are not included in that total.",
+  "samples": [
+    { "name": "Max", "size": "Mini", "points": 1, "fur": "Smooth", "color": "Red", "pattern": "Brindle" },
+    { "name": "Bella", "size": "Standard", "points": 2, "fur": "Smooth", "color": "Cream", "pattern": "Brindle" },
+    { "name": "Luna", "size": "Mini", "points": 1, "fur": "Long Hair", "color": "Red", "pattern": "Dapple" },
+    { "name": "Cooper", "size": "Standard", "points": 2, "fur": "Wire", "color": "Red", "pattern": "Solid" },
+    { "name": "Daisy", "size": "Standard", "points": 2, "fur": "Wire", "color": "Black & Tan", "pattern": "Brindle" },
+    { "name": "Rocky", "size": "Mini", "points": 1, "fur": "Wire", "color": "Cream", "pattern": "Dapple" }
+  ],
+  "wildNames": ["Ace", "Nova", "Ziggy", "Mocha", "Dash", "Loki"],
+  "faqs": [
+    { "question": "How many cards do we start with?", "answer": "7 cards each, dealt face down. Turn over 1 additional card from the remaining deck to start the discard pile. The first player draws before playing." },
+    { "question": "Do cards in my hand score? Must I put down a set?", "answer": "Only cards played face up score. You can play regular Doxies individually for base points, then group them into valid sets on your turn. Wilds must be played directly into a complete set." },
+    { "question": "What exactly can I do on my turn?", "answer": "Draw 1, play any number of Doxies and special cards in any order while resolving effects one at a time, then discard 1 if you still have a card. You may play nothing. Picking up or discarding a special does not activate it." },
+    { "question": "My printed rules say 84 cards, 3 or more, or end when a hand is empty. Which do we use?", "answer": "Use this complete guide consistently: 90 cards with Wilds, sets of exactly 3, and finish the current turn when the draw deck empties. Empty hands do not end play. An 84-card deck without Wilds uses the same procedure, simply omitting Wilds. The updated guide also clarifies that Treat Time earns its printed +2 points." },
+    { "question": "Can I move cards out of a completed set?", "answer": "No. Sets stay together unless a card effect breaks them. After Vet Visit, remaining regular Doxies become ungrouped face-up cards and a remaining Wild goes back to its owner's hand. Regroup only on your own turn." },
+    { "question": "Can the same Doxie earn a set bonus and a Dynasty bonus?", "answer": "Yes. A regular Doxie may help meet the three-fur-type Dynasty goal while belonging to one matching set. It cannot belong to two sets, and the Dynasty bonus is awarded only once." },
+    { "question": "Is there a downloadable PDF?", "answer": "Yes. Download the full rules PDF linked at the top of this page. It includes setup, turn order, scoring, all special-card rulings, and the representative checklist. The PDF and this page use the same rules version." },
+    { "question": "Is there an official gameplay demonstration video?", "answer": "No official demonstration video is linked here yet. The example turn and scoring walkthrough above cover the full sequence, and the downloadable PDF can stay beside the table while you play." }
+  ]
+}
