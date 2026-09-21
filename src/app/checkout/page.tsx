@@ -33,20 +33,22 @@ function CheckoutContent() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [giftNote, setGiftNote] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
 
   const handleCheckout = async (event: React.FormEvent) => {
     event.preventDefault();
+    setCheckoutError('');
     const normalizedName = customerName.trim();
     const normalizedEmail = customerEmail.trim();
     const normalizedGiftNote = giftNote.trim();
 
     if (!normalizedName || !normalizedEmail) {
-      alert('Please fill in your name and email');
+      setCheckoutError('Please fill in your name and email');
       return;
     }
 
     if (normalizedGiftNote.length > DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH) {
-      alert(`Gift notes are limited to ${DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH} characters.`);
+      setCheckoutError(`Gift notes are limited to ${DOXIE_DYNASTY.MAX_GIFT_NOTE_LENGTH} characters.`);
       return;
     }
 
@@ -77,7 +79,7 @@ function CheckoutContent() {
       window.location.assign(url);
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+      setCheckoutError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -131,6 +133,7 @@ function CheckoutContent() {
               <span><CheckCircle aria-hidden="true" /> 30-day returns</span>
               <span><Gift aria-hidden="true" /> Choose 1–10 decks</span>
             </div>
+            <p><Link href="/product#shipping-returns">Shipping, returns &amp; product details</Link></p>
           </aside>
 
           <section className="checkout-form-card" aria-labelledby="customer-details-title">
@@ -140,11 +143,13 @@ function CheckoutContent() {
               We will prefill your details and take you to the final secure checkout step.
             </p>
 
-            <form onSubmit={handleCheckout} className="checkout-form">
+            <form onSubmit={handleCheckout} className="checkout-form" aria-busy={isLoading}>
+              {checkoutError && <p className="commerce-alert" role="alert">{checkoutError}</p>}
               <label className="checkout-field" htmlFor="customer-name">
                 <span>Full name</span>
                 <input
                   id="customer-name"
+                  name="customerName"
                   type="text"
                   value={customerName}
                   onChange={(event) => setCustomerName(event.target.value)}
@@ -159,6 +164,7 @@ function CheckoutContent() {
                 <span>Email address</span>
                 <input
                   id="customer-email"
+                  name="customerEmail"
                   type="email"
                   value={customerEmail}
                   onChange={(event) => setCustomerEmail(event.target.value)}
@@ -174,6 +180,7 @@ function CheckoutContent() {
                 <span>Gift note <em>optional</em></span>
                 <textarea
                   id="gift-note"
+                  name="giftNote"
                   value={giftNote}
                   onChange={(event) => setGiftNote(event.target.value)}
                   placeholder="Add a message for the lucky top dog"

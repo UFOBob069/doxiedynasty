@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { BookOpen, Download, ListChecks, ArrowUpRight } from "lucide-react";
-import { DOXIE_DYNASTY } from "@/lib/doxie-product";
-import { SITE_URL } from "@/lib/site";
+import { PRODUCT, PRODUCT_JSON_LD } from "@/lib/product-catalog";
 
 const dynastyCards = [
   { src: "/cards/andre.webp", alt: "Andre doxie card" },
@@ -57,59 +56,8 @@ const steps = [
 ];
 
 const directCheckoutUrl = "/checkout";
-const amazonUrl = "https://www.amazon.com/dp/B0H1NL53PX";
-const rulesPdfUrl = "/downloads/doxie-dynasty-full-rules.pdf";
-
-const productJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "@id": `${SITE_URL}/#doxie-dynasty-card-game`,
-  name: DOXIE_DYNASTY.NAME,
-  image: [
-    `${SITE_URL}/box-product-mockup.webp`,
-    `${SITE_URL}/cards/box-front.webp`,
-    `${SITE_URL}/hero-game-night.webp`,
-  ],
-  description:
-    "A 90-card dachshund set-collection game for 2–6 players, with fast 20–30 minute rounds, clever quirks, and plenty of pack-building strategy.",
-  sku: "DOXIE-DYNASTY-84",
-  category: "Card Games",
-  brand: {
-    "@type": "Brand",
-    name: "Doxie Dynasty",
-  },
-  offers: {
-    "@type": "Offer",
-    url: `${SITE_URL}/checkout`,
-    priceCurrency: "USD",
-    price: (DOXIE_DYNASTY.CURRENT_PRICE / 100).toFixed(2),
-    availability: "https://schema.org/InStock",
-    itemCondition: "https://schema.org/NewCondition",
-    shippingDetails: {
-      "@type": "OfferShippingDetails",
-      shippingRate: {
-        "@type": "MonetaryAmount",
-        value: 0,
-        currency: "USD",
-      },
-      shippingDestination: {
-        "@type": "DefinedRegion",
-        addressCountry: "US",
-      },
-    },
-    hasMerchantReturnPolicy: {
-      "@type": "MerchantReturnPolicy",
-      applicableCountry: "US",
-      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-      merchantReturnDays: DOXIE_DYNASTY.RETURN_DAYS,
-    },
-    seller: {
-      "@type": "Organization",
-      name: "Doxie Dynasty",
-      url: SITE_URL,
-    },
-  },
-};
+const amazonUrl = PRODUCT.amazonUrl;
+const rulesPdfUrl = PRODUCT.rulesPdfUrl;
 
 const faqItems = [
   {
@@ -153,7 +101,7 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(PRODUCT_JSON_LD).replace(/</g, "\\u003c"),
         }}
       />
       <header className="site-header home-header">
@@ -432,7 +380,8 @@ export default function Home() {
             </a>
             <a className="button button-outline" href={directCheckoutUrl}>Buy direct <span aria-hidden="true">→</span></a>
           </div>
-          <small>Choose the way you like to shop.</small>
+          <small>Direct: ${PRODUCT.price} USD per deck with free U.S. shipping. Amazon shows its own price and availability.</small>
+          <p className="purchase-details"><a href="/product">Product details, shipping &amp; returns</a></p>
         </div>
       </section>
 
@@ -451,6 +400,7 @@ export default function Home() {
         <p>Collect. Make sets. Win.</p>
         <div className="footer-links">
           <a href="#game">The game</a>
+          <a href="/product">Product details</a>
           <a href="/gameplay">How to play</a>
           <a href={rulesPdfUrl} download>Rules PDF</a>
           <a href="/gameplay#checklist">All card names</a>

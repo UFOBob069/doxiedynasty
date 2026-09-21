@@ -424,6 +424,8 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
 .rules-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 26px; margin-top: 26px; }
 .rules-read-link { background: var(--navy); color: var(--white); font-size: .875rem; letter-spacing: 0; }
 .rules-pdf-link { color: var(--navy); text-decoration: underline; text-underline-offset: 4px; }
+.buy-copy .purchase-details { font-size: .875rem; margin-top: 18px; }
+.purchase-details a { color: var(--gold-light); text-decoration: underline; text-underline-offset: 4px; }
 footer .footer-links { flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 850px) {
   .home-header { grid-template-columns: minmax(0, 1fr) auto; }

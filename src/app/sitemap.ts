@@ -4,6 +4,13 @@ import { SITE_URL } from '@/lib/site';
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
+      url: `${SITE_URL}/product`,
+      lastModified: new Date('2026-09-21'),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+      images: [`${SITE_URL}/box-product-mockup.webp`],
+    },
+    {
       url: `${SITE_URL}/gameplay`,
       lastModified: new Date('2026-09-19'),
       changeFrequency: 'monthly',
@@ -11,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: SITE_URL,
-      lastModified: new Date(),
+      lastModified: new Date('2026-09-21'),
       changeFrequency: 'monthly',
       priority: 1,
       images: [
