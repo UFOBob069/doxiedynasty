@@ -27,6 +27,7 @@ test('HTML and JSON share one accurate product and direct offer', async () => {
     assert.deepEqual(productMarkup(html), json);
     assert.match(html, /24\.99/);
     assert.match(html, /Buy on Amazon/);
+    assert.match(html, /In stock/);
     assert.ok(html.includes('https://www.amazon.com/dp/B0H1NL53PX'));
     assert.ok(html.includes('href="/product'));
   }
@@ -38,7 +39,7 @@ test('HTML and JSON share one accurate product and direct offer', async () => {
   assert.equal(json.offers.hasMerchantReturnPolicy.merchantReturnDays, 30);
   assert.ok(!('sku' in json), 'Do not publish the old unverified 84-card SKU');
   assert.ok(!('aggregateRating' in json) && !('review' in json), 'Do not invent reviews');
-  assert.ok(!('availability' in json.offers), 'Do not invent real-time inventory');
+  assert.equal(json.offers.availability, 'https://schema.org/InStock', 'Publish owner-confirmed direct-order stock');
   const count = json.additionalProperty.find(property => property.name === 'Playing cards');
   assert.match(count.value, /^90: 66 regular Doxies, 6 Wilds, 12 Quirks, 6 Actions$/);
 });
@@ -55,7 +56,7 @@ test('discovery feed has current required fields and does not enable checkout', 
   assert.equal(product.item_id, 'doxie-dynasty-90');
   assert.equal(product.url, `${canonical}/product`);
   assert.equal(product.price, '24.99 USD');
-  assert.equal(product.availability, 'unknown');
+  assert.equal(product.availability, 'in_stock');
   assert.equal(product.is_eligible_search, true);
   assert.equal(product.is_eligible_checkout, false);
   assert.ok(!('gtin' in product) && !('mpn' in product));
@@ -69,7 +70,8 @@ test('plain-text summary links public resources and distinguishes purchase chann
   assert.match(summary, /90-card/);
   assert.match(summary, /24\.99 USD/);
   assert.match(summary, /Native agent checkout is not enabled/);
-  assert.match(summary, /Real-time inventory is not published/);
+  assert.match(summary, /Direct-order availability: In stock/);
+  assert.match(summary, /Stock status is maintained manually/);
   assert.match(summary, /Amazon displays its own current price/);
   for (const [, url] of summary.matchAll(/\]\((https:\/\/[^)]+)\)/g)) {
     const target = new URL(url);

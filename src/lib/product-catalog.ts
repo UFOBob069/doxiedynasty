@@ -12,8 +12,12 @@ export const PRODUCT = {
   supportEmail: 'david.eagan@gmail.com',
   description: 'Doxie Dynasty is a physical, 90-card dachshund-themed set-collection game for 2-6 players. A typical game takes 20-30 minutes. Play Doxies face up, make matching sets, and use Quirks, Actions, and Wild Doxies to build the highest-scoring Dynasty.',
   images: [`${SITE_URL}/box-product-mockup.webp`, `${SITE_URL}/cards/box-front.webp`],
-  // There is no connected inventory system. Do not infer stock from an active payment page.
-  availability: 'unknown',
+  // Owner-confirmed 2026-09-23. Update all three values when direct-order stock changes.
+  availability: {
+    label: 'In stock',
+    schemaValue: 'https://schema.org/InStock',
+    feedValue: 'in_stock',
+  },
   price: (DOXIE_DYNASTY.CURRENT_PRICE / 100).toFixed(2),
   currency: 'USD',
 } as const;
@@ -53,6 +57,7 @@ export const PRODUCT_JSON_LD = {
     url: PRODUCT.checkoutUrl,
     price: PRODUCT.price,
     priceCurrency: PRODUCT.currency,
+    availability: PRODUCT.availability.schemaValue,
     itemCondition: 'https://schema.org/NewCondition',
     eligibleRegion: { '@type': 'Country', name: 'US' },
     shippingDetails: {
@@ -86,7 +91,7 @@ export const DISCOVERY_PRODUCT = {
   brand: PRODUCT.brand,
   seller_name: PRODUCT.brand,
   image_url: PRODUCT.images[0],
-  availability: PRODUCT.availability,
+  availability: PRODUCT.availability.feedValue,
   price: `${PRODUCT.price} ${PRODUCT.currency}`,
   is_eligible_search: true,
   is_eligible_checkout: false,
@@ -106,7 +111,7 @@ ${PRODUCT_FACTS.map(([name, value]) => `- ${name}: ${value}`).join('\n')}
 - [Buy on Amazon](${PRODUCT.amazonUrl}): primary purchase link. Amazon displays its own current price, availability, shipping, and returns.
 - [Direct checkout](${PRODUCT.checkoutUrl}): published site price ${PRODUCT.price} ${PRODUCT.currency} per deck; ${DOXIE_DYNASTY.MIN_QUANTITY}-${DOXIE_DYNASTY.MAX_QUANTITY} decks per order. Browser-based Stripe checkout, not an agent checkout API.
 - Direct orders: free U.S. shipping only; estimated delivery ${DOXIE_DYNASTY.SHIPPING_DAYS} business days. Returns accepted within ${DOXIE_DYNASTY.RETURN_DAYS} days of delivery.
-- Real-time inventory is not published. Confirm availability and the final order total at the selected checkout. The site's price and policies are not Amazon's offer.
+- Direct-order availability: ${PRODUCT.availability.label}. Stock status is maintained manually, not connected to real-time inventory. The site's price, stock status, and policies are not Amazon's offer.
 - Native agent checkout is not enabled. A product feed is not a purchase authorization.
 
 ## Official pages

@@ -380,7 +380,7 @@ export default function Home() {
             </a>
             <a className="button button-outline" href={directCheckoutUrl}>Buy direct <span aria-hidden="true">→</span></a>
           </div>
-          <small>Direct: ${PRODUCT.price} USD per deck with free U.S. shipping. Amazon shows its own price and availability.</small>
+          <small>Direct: ${PRODUCT.price} USD per deck with free U.S. shipping. {PRODUCT.availability.label} for direct orders. Amazon shows its own price and availability.</small>
           <p className="purchase-details"><a href="/product">Product details, shipping &amp; returns</a></p>
         </div>
       </section>

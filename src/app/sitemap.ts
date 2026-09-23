@@ -5,7 +5,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: `${SITE_URL}/product`,
-      lastModified: new Date('2026-09-21'),
+      lastModified: new Date('2026-09-23'),
       changeFrequency: 'monthly',
       priority: 0.9,
       images: [`${SITE_URL}/box-product-mockup.webp`],
@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: SITE_URL,
-      lastModified: new Date('2026-09-21'),
+      lastModified: new Date('2026-09-23'),
       changeFrequency: 'monthly',
       priority: 1,
       images: [

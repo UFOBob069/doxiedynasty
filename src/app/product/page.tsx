@@ -61,7 +61,7 @@ export default function ProductPage() {
             <a className="button button-gold" href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Buy on Amazon <ArrowUpRight size={18} aria-hidden="true" /></a>
             <Link className={styles.secondary} href="/checkout"><span>{`Buy direct: $${PRODUCT.price} ${PRODUCT.currency} per deck`}</span> <ArrowUpRight size={18} aria-hidden="true" /></Link>
           </div>
-          <p className={styles.note}>Amazon shows its own current price, availability, shipping, and return terms. Direct orders use Stripe checkout, with {DOXIE_DYNASTY.MIN_QUANTITY}-{DOXIE_DYNASTY.MAX_QUANTITY} decks per order. Confirm availability and the final total at checkout; real-time stock is not published here.</p>
+          <p className={styles.note}>Direct orders: {PRODUCT.availability.label}. Amazon shows its own current price, availability, shipping, and return terms. Direct orders use Stripe checkout, with {DOXIE_DYNASTY.MIN_QUANTITY}-{DOXIE_DYNASTY.MAX_QUANTITY} decks per order. Confirm the final total at checkout.</p>
         </section>
 
         <section className={styles.section} aria-labelledby="rules-title">
@@ -78,6 +78,7 @@ export default function ProductPage() {
           <h2 id="shipping-title">Direct-order shipping &amp; returns</h2>
           <dl className={styles.facts}>
             <div><dt>Price</dt><dd>${PRODUCT.price} {PRODUCT.currency} per deck</dd></div>
+            <div><dt>Availability</dt><dd>{PRODUCT.availability.label}</dd></div>
             <div><dt>Shipping</dt><dd>Free to U.S. addresses only</dd></div>
             <div><dt>Estimated delivery</dt><dd>{DOXIE_DYNASTY.SHIPPING_DAYS} business days</dd></div>
             <div><dt>Returns</dt><dd>Accepted within {DOXIE_DYNASTY.RETURN_DAYS} days of delivery</dd></div>
