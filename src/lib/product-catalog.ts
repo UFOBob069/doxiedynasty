@@ -1,5 +1,6 @@
 import { DOXIE_DYNASTY } from './doxie-product';
 import { SITE_URL } from './site';
+import { GUIDES } from './guides';
 
 export const PRODUCT = {
   id: 'doxie-dynasty-90',
@@ -123,6 +124,16 @@ ${PRODUCT_FACTS.map(([name, value]) => `- ${name}: ${value}`).join('\n')}
 - [Download the full rules PDF](${PRODUCT.rulesPdfUrl})
 - [Product data (Schema.org JSON-LD)](${SITE_URL}/product.json)
 - [Discovery product feed (JSONL)](${SITE_URL}/feeds/products.jsonl)
+
+## Plain-text and structured references
+- [Complete text reference](${SITE_URL}/llms-full.txt): product facts, full rules, all card names, FAQs, and complete gift guides.
+- [Full rules as plain text](${SITE_URL}/gameplay.txt): the same rules and card explanations as the visible gameplay page.
+- [All 90 card names as JSON](${SITE_URL}/cards.json): names grouped by regular Doxie, Wild, Quirk, and Action; not a full trait catalog.
+- [XML sitemap](${SITE_URL}/sitemap.xml)
+
+## Gift guides
+These guides are written by Doxie Dynasty, the maker of the game, not an independent review publication. The game is a fixed deck, not a custom-name or custom-portrait product.
+${GUIDES.map(guide => `- [${guide.title}](${SITE_URL}/guides/${guide.slug}): ${guide.description}`).join('\n')}
 
 ## Support
 Email: ${PRODUCT.supportEmail}

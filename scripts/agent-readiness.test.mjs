@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
+
+const rules = JSON.parse(await readFile(new URL('../src/lib/gameplay.json', import.meta.url), 'utf8'));
 
 const base = process.env.TEST_BASE_URL || 'http://localhost:3013';
 const canonical = 'https://www.doxiedynasty.com';
@@ -95,7 +98,7 @@ test('crawler access, sitemap, canonical URLs and payment privacy', async () => 
   assert.ok(sitemap.includes(`<loc>${canonical}/product</loc>`));
   assert.ok(sitemap.includes(`<loc>${canonical}/gameplay</loc>`));
   assert.ok(!sitemap.includes('/checkout') && !sitemap.includes('/success'));
-  for (const agent of ['OAI-SearchBot/1.3', 'ChatGPT-User/1.0']) {
+  for (const agent of ['OAI-SearchBot/1.3', 'ChatGPT-User/1.0', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot', 'Googlebot', 'bingbot']) {
     const html = await get('/product', 'text/html', agent);
     assert.match(html, /rel="canonical" href="https:\/\/www\.doxiedynasty\.com\/product"/);
     assert.match(html, /Inside the deck/);
@@ -103,4 +106,53 @@ test('crawler access, sitemap, canonical URLs and payment privacy', async () => 
   }
   const checkout = await get('/checkout', 'text/html');
   assert.match(checkout, /content="noindex, nofollow"/);
+});
+
+test('complete text reference contains the published rules, names, and guide content', async () => {
+  const full = await get('/llms-full.txt', 'text/plain');
+  const gameplay = await get('/gameplay.txt', 'text/plain');
+  assert.ok(full.includes(gameplay));
+  assert.ok(gameplay.includes(rules.version));
+  assert.ok(gameplay.includes(rules.edition));
+  for (const section of rules.sections) {
+    for (const item of section.items) assert.ok(gameplay.includes(item.text), `Missing rule: ${item.title}`);
+  }
+  for (const card of [...rules.quirks, ...rules.actions]) {
+    assert.ok(gameplay.includes(card.text), `Missing effect: ${card.name}`);
+    assert.ok(gameplay.includes(`Timing: ${card.timing}`));
+  }
+  for (const faq of rules.faqs) assert.ok(gameplay.includes(faq.answer));
+  for (const name of [...rules.regularNames, ...rules.wildNames]) assert.ok(gameplay.includes(`- ${name}\n`));
+  assert.match(full, /not a custom-name or custom-portrait product/);
+  assert.match(full, /Native agent checkout is not enabled/);
+  assert.match(full, /not independent reviews or rankings/);
+  const guideSlugs = ['dachshund-gift-guide', 'personalized-dachshund-gifts', 'dog-lover-game-night'];
+  for (const slug of guideSlugs) {
+    assert.ok(full.includes(`Source: ${canonical}/guides/${slug}`));
+    await get(`/guides/${slug}`, 'text/html');
+  }
+  const response = await fetch(new URL('/gameplay.txt', base));
+  assert.equal(response.headers.get('link'), `<${canonical}/gameplay>; rel="canonical"`);
+  const home = await get('/', 'text/html');
+  assert.match(home, /rel="describedby"[^>]*href="\/llms\.txt"/);
+  for (const path of ['/gameplay.txt', '/llms-full.txt', '/cards.json']) {
+    const rejected = await fetch(new URL(path, base), { method: 'POST' });
+    assert.equal(rejected.status, 405, `${path} is read-only`);
+  }
+});
+
+test('machine-readable card checklist exactly matches the visible checklist source', async () => {
+  const checklist = JSON.parse(await get('/cards.json', 'application/json'));
+  assert.equal(checklist.cardCount, 90);
+  assert.deepEqual(checklist.counts, { regular: 66, wild: 6, quirk: 12, action: 6 });
+  assert.equal(checklist.source, `${canonical}/gameplay#checklist`);
+  assert.equal(new Set(checklist.cards.map(card => card.name)).size, 90);
+  for (const [type, names] of Object.entries({
+    regular: rules.regularNames,
+    wild: rules.wildNames,
+    quirk: rules.quirks.map(card => card.name),
+    action: rules.actions.map(card => card.name),
+  })) {
+    assert.deepEqual(checklist.cards.filter(card => card.type === type).map(card => card.name), names);
+  }
 });

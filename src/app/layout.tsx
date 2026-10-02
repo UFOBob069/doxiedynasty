@@ -53,6 +53,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="describedby" type="text/plain" href="/llms.txt" title="Doxie Dynasty public reference index" />
+      </head>
       <body className={`${display.variable} ${body.variable}`}>{children}</body>
     </html>
   );
