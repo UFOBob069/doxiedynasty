@@ -1,6 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import { BookOpen, Download, ListChecks, ArrowUpRight } from "lucide-react";
 import { PRODUCT, PRODUCT_JSON_LD } from "@/lib/product-catalog";
+import GuideLinks from "@/components/GuideLinks";
+import guideStyles from "@/app/guides/guides.module.css";
 
 const dynastyCards = [
   { src: "/cards/andre.webp", alt: "Andre doxie card" },
@@ -385,6 +388,16 @@ export default function Home() {
         </div>
       </section>
 
+      <section className={guideStyles.homeSection} aria-labelledby="gift-guides-title">
+        <div className={guideStyles.homeInner}>
+          <p className={guideStyles.kicker}>FOR YOUR FAVORITE DOXIE PERSON</p>
+          <h2 id="gift-guides-title">A thoughtful gift. A good night together.</h2>
+          <p>Find a dachshund gift that fits, add a personal touch, or plan your first game night.</p>
+          <GuideLinks />
+          <p><Link className={guideStyles.textLink} href="/guides">Explore all gift guides</Link></p>
+        </div>
+      </section>
+
       <section className="contact-section" id="contact">
         <div>
           <p className="eyebrow">QUESTIONS, SUPPORT OR WHOLESALE</p>
@@ -401,6 +414,7 @@ export default function Home() {
         <div className="footer-links">
           <a href="#game">The game</a>
           <a href="/product">Product details</a>
+          <Link href="/guides">Gift guides</Link>
           <a href="/gameplay">How to play</a>
           <a href={rulesPdfUrl} download>Rules PDF</a>
           <a href="/gameplay#checklist">All card names</a>

@@ -90,6 +90,7 @@ export default function ProductPage() {
       <footer className={styles.footer}>
         <Link href="/">Doxie Dynasty</Link>
         <Link href="/gameplay">How to play</Link>
+        <Link href="/guides">Gift guides</Link>
         <a href={PRODUCT.rulesPdfUrl} download>Rules PDF</a>
         <a href="/product.json">Product data</a>
         <a href={`mailto:${PRODUCT.supportEmail}`}>Contact</a>

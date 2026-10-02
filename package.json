@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:agent-readiness": "node --test scripts/agent-readiness.test.mjs"
+    "test:agent-readiness": "node --test scripts/agent-readiness.test.mjs",
+    "test:guides": "node --test scripts/guides.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.400.0",

@@ -116,6 +116,7 @@ ${PRODUCT_FACTS.map(([name, value]) => `- ${name}: ${value}`).join('\n')}
 
 ## Official pages
 - [Product details and purchase information](${PRODUCT.url})
+- [Dachshund gift guides and game-night ideas](${SITE_URL}/guides)
 - [Shipping and returns](${PRODUCT.url}#shipping-returns)
 - [Full gameplay rules](${PRODUCT.rulesUrl})
 - [All 90 card names](${PRODUCT.rulesUrl}#checklist)
