@@ -3,7 +3,8 @@ import test from 'node:test';
 
 const base = process.env.TEST_BASE_URL || 'http://localhost:3015';
 const canonical = 'https://www.doxiedynasty.com';
-const slugs = ['dachshund-gift-guide', 'personalized-dachshund-gifts', 'dog-lover-game-night'];
+const holidaySlugs = ['black-friday-dachshund-gifts', 'christmas-gifts-for-dachshund-lovers'];
+const slugs = [...holidaySlugs, 'dachshund-gift-guide', 'personalized-dachshund-gifts', 'dog-lover-game-night'];
 
 async function html(path) {
   const response = await fetch(new URL(path, base));
@@ -44,7 +45,7 @@ test('each guide has unique metadata, matching article schema, and working local
     const article = graph.find(schema => schema['@type'] === 'Article');
     assert.ok(article);
     assert.equal(article.mainEntityOfPage, `${canonical}${path}`);
-    assert.equal(article.datePublished, '2026-10-02');
+    assert.equal(article.datePublished, holidaySlugs.includes(slug) ? '2026-11-07' : '2026-10-02');
     assert.equal(article.author.name, 'Doxie Dynasty');
     assert.ok(page.includes('This guide features our own game.'));
     assert.equal(graph.find(schema => schema['@type'] === 'BreadcrumbList').itemListElement.at(-1).item, `${canonical}${path}`);

@@ -1,5 +1,5 @@
 import rules from './gameplay.json';
-import { GUIDES, GUIDE_DATE } from './guides';
+import { GUIDES } from './guides';
 import { PRODUCT, productSummary } from './product-catalog';
 import { SITE_URL } from './site';
 
@@ -61,11 +61,11 @@ export function fullReference() {
     gameplayText(),
     '---',
     '# Doxie Dynasty Gift Guides',
-    `Source: ${SITE_URL}/guides\n\nPublished and updated: ${GUIDE_DATE}`,
+    `Source: ${SITE_URL}/guides`,
     'These guides are written by Doxie Dynasty, the maker of the game. They are brand-authored guides, not independent reviews or rankings.',
     ...GUIDES.map(guide => [
       `## ${guide.title}`,
-      `Source: ${SITE_URL}/guides/${guide.slug}`,
+      `Source: ${SITE_URL}/guides/${guide.slug}\n\nPublished: ${guide.published}`,
       guide.description,
       guide.intro,
       ...guide.sections.map(section => [

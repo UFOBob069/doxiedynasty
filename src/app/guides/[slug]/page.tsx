@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import GuideLinks from '@/components/GuideLinks';
-import { GUIDES, GUIDE_DATE } from '@/lib/guides';
+import { GUIDES } from '@/lib/guides';
 import { SITE_URL } from '@/lib/site';
 import { PRODUCT } from '@/lib/product-catalog';
 import styles from '../guides.module.css';
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${guide.title} | Doxie Dynasty`;
   return {
     title, description: guide.description, alternates: { canonical: `/guides/${slug}` },
-    openGraph: { title, description: guide.description, type: 'article', url: `/guides/${slug}`, publishedTime: GUIDE_DATE, modifiedTime: GUIDE_DATE, images: [{ url: guide.image, alt: guide.imageAlt }] },
+    openGraph: { title, description: guide.description, type: 'article', url: `/guides/${slug}`, publishedTime: guide.published, modifiedTime: guide.published, images: [{ url: guide.image, alt: guide.imageAlt }] },
     twitter: { card: 'summary_large_image', title, description: guide.description, images: [guide.image] },
   };
 }
@@ -32,7 +32,7 @@ export default async function GuidePage({ params }: Props) {
   const url = `${SITE_URL}/guides/${slug}`;
   const schema = {
     '@context': 'https://schema.org', '@graph': [
-      { '@type': 'Article', '@id': `${url}#article`, headline: guide.title, description: guide.description, image: [`${SITE_URL}${guide.image}`], datePublished: GUIDE_DATE, dateModified: GUIDE_DATE, mainEntityOfPage: url, author: { '@type': 'Organization', name: 'Doxie Dynasty', url: SITE_URL }, publisher: { '@type': 'Organization', name: 'Doxie Dynasty', url: SITE_URL } },
+      { '@type': 'Article', '@id': `${url}#article`, headline: guide.title, description: guide.description, image: [`${SITE_URL}${guide.image}`], datePublished: guide.published, dateModified: guide.published, mainEntityOfPage: url, author: { '@type': 'Organization', name: 'Doxie Dynasty', url: SITE_URL }, publisher: { '@type': 'Organization', name: 'Doxie Dynasty', url: SITE_URL } },
       { '@type': 'BreadcrumbList', itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
         { '@type': 'ListItem', position: 2, name: 'Guides', item: `${SITE_URL}/guides` },
@@ -47,7 +47,7 @@ export default async function GuidePage({ params }: Props) {
       <header>
         <p className={styles.kicker}>{guide.category}</p><h1>{guide.title}</h1>
         <p className={styles.intro}>{guide.intro}</p>
-        <p className={styles.byline}>By <Link className={styles.textLink} href="/">Doxie Dynasty</Link> | <time dateTime={GUIDE_DATE}>October 2, 2026</time><br />From the maker of Doxie Dynasty. This guide features our own game.</p>
+        <p className={styles.byline}>By <Link className={styles.textLink} href="/">Doxie Dynasty</Link> | <time dateTime={guide.published}>{new Date(guide.published).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })}</time><br />From the maker of Doxie Dynasty. This guide features our own game.</p>
       </header>
       <details className={styles.mobileContents}><summary>In this guide</summary><nav aria-label="On this page (mobile)">{guide.sections.map(section => <a key={section.id} href={`#${section.id}`}>{section.title}</a>)}</nav></details>
       <div className={styles.columns}>

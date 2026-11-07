@@ -6,7 +6,7 @@ import { SITE_URL } from '@/lib/site';
 import styles from './guides.module.css';
 
 const title = 'Dachshund Gift Guides & Game-Night Ideas | Doxie Dynasty';
-const description = 'Find a thoughtful gift for a dachshund lover, plan a personalized present, or host a Doxie Dynasty game night. Practical guides from Doxie Dynasty.';
+const description = 'Compare Black Friday dachshund gifts, find Christmas presents for dachshund lovers, or plan a game night with guides from the maker of Doxie Dynasty.';
 export const metadata: Metadata = {
   title, description, alternates: { canonical: '/guides' },
   openGraph: { title, description, url: '/guides', type: 'website', images: ['/box-product-mockup.webp'] },
