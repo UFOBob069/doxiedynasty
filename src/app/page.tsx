@@ -420,6 +420,7 @@ export default function Home() {
           <a href="/gameplay#checklist">All card names</a>
           <a href="#faq">FAQ</a>
           <a href={directCheckoutUrl}>Buy direct</a>
+          <Link href="/product#shipping-returns">Shipping &amp; returns</Link>
           <a href="https://www.amazon.com/dp/B0H1NL53PX" target="_blank" rel="noopener noreferrer">Amazon</a>
           <a href={contactUrl}>Contact</a>
         </div>
