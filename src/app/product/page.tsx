@@ -43,7 +43,7 @@ export default function ProductPage() {
         <div className={styles.details}>
           <figure className={styles.photo}>
             <Image src="/box-product-mockup.webp" alt="Doxie Dynasty physical card game box" width={800} height={800} sizes="(max-width: 700px) 90vw, 380px" priority />
-            <figcaption className={styles.note}>Older packaging pictured. The full rules also cover the 84-card edition without Wilds.</figcaption>
+            <figcaption className={styles.note}>The box says &ldquo;84 cards total.&rdquo; Inside are 90 playing cards: the original 84 plus six Wild Doxies.</figcaption>
           </figure>
           <div>
             <h2>Inside the deck</h2>
