@@ -83,7 +83,14 @@ export default function ProductPage() {
             <div><dt>Estimated delivery</dt><dd>{DOXIE_DYNASTY.SHIPPING_DAYS} business days</dd></div>
             <div><dt>Returns</dt><dd>Accepted within {DOXIE_DYNASTY.RETURN_DAYS} days of delivery</dd></div>
           </dl>
-          <p>For return instructions or help with a direct order, email <a href={`mailto:${PRODUCT.supportEmail}`}>{PRODUCT.supportEmail}</a>. For Amazon orders, use the order support and return options on Amazon.</p>
+          <h3>How to return a deck bought here</h3>
+          <p>We accept new or lightly used decks, including opened decks, whether you changed your mind or there was a problem with your order.</p>
+          <ol>
+            <li>Email <a href={`mailto:${PRODUCT.supportEmail}`}>{PRODUCT.supportEmail}</a> within {DOXIE_DYNASTY.RETURN_DAYS} days of delivery. We’ll reply with the mailing address and return instructions.</li>
+            <li>Buy a return label and mail the deck to us. If your deck was defective or we sent the wrong item, we’ll reimburse your return postage. For a change of mind, you cover the postage.</li>
+            <li>You’ll receive your refund within 14 days after we receive the deck. We charge no restocking fee. We don’t offer exchanges.</li>
+          </ol>
+          <p><strong>Bought your deck on Amazon?</strong> Open the order in your Amazon account to see its return options and start your return.</p>
         </section>
       </main>
 
