@@ -25,7 +25,7 @@ export default function NotFound() {
             </Link>
             
             <div className="text-sm text-gray-500">
-              <Link href="/#checkout-section" className="text-orange-600 hover:text-orange-700 underline">
+              <Link href="/checkout" className="text-orange-600 hover:text-orange-700 underline">
                 Or go to checkout
               </Link>
             </div>
@@ -34,4 +34,4 @@ export default function NotFound() {
       </div>
     </div>
   );
-} 
+}

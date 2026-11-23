@@ -4,7 +4,7 @@ Reviewed September 21, 2026. Platform: Next.js 16 / React 19 on Vercel; browser-
 
 ## Implemented
 
-- `/product`: server-rendered product facts, direct-site pricing and terms, rules, support, and purchase links. Amazon remains the primary CTA.
+- `/product`: server-rendered product facts, direct-site pricing and terms, rules, support, and purchase links. Direct checkout is the primary CTA; Amazon is a secondary purchase option. The homepage and gift guides use the same purchase hierarchy.
 - `/product.json`: public, read-only Schema.org Product/Offer JSON-LD, also embedded on the homepage and product page.
 - `/llms.txt`: factual text summary linking official resources; an optional convenience, not a ranking guarantee.
 - `/feeds/products.jsonl`: one-record discovery feed using OpenAI's documented fields. It has not been submitted or approved. Native checkout is explicitly disabled.

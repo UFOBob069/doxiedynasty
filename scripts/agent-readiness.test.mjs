@@ -29,7 +29,7 @@ test('HTML and JSON share one accurate product and direct offer', async () => {
     const html = await get(path, 'text/html');
     assert.deepEqual(productMarkup(html), json);
     assert.match(html, /24\.99/);
-    assert.match(html, /Buy on Amazon/);
+    assert.match(html, /Also available on Amazon/);
     assert.match(html, /In stock/);
     assert.ok(html.includes('https://www.amazon.com/dp/B0H1NL53PX'));
     assert.ok(html.includes('href="/product'));

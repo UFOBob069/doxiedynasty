@@ -66,9 +66,11 @@ export default async function GuidePage({ params }: Props) {
           <h2>In this guide</h2><nav aria-label="On this page">{guide.sections.map(section => <a key={section.id} href={`#${section.id}`}>{section.title}</a>)}</nav>
           <figure><Image src={guide.image} alt={guide.imageAlt} width={400} height={500} sizes="270px" /><figcaption>{guide.imageAlt}.</figcaption></figure>
           <h2>Doxie Dynasty</h2><p>90 cards. 2-6 players.<br />A typical game: 20-30 minutes.</p>
-          <a className={`button button-gold ${styles.purchase}`} href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" /></a>
+          <Link className={`button button-gold ${styles.purchase}`} href="/checkout">Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" /></Link>
+          <p>{PRODUCT.availability.label}. Free U.S. shipping.</p>
           <Link className={styles.textLink} href="/product">Product details &amp; direct orders</Link><br />
           <Link className={styles.textLink} href="/gameplay">How to play &amp; rules PDF</Link>
+          <p><a className={styles.textLink} href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Also available on Amazon</a></p>
         </aside>
       </div>
     </article>

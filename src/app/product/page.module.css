@@ -12,6 +12,9 @@
 .photo { margin: 0; }
 .photo img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; border-radius: 8px; }
 .facts { margin: 0 0 18px; }
+.offerPrice { font-size: 2rem; font-weight: 800; margin: 0 0 8px; }
+.offerPrice span { font-size: 1rem; font-weight: 500; }
+.offerTerms { color: #4d5961; margin: 0; }
 .facts > div { display: grid; grid-template-columns: minmax(120px, .55fr) minmax(0, 1fr); gap: 20px; padding: 11px 0; border-bottom: 1px solid #d9caaa; }
 .facts dt { font-weight: 700; }
 .facts dd { margin: 0; color: #4d5961; }

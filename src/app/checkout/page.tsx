@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { DOXIE_DYNASTY } from '@/lib/doxie-product';
+import { PRODUCT } from '@/lib/product-catalog';
 
 function CommerceHeader() {
   return (
@@ -133,7 +134,9 @@ function CheckoutContent() {
               <span><CheckCircle aria-hidden="true" /> 30-day returns</span>
               <span><Gift aria-hidden="true" /> Choose 1–10 decks</span>
             </div>
+            <p>{PRODUCT.availability.label}. Sold directly by Doxie Dynasty. Estimated delivery: {DOXIE_DYNASTY.SHIPPING_DAYS} business days.</p>
             <p><Link href="/product#shipping-returns">Shipping, returns &amp; product details</Link></p>
+            <p>Order questions? <a href={`mailto:${PRODUCT.supportEmail}`}>{PRODUCT.supportEmail}</a></p>
           </aside>
 
           <section className="checkout-form-card" aria-labelledby="customer-details-title">

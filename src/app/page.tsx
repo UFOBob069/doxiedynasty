@@ -4,6 +4,7 @@ import { BookOpen, Download, ListChecks, ArrowUpRight } from "lucide-react";
 import { PRODUCT, PRODUCT_JSON_LD } from "@/lib/product-catalog";
 import GuideLinks from "@/components/GuideLinks";
 import guideStyles from "@/app/guides/guides.module.css";
+import { DOXIE_DYNASTY } from "@/lib/doxie-product";
 
 const dynastyCards = [
   { src: "/cards/andre.webp", alt: "Andre doxie card" },
@@ -117,8 +118,8 @@ export default function Home() {
           <a href="/gameplay">How to play</a>
           <a href={contactUrl}>Contact</a>
         </nav>
-        <a className="nav-cta" href={amazonUrl} target="_blank" rel="noopener noreferrer">
-          Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
+        <a className="nav-cta" href={directCheckoutUrl}>
+          Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" />
         </a>
       </header>
       <nav className="home-resources" aria-label="Rules and card list">
@@ -142,14 +143,13 @@ export default function Home() {
             <div>
               <a
                 className="button button-gold"
-                href={amazonUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={directCheckoutUrl}
               >
-                Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
+                Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" />
               </a>
               <a className="button button-outline" href="/gameplay"><BookOpen size={17} aria-hidden="true" /> How to play</a>
             </div>
+            <p className="direct-purchase-terms">{PRODUCT.availability.label} · Free U.S. shipping<br />{DOXIE_DYNASTY.SHIPPING_DAYS} business days · {DOXIE_DYNASTY.RETURN_DAYS}-day returns</p>
             <a className="hero-pdf-link" href={rulesPdfUrl} download><Download size={16} aria-hidden="true" /> Download full rules PDF</a>
           </div>
         </div>
@@ -161,13 +161,12 @@ export default function Home() {
           <div className="hero-actions" aria-label="Purchase options">
             <a
               className="button button-gold"
-              href={amazonUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={directCheckoutUrl}
             >
-              Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
+              Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" />
             </a>
             <a className="button button-outline" href="/gameplay"><BookOpen size={17} aria-hidden="true" /> How to play</a>
+            <p className="direct-purchase-terms">{PRODUCT.availability.label} · Free U.S. shipping<br />{DOXIE_DYNASTY.SHIPPING_DAYS} business days · {DOXIE_DYNASTY.RETURN_DAYS}-day returns</p>
             <a className="hero-pdf-link" href={rulesPdfUrl} download><Download size={16} aria-hidden="true" /> Download rules PDF</a>
           </div>
           <dl className="hero-facts">
@@ -378,13 +377,13 @@ export default function Home() {
             and anyone ready to become the top dog at game night.
           </p>
           <div className="buy-actions">
-            <a className="button button-gold" href={amazonUrl} target="_blank" rel="noopener noreferrer">
-              Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" />
+            <a className="button button-gold" href={directCheckoutUrl}>
+              Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" />
             </a>
-            <a className="button button-outline" href={directCheckoutUrl}>Buy direct <span aria-hidden="true">→</span></a>
           </div>
-          <small>Direct: ${PRODUCT.price} USD per deck with free U.S. shipping. {PRODUCT.availability.label} for direct orders. Amazon shows its own price and availability.</small>
+          <small>${PRODUCT.price} USD per deck. {PRODUCT.availability.label}. Free U.S. shipping, estimated delivery in {DOXIE_DYNASTY.SHIPPING_DAYS} business days. Returns accepted within {DOXIE_DYNASTY.RETURN_DAYS} days of delivery.</small>
           <p className="purchase-details"><a href="/product">Product details, shipping &amp; returns</a></p>
+          <p className="purchase-details"><a href={amazonUrl} target="_blank" rel="noopener noreferrer">Also available on Amazon</a>. Amazon sets its own price, shipping, and return terms.</p>
         </div>
       </section>
 
@@ -402,6 +401,7 @@ export default function Home() {
         <div>
           <p className="eyebrow">QUESTIONS, SUPPORT OR WHOLESALE</p>
           <h2>Talk to the top dog.</h2>
+          <p className="store-contact-details">Doxie Dynasty is the maker and direct seller of this game. For product questions, direct-order support, or returns, email <a href={`mailto:${PRODUCT.supportEmail}`}>{PRODUCT.supportEmail}</a>.</p>
         </div>
         <a className="contact-button" href={contactUrl}>
           Send a message <span aria-hidden="true">↗</span>
