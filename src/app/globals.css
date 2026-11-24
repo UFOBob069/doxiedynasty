@@ -419,6 +419,10 @@ footer > small { color: rgba(255,255,255,.34); font-size: .57rem; grid-column: 1
 .home-resources a:focus-visible, .hero-pdf-link:focus-visible, .card-name-link a:focus-visible, .rules-actions a:focus-visible, .home-header a:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
 .hero-purchase > .hero-pdf-link { color: var(--cream); margin: 14px 2px 2px; font-size: .8125rem; }
 .hero-actions > .hero-pdf-link { grid-column: 1 / -1; justify-content: center; color: var(--gold-light); }
+.direct-purchase-terms { color: var(--cream); font-size: .8125rem; line-height: 1.6; margin: 14px 2px 0; letter-spacing: 0; }
+.hero-actions > .direct-purchase-terms { grid-column: 1 / -1; margin: 0; text-align: center; }
+.store-contact-details { max-width: 720px; font-size: 1rem; line-height: 1.7; margin: 24px 0 0; letter-spacing: 0; }
+.store-contact-details a { text-decoration: underline; overflow-wrap: anywhere; }
 .card-name-link { text-align: center; padding: 0 20px 36px; color: var(--gold-light); }
 .card-name-link svg { color: var(--gold-light); }
 .rules-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 26px; margin-top: 26px; }

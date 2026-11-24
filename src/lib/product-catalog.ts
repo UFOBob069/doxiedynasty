@@ -109,8 +109,8 @@ ${PRODUCT.description}
 ${PRODUCT_FACTS.map(([name, value]) => `- ${name}: ${value}`).join('\n')}
 
 ## Buying
-- [Buy on Amazon](${PRODUCT.amazonUrl}): primary purchase link. Amazon displays its own current price, availability, shipping, and returns.
-- [Direct checkout](${PRODUCT.checkoutUrl}): published site price ${PRODUCT.price} ${PRODUCT.currency} per deck; ${DOXIE_DYNASTY.MIN_QUANTITY}-${DOXIE_DYNASTY.MAX_QUANTITY} decks per order. Browser-based Stripe checkout, not an agent checkout API.
+- [Buy directly from Doxie Dynasty](${PRODUCT.checkoutUrl}): ${PRODUCT.price} ${PRODUCT.currency} per deck; ${DOXIE_DYNASTY.MIN_QUANTITY}-${DOXIE_DYNASTY.MAX_QUANTITY} decks per order. Browser-based Stripe checkout, not an agent checkout API.
+- [Also available on Amazon](${PRODUCT.amazonUrl}): an alternative purchase option. Amazon displays its own current price, availability, shipping, and returns.
 - Direct orders: free U.S. shipping only; estimated delivery ${DOXIE_DYNASTY.SHIPPING_DAYS} business days. Returns accepted within ${DOXIE_DYNASTY.RETURN_DAYS} days of delivery.
 - Direct-order availability: ${PRODUCT.availability.label}. Stock status is maintained manually, not connected to real-time inventory. The site's price, stock status, and policies are not Amazon's offer.
 - Native agent checkout is not enabled. A product feed is not a purchase authorization.

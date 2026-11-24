@@ -31,7 +31,7 @@ export default function ProductPage() {
           <Link href="/gameplay">How to play</Link>
           <a href={`mailto:${PRODUCT.supportEmail}`}>Contact</a>
         </nav>
-        <a className="nav-cta" href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" /></a>
+        <Link className="nav-cta" href="/checkout">Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" /></Link>
       </header>
 
       <main className={styles.main} id="product-details">
@@ -46,6 +46,12 @@ export default function ProductPage() {
             <figcaption className={styles.note}>The box says &ldquo;84 cards total.&rdquo; Inside are 90 playing cards: the original 84 plus six Wild Doxies.</figcaption>
           </figure>
           <div>
+            <p className={styles.offerPrice}>${PRODUCT.price} <span>{PRODUCT.currency} per deck</span></p>
+            <p className={styles.offerTerms}><strong>{PRODUCT.availability.label}</strong> · Sold directly by Doxie Dynasty<br />Free U.S. shipping · Estimated delivery: {DOXIE_DYNASTY.SHIPPING_DAYS} business days<br />{DOXIE_DYNASTY.RETURN_DAYS}-day returns from delivery</p>
+            <div className={styles.actions}>
+              <Link className="button button-gold" href="/checkout">Buy now — ${PRODUCT.price} <ArrowUpRight size={18} aria-hidden="true" /></Link>
+              <a className={styles.secondary} href="#shipping-returns">Shipping &amp; return details</a>
+            </div>
             <h2>Inside the deck</h2>
             <dl className={styles.facts}>
               {PRODUCT_FACTS.map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}
@@ -58,8 +64,8 @@ export default function ProductPage() {
           <h2 id="buy-title">Bring home Doxie Dynasty</h2>
           <p>A game-night choice for dachshund lovers, dog owners, and friends who enjoy collecting sets and playful competition.</p>
           <div className={styles.actions}>
-            <a className="button button-gold" href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Buy on Amazon <ArrowUpRight size={18} aria-hidden="true" /></a>
-            <Link className={styles.secondary} href="/checkout"><span>{`Buy direct: $${PRODUCT.price} ${PRODUCT.currency} per deck`}</span> <ArrowUpRight size={18} aria-hidden="true" /></Link>
+            <Link className="button button-gold" href="/checkout">Buy now — ${PRODUCT.price} <ArrowUpRight size={18} aria-hidden="true" /></Link>
+            <a className={styles.secondary} href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Also available on Amazon <ArrowUpRight size={18} aria-hidden="true" /></a>
           </div>
           <p className={styles.note}>Direct orders: {PRODUCT.availability.label}. Amazon shows its own current price, availability, shipping, and return terms. Direct orders use Stripe checkout, with {DOXIE_DYNASTY.MIN_QUANTITY}-{DOXIE_DYNASTY.MAX_QUANTITY} decks per order. Confirm the final total at checkout.</p>
         </section>
@@ -91,6 +97,11 @@ export default function ProductPage() {
             <li>You’ll receive your refund within 14 days after we receive the deck. We charge no restocking fee. We don’t offer exchanges.</li>
           </ol>
           <p><strong>Bought your deck on Amazon?</strong> Open the order in your Amazon account to see its return options and start your return.</p>
+        </section>
+        <section className={styles.section} id="contact" aria-labelledby="contact-title">
+          <h2 id="contact-title">About the seller &amp; contact</h2>
+          <p>Doxie Dynasty is the maker and direct seller of this card game. When you order here, you buy from Doxie Dynasty and pay through secure Stripe checkout.</p>
+          <p>For product questions, order support, or returns, email <a href={`mailto:${PRODUCT.supportEmail}`}>{PRODUCT.supportEmail}</a>.</p>
         </section>
       </main>
 

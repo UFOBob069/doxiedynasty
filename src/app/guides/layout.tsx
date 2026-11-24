@@ -10,7 +10,7 @@ export default function GuidesLayout({ children }: { children: React.ReactNode }
     <header className="site-header home-header">
       <Link className="brand" href="/" aria-label="Doxie Dynasty home"><span className="brand-lockup"><Image src="/cards/box-side.webp" alt="Doxie Dynasty Card Game" width={420} height={190} priority /></span></Link>
       <nav aria-label="Main navigation"><Link href="/product">The game</Link><Link href="/guides">Gift guides</Link><Link href="/gameplay">How to play</Link></nav>
-      <a className="nav-cta" href={PRODUCT.amazonUrl} target="_blank" rel="noopener noreferrer">Buy on Amazon <ArrowUpRight size={17} aria-hidden="true" /></a>
+      <Link className="nav-cta" href="/checkout">Buy now — ${PRODUCT.price} <ArrowUpRight size={17} aria-hidden="true" /></Link>
     </header>
     <main className={styles.main} id="guide-content">{children}</main>
     <footer className={styles.footer}>
